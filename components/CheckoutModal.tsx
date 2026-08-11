@@ -30,7 +30,7 @@ export default function CheckoutModal({
   });
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof CustomerDetails, string>>>({});
-  const [step, setStep] = useState<'form' | 'payment'>('form');
+  const [step, setStep] = useState<'form' | 'payment' | 'processing'>('form');
   const [loading, setLoading] = useState<boolean>(false);
   const [orderSession, setOrderSession] = useState<{
     razorpayOrderId: string;
@@ -111,6 +111,7 @@ export default function CheckoutModal({
 
   const handleSimulatePayment = async () => {
     if (!orderSession) return;
+    setStep('processing');
     setLoading(true);
 
     try {
@@ -134,39 +135,54 @@ export default function CheckoutModal({
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok) {
         alert(verifyData.error || 'Payment verification failed.');
+        setStep('payment');
         setLoading(false);
         return;
       }
 
-      onClearCart();
-      onClose();
-      router.push(`/order-confirmation?order=${verifyData.orderNumber}&name=${encodeURIComponent(customer.fullName)}&total=${verifyData.totalAmount}`);
+      // Small delay for smooth UX transition
+      setTimeout(() => {
+        onClearCart();
+        onClose();
+        router.push(
+          `/order-confirmation?order=${verifyData.orderNumber}&name=${encodeURIComponent(
+            customer.fullName
+          )}&total=${verifyData.totalAmount}`
+        );
+      }, 600);
     } catch (err: any) {
       console.error(err);
       alert('Error verifying payment.');
+      setStep('payment');
       setLoading(false);
     }
   };
 
   return (
     <div className="checkout-modal active">
-      <div className="modal-backdrop active" onClick={onClose}></div>
+      <div className="modal-backdrop active" onClick={step === 'processing' ? undefined : onClose}></div>
       <div className="checkout-modal-content">
         <div className="checkout-modal-header">
           <h3>
             <i className="fa-solid fa-shield-halved" style={{ color: '#FFE600', marginRight: '8px' }}></i>
-            {step === 'form' ? 'GUEST CHECKOUT — DELIVERY DETAILS' : 'TEST PAYMENT PROTOTYPE'}
+            {step === 'form'
+              ? 'GUEST CHECKOUT — DELIVERY DETAILS'
+              : step === 'payment'
+              ? 'TEST PAYMENT PROTOTYPE'
+              : 'PROCESSING ORDER'}
           </h3>
-          <button className="close-checkout" onClick={onClose}>
-            <i className="fa-solid fa-xmark"></i>
-          </button>
+          {step !== 'processing' && (
+            <button className="close-checkout" onClick={onClose}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          )}
         </div>
 
         {step === 'form' ? (
           <form className="checkout-form-grid" onSubmit={handleProceedToPayment}>
             <div className="form-column">
               <h4 className="form-section-title">1. Customer Information</h4>
-              
+
               <div className="form-group">
                 <label>Full Name *</label>
                 <input
@@ -205,7 +221,9 @@ export default function CheckoutModal({
                 </div>
               </div>
 
-              <h4 className="form-section-title" style={{ marginTop: '20px' }}>2. Shipping Address</h4>
+              <h4 className="form-section-title" style={{ marginTop: '20px' }}>
+                2. Shipping Address
+              </h4>
 
               <div className="form-group">
                 <label>Street Address / Door No / Apartment *</label>
@@ -266,7 +284,9 @@ export default function CheckoutModal({
                     <img src={item.product.front_img} alt={item.product.name} />
                     <div className="checkout-item-info">
                       <strong className="item-title">{item.product.name}</strong>
-                      <span className="item-meta">Size: {item.size} | Qty: {item.quantity}</span>
+                      <span className="item-meta">
+                        Size: {item.size} | Qty: {item.quantity}
+                      </span>
                     </div>
                     <span className="item-price">₹{item.product.price * item.quantity}</span>
                   </div>
@@ -290,9 +310,13 @@ export default function CheckoutModal({
 
               <button type="submit" className="btn-pay-submit" disabled={loading}>
                 {loading ? (
-                  <><i className="fa-solid fa-spinner fa-spin"></i> PREPARING TEST PAYMENT...</>
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i> PREPARING TEST PAYMENT...
+                  </>
                 ) : (
-                  <><i className="fa-solid fa-lock"></i> PROCEED TO TEST PAYMENT — ₹{totalAmount}</>
+                  <>
+                    <i className="fa-solid fa-lock"></i> PROCEED TO TEST PAYMENT — ₹{totalAmount}
+                  </>
                 )}
               </button>
 
@@ -301,11 +325,9 @@ export default function CheckoutModal({
               </div>
             </div>
           </form>
-        ) : (
+        ) : step === 'payment' ? (
           <div className="payment-simulation-box">
-            <div className="test-badge-banner">
-              ⚡ RAZORPAY & UPI TEST MODE PROTOTYPE ⚡
-            </div>
+            <div className="test-badge-banner">⚡ RAZORPAY & UPI TEST MODE PROTOTYPE ⚡</div>
 
             <div className="payment-amount-display">
               <span className="amount-label">AMOUNT PAYABLE</span>
@@ -327,25 +349,36 @@ export default function CheckoutModal({
             </div>
 
             <div className="simulated-payment-actions">
-              <button
-                className="btn-simulate-success"
-                onClick={handleSimulatePayment}
-                disabled={loading}
-              >
-                {loading ? (
-                  <><i className="fa-solid fa-spinner fa-spin"></i> VERIFYING & SAVING ORDER...</>
-                ) : (
-                  <><i className="fa-solid fa-circle-check"></i> SIMULATE SUCCESSFUL TEST PAYMENT</>
-                )}
+              <button className="btn-simulate-success" onClick={handleSimulatePayment} disabled={loading}>
+                <i className="fa-solid fa-circle-check"></i> SIMULATE SUCCESSFUL TEST PAYMENT
               </button>
 
-              <button
-                className="btn-simulate-cancel"
-                onClick={() => setStep('form')}
-                disabled={loading}
-              >
+              <button className="btn-simulate-cancel" onClick={() => setStep('form')} disabled={loading}>
                 <i className="fa-solid fa-arrow-left"></i> BACK TO DETAILS
               </button>
+            </div>
+          </div>
+        ) : (
+          /* Processing Screen */
+          <div className="processing-order-box">
+            <div className="processing-spinner-wrapper">
+              <i className="fa-solid fa-circle-notch fa-spin processing-spinner"></i>
+            </div>
+            <h3 className="processing-title">PROCESSING YOUR ORDER...</h3>
+            <p className="processing-desc">
+              Please wait while we verify your test payment and confirm your delivery details.
+            </p>
+
+            <div className="processing-checklist">
+              <div className="checklist-item done">
+                <i className="fa-solid fa-circle-check"></i> Test Payment Authorized
+              </div>
+              <div className="checklist-item active">
+                <i className="fa-solid fa-spinner fa-spin"></i> Verifying Server Signature & Security
+              </div>
+              <div className="checklist-item pending">
+                <i className="fa-solid fa-circle text-muted"></i> Generating Order Reference & Saving to Supabase
+              </div>
             </div>
           </div>
         )}
