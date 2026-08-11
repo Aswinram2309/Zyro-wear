@@ -80,14 +80,16 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
--- Public read access for active products and categories
+-- Orders: Public insert for guest checkout & server/service-role read/update
 CREATE POLICY "Public Read Categories" ON public.categories FOR SELECT USING (true);
 CREATE POLICY "Public Read Products" ON public.products FOR SELECT USING (is_active = true);
-
--- Orders: Server/Service-Role bypasses RLS for guest checkout insertion & admin management.
--- Authenticated users (admin) can read/update orders.
-CREATE POLICY "Admin Full Access Orders" ON public.orders FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Admin Full Access Order Items" ON public.order_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Public Insert Orders" ON public.orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Read Orders" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Public Update Orders" ON public.orders FOR UPDATE USING (true);
+CREATE POLICY "Public Insert Order Items" ON public.order_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Read Order Items" ON public.order_items FOR SELECT USING (true);
+CREATE POLICY "Admin Full Access Orders" ON public.orders FOR ALL USING (true);
+CREATE POLICY "Admin Full Access Order Items" ON public.order_items FOR ALL USING (true);
 
 -- SEED DATA: CATEGORIES
 INSERT INTO public.categories (name, slug) VALUES
