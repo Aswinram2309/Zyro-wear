@@ -140,16 +140,13 @@ export default function CheckoutModal({
         return;
       }
 
-      // Small delay for smooth UX transition
-      setTimeout(() => {
-        onClearCart();
-        onClose();
-        router.push(
-          `/order-confirmation?order=${verifyData.orderNumber}&name=${encodeURIComponent(
-            customer.fullName
-          )}&total=${verifyData.totalAmount}`
-        );
-      }, 600);
+      onClearCart();
+      onClose();
+      router.push(
+        `/order-confirmation?order=${verifyData.orderNumber}&name=${encodeURIComponent(
+          customer.fullName
+        )}&total=${verifyData.totalAmount}`
+      );
     } catch (err: any) {
       console.error(err);
       alert('Error verifying payment.');

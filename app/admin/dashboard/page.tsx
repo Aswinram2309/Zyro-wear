@@ -37,6 +37,7 @@ export default function AdminDashboardPage() {
 
   // Check auth
   useEffect(() => {
+    router.prefetch('/');
     const isAuthenticated = sessionStorage.getItem('zyro_admin_auth');
     if (!isAuthenticated) {
       router.push('/admin/login');

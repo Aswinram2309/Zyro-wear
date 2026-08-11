@@ -1,14 +1,25 @@
 'use client';
 
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 function OrderConfirmationContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const orderNumber = searchParams.get('order') || '#ZY1001';
+  const orderNumber = searchParams.get('order') || 'ZY1001';
   const customerName = searchParams.get('name') || 'Valued Customer';
   const totalAmount = searchParams.get('total') || '299';
+
+  // Prefetch home route immediately on mount for zero-latency return to store navigation
+  useEffect(() => {
+    router.prefetch('/');
+  }, [router]);
+
+  const handleReturnToStore = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push('/');
+  };
 
   return (
     <div className="confirmation-page-container">
@@ -52,8 +63,8 @@ function OrderConfirmationContent() {
         </div>
 
         <div className="confirmation-actions">
-          <Link href="/" className="btn-primary">
-            <i className="fa-solid fa-bag-shopping"></i> CONTINUE SHOPPING
+          <Link href="/" prefetch={true} onClick={handleReturnToStore} className="btn-primary">
+            <i className="fa-solid fa-bag-shopping"></i> RETURN TO STORE
           </Link>
           <a
             href={`https://wa.me/917200515977?text=${encodeURIComponent(
