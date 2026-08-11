@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZYRO WEAR — Wear Your Energy | Premium Football Jerseys & Streetwear</title>
+    <meta name="description"
+        content="Shop official premium international football jerseys at ZYRO Wear. High quality, comfortable fit, bold designs. Only ₹299. Order directly on WhatsApp!">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome / Lucide Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Announcement Bar -->
+    <div class="announcement-bar">
+        <span>🔥 SPECIAL LAUNCH OFFER: ALL INTERNATIONAL JERSEYS AT FLAT <strong>₹299</strong> ONLY! FREE SHIPPING ON
+            ORDERS OVER ₹999 🔥</span>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="navbar" id="header">
+        <div class="nav-container">
+            <a href="#home" class="logo-link">
+                <img src="Logo/Zyro wears logo.jpeg" alt="ZYRO WEAR Logo" class="brand-logo">
+            </a>
+
+            <nav class="nav-links">
+                <a href="#home" class="nav-item active">HOME</a>
+                <a href="#shop" class="nav-item">SHOP</a>
+                <a href="#collections" class="nav-item">COLLECTIONS</a>
+                <a href="#about" class="nav-item">ABOUT</a>
+                <a href="#reviews" class="nav-item">REVIEWS</a>
+                <a href="#contact" class="nav-item">CONTACT</a>
+            </nav>
+
+            <div class="header-actions">
+                <button class="search-trigger" id="searchToggleBtn" aria-label="Toggle Search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button class="cart-trigger" id="cartToggleBtn" aria-label="Shopping Cart">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Global Search Overlay Bar -->
+        <div class="search-bar-overlay" id="searchOverlay">
+            <div class="search-inner">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="globalSearchInput"
+                    placeholder="Search by team (Argentina, France, Spain) or player (Messi, Ronaldo, Mbappe, Haaland)...">
+                <button class="close-search" id="closeSearchBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer Navigation -->
+    <div class="mobile-nav-drawer" id="mobileNavDrawer">
+        <div class="mobile-nav-header">
+            <img src="Logo/Zyro wears logo.jpeg" alt="ZYRO WEAR" class="brand-logo-sm">
+            <button class="close-drawer" id="closeMobileNavBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <nav class="mobile-nav-links">
+            <a href="#home" class="mobile-link">Home</a>
+            <a href="#shop" class="mobile-link">Shop Collection</a>
+            <a href="#collections" class="mobile-link">Star Players</a>
+            <a href="#about" class="mobile-link">About Us</a>
+            <a href="#reviews" class="mobile-link">Customer Reviews</a>
+            <a href="#contact" class="mobile-link">Contact & Support</a>
+        </nav>
+        <div class="mobile-contact-info">
+            <a href="https://wa.me/919952240817" target="_blank" class="btn-whatsapp-full">
+                <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+            </a>
+        </div>
+    </div>
+    <div class="backdrop" id="navBackdrop"></div>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="home">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">OFFICIAL 2026 EDITION</div>
+                <h1 class="hero-title">WEAR YOUR <span class="text-gold">ENERGY.</span></h1>
+                <p class="hero-description">
+                    Premium Quality. Bold Designs. Built for Comfort. Made for You.
+                    Discover top-tier international football jerseys crafted for champions.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#shop" class="btn-gold">EXPLORE COLLECTION <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="#reviews" class="btn-outline">SEE CUSTOMER REVIEWS</a>
+                </div>
+
+                <!-- Trust Badges -->
+                <div class="hero-trust-badges">
+                    <div class="trust-item">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>PREMIUM QUALITY</span>
+                    </div>
+                    <div class="trust-item">
+                        <i class="fa-solid fa-shirt"></i>
+                        <span>COMFORT FIT</span>
+                    </div>
+                    <div class="trust-item">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <span>FAST DELIVERY</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Hero Product Visual Showcase -->
+            <div class="hero-visual">
+                <div class="neon-z-glow"></div>
+                <div class="featured-jersey-wrapper" id="heroFeaturedWrapper" style="cursor: pointer;">
+                    <img src="ZYRO_Wear_Studio_Imgs/Belgium_Home_Front (2).png" alt="Featured Jersey"
+                        class="featured-jersey-img" id="heroFeaturedImg">
+                    <div class="hero-product-tag" id="heroProductTag">
+                        <span class="tag-title" id="heroTagTitle">Belgium Home Kit (De Bruyne #7)</span>
+                        <span class="tag-price" id="heroTagPrice">₹299 <s class="old-price">₹699</s></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Catalog Section / Trending Now -->
+    <section class="catalog-section" id="shop">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="sub-heading">SHOP OUR COLLECTION</span>
+                <h2 class="main-heading">TRENDING NOW</h2>
+                <div class="heading-line"></div>
+            </div>
+
+            <!-- Category Filter Tabs & Live Search -->
+            <div class="catalog-toolbar">
+                <div class="filter-tabs" id="filterTabs">
+                    <button class="tab-btn active" data-filter="all">ALL JERSEYS</button>
+                    <button class="tab-btn" data-filter="star">STAR PLAYER EDITION</button>
+                    <button class="tab-btn" data-filter="national">NATIONAL TEAMS</button>
+                </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="catalogSearchInput" placeholder="Filter by player or country...">
+                </div>
+            </div>
+
+            <!-- Products Grid Container -->
+            <div class="products-grid" id="productsGrid">
+                <!-- Dynamically Rendered by app.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Brand / Ethos Banner -->
+    <section class="ethos-section" id="about">
+        <div class="ethos-container">
+            <div class="ethos-content">
+                <span class="sub-heading-gold">ABOUT ZYRO WEAR</span>
+                <h2 class="ethos-heading">BUILT DIFFERENT.<br>MADE FOR YOU.</h2>
+                <p class="ethos-desc">
+                    ZYRO Wear is all about confidence, comfort, and standing out. Every jersey in our collection is
+                    crafted with premium lightweight breathable fabrics and bold, authentic designs for sports
+                    enthusiasts who don't follow trends—they set them.
+                </p>
+                <div class="ethos-highlights">
+                    <div class="ethos-pill"><i class="fa-solid fa-bolt"></i> BOLD DESIGNS</div>
+                    <div class="ethos-pill"><i class="fa-solid fa-feather"></i> PREMIUM FABRIC</div>
+                    <div class="ethos-pill"><i class="fa-solid fa-award"></i> MADE TO LAST</div>
+                </div>
+                <a href="#shop" class="btn-gold mt-4">SHOP NOW</a>
+            </div>
+            <div class="ethos-visual">
+                <div class="ethos-card-preview">
+                    <img src="Logo/Zyro wears logo.jpeg" alt="ZYRO Brand" class="ethos-logo-watermark">
+                    <h3>AUTHENTIC JERSEY STORE</h3>
+                    <p>Designed for performance, durability & everyday streetwear style.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cleaned Customer Reviews Section (Privacy Protected) -->
+    <section class="reviews-section" id="reviews">
+        <div class="section-container">
+            <div class="section-header text-center">
+                <span class="sub-heading">HAPPY CUSTOMERS</span>
+                <h2 class="main-heading">CUSTOMER FEEDBACK</h2>
+                <p class="section-intro">Authentic product feedback & quality reviews from verified ZYRO Wear customers!
+                </p>
+            </div>
+
+            <!-- Auto-Scrolling Cleaned Reviews Slider -->
+            <div class="reviews-slider-wrapper">
+                <div class="reviews-track" id="reviewsTrack">
+                    <!-- Cleaned screenshot cards populated by app.js -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Proposition Grid -->
+    <section class="value-props-section">
+        <div class="section-container">
+            <div class="props-grid">
+                <div class="prop-card">
+                    <div class="prop-icon"><i class="fa-solid fa-shirt"></i></div>
+                    <h3>PREMIUM QUALITY</h3>
+                    <p>Top notch fabric for all day comfort, sweat wicking and high durability.</p>
+                </div>
+                <div class="prop-card">
+                    <div class="prop-icon"><i class="fa-solid fa-ruler-combined"></i></div>
+                    <h3>PERFECT FIT</h3>
+                    <p>Designed to fit you right. Regular or athletic fit options available across sizes.</p>
+                </div>
+                <div class="prop-card">
+                    <div class="prop-icon"><i class="fa-solid fa-palette"></i></div>
+                    <h3>BOLD STYLES</h3>
+                    <p>Authentic colors, precise player prints, and high-definition crests.</p>
+                </div>
+                <div class="prop-card">
+                    <div class="prop-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                    <h3>FAST DELIVERY</h3>
+                    <p>Quick and reliable dispatch to your doorstep with WhatsApp tracking updates.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="footer-container">
+            <div class="footer-col brand-col">
+                <img src="Logo/Zyro wears logo.jpeg" alt="ZYRO WEAR Logo" class="footer-logo">
+                <p class="footer-about">
+                    ZYRO Wear delivers top-quality international football jerseys and sportswear. Wear your passion with
+                    pride.
+                </p>
+                <div class="social-links">
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/919952240817" target="_blank" aria-label="WhatsApp"><i
+                            class="fa-brands fa-whatsapp"></i></a>
+                    <a href="mailto:support@zyrowear.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>QUICK LINKS</h4>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#shop">Shop Collection</a></li>
+                    <li><a href="#collections">Star Players</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#reviews">Customer Feedback</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>HELP & POLICIES</h4>
+                <ul>
+                    <li><a href="#contact">Shipping & Delivery</a></li>
+                    <li><a href="#contact">Returns & Exchanges</a></li>
+                    <li><a href="#contact">Size Guide</a></li>
+                    <li><a href="#contact">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col contact-col">
+                <h4>CONNECT WITH US</h4>
+                <p><i class="fa-solid fa-phone"></i> WhatsApp Order Line</p>
+                <a href="https://wa.me/919952240817" target="_blank" class="footer-wa-btn">
+                    <i class="fa-brands fa-whatsapp"></i> +91 99522 40817
+                </a>
+                <p class="sub-text mt-2"><i class="fa-solid fa-clock"></i> Available 24/7 for instant order
+                    confirmations</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="footer-bottom-container">
+                <p>&copy; 2026 ZYRO Wear. All Rights Reserved.</p>
+                <p class="tagline">Built Different. Made for You.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Shopping Cart Drawer -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <div class="cart-title">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span>YOUR SHOPPING CART</span>
+            </div>
+            <button class="close-cart" id="closeCartBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="cart-body" id="cartItemsContainer">
+            <!-- Empty Cart State or Items populated by app.js -->
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-summary-row">
+                <span>Subtotal:</span>
+                <span class="subtotal-amount" id="cartSubtotal">₹0</span>
+            </div>
+            <div class="cart-summary-row shipping-row">
+                <span>Shipping:</span>
+                <span class="free-shipping-tag">FREE</span>
+            </div>
+            <div class="cart-summary-row total-row">
+                <span>Total Amount:</span>
+                <span class="total-amount" id="cartTotal">₹0</span>
+            </div>
+
+            <button class="btn-whatsapp-checkout" id="whatsappCheckoutBtn">
+                <i class="fa-brands fa-whatsapp"></i> ORDER VIA WHATSAPP NOW
+            </button>
+            <p class="cart-note">⚡ Orders are verified instantly on WhatsApp!</p>
+        </div>
+    </div>
+    <div class="backdrop" id="cartBackdrop"></div>
+
+    <!-- Product Detail Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content" id="productModalContent">
+            <!-- Rendered by app.js -->
+        </div>
+    </div>
+    <div class="backdrop" id="modalBackdrop"></div>
+
+    <!-- Image Lightbox Modal for Customer Reviews -->
+    <div class="lightbox" id="imageLightbox">
+        <button class="lightbox-close" id="lightboxCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+        <img src="" alt="Customer Review Screenshot" id="lightboxImg" class="lightbox-img">
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+
+</html>
