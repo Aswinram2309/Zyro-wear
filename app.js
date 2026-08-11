@@ -4,7 +4,7 @@
 
 // 1. Central Configuration
 const CONFIG = {
-    WHATSAPP_PHONE: "919952240817", // Target Business Phone Number
+    WHATSAPP_PHONE: "917200515977", // Target Business Phone Number
     UNIFORM_PRICE: 299,
     MRP_PRICE: 699,
     CURRENCY_SYMBOL: "₹"
