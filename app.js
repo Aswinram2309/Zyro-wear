@@ -290,11 +290,11 @@ function getSelectedSize(productId) {
 }
 
 // 8. Direct WhatsApp Order Generator
-function orderProductWhatsApp(productId) {
+function orderProductWhatsApp(productId, sizeOverride = null) {
     const product = PRODUCTS.find(p => p.id === productId);
     if (!product) return;
 
-    const size = getSelectedSize(productId);
+    const size = sizeOverride || getSelectedSize(productId);
     const message = `Hi ZYRO Wear! 👋 I want to order:\n- ${product.name}\n- Size: ${size}\n- Price: ₹${product.price}\n\nPlease confirm availability and payment details!`;
     
     const waUrl = `https://wa.me/${CONFIG.WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
@@ -467,7 +467,7 @@ function openProductModal(productId) {
                 <button class="btn-add-cart" onclick="addToCart('${product.id}', activeModalSize); closeProductModal();">
                     <i class="fa-solid fa-bag-shopping"></i> ADD TO CART
                 </button>
-                <button class="btn-gold" onclick="orderProductWhatsApp('${product.id}'); closeProductModal();">
+                <button class="btn-gold" onclick="orderProductWhatsApp('${product.id}', activeModalSize); closeProductModal();">
                     <i class="fa-brands fa-whatsapp"></i> ORDER ON WHATSAPP
                 </button>
             </div>

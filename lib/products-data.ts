@@ -1,0 +1,121 @@
+import { Product } from '@/types';
+
+export const INITIAL_PRODUCTS: Product[] = [
+  {
+    id: "arg-home-10",
+    name: "Argentina Home Kit (Messi #10)",
+    slug: "argentina-home-kit-messi-10",
+    description: "Official 2026 Argentina Home Jersey featuring legend Lionel Messi #10. Crafted with ultra-light breathable fabric for peak performance and style.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Argentina",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Argentina_Home_Front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Argentina_Home_Messi_10_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "bel-home-7",
+    name: "Belgium Home Kit (De Bruyne #7)",
+    slug: "belgium-home-kit-de-bruyne-7",
+    description: "Official Belgium Red Devils Home Kit featuring playmaker Kevin De Bruyne #7. Bold geometric graphics and sweat-wicking comfort.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Belgium",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Belgium_Home_Front (2).png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Belgium_Home_De_Bruyne_7_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "bra-home-7",
+    name: "Brazil Home Kit (Vini Jr #7)",
+    slug: "brazil-home-kit-vini-jr-7",
+    description: "Iconic Seleção Canary Yellow Home Jersey with Vinícius Jr #7. Represents Samba football energy, built for comfort.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Brazil",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Brazil_Home_Front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Brazil_Home_Vini_Jr_7_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "eng-home-10",
+    name: "England Home Kit (Bellingham #10)",
+    slug: "england-home-kit-bellingham-10",
+    description: "Classic Three Lions Pure White Home Jersey featuring Jude Bellingham #10. Premium tailored fit and high-definition badge.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "England",
+    front_img: "/ZYRO_Wear_Studio_Imgs/England_Home_Front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/England_Home_Bellingham_10_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "fra-home-10",
+    name: "France Home Kit (Mbappé #10)",
+    slug: "france-home-kit-mbappe-10",
+    description: "Elegant Royal Blue Les Bleus Home Kit with speedster Kylian Mbappé #10. Gold rooster crest detail and modern athletic cut.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "France",
+    front_img: "/ZYRO_Wear_Studio_Imgs/France_Home_Front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/France_Home_Mbappe_10_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "ger-home-10",
+    name: "Germany Home Kit (Musiala #10)",
+    slug: "germany-home-kit-musiala-10",
+    description: "Modern DFB White & Flame Graphic Home Kit featuring Jamal Musiala #10. Precision engineering and breathable texture.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Germany",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Germany_Home_Front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "nor-home-9",
+    name: "Norway Home Kit (Haaland #9)",
+    slug: "norway-home-kit-haaland-9",
+    description: "Striking Red & Blue Nordic Cross Home Jersey with goal machine Erling Haaland #9. Maximum ventilation & durability.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Norway",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Norway_Home_Front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Norway_Home_Haaland_9_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "por-home-7",
+    name: "Portugal Home Kit (Ronaldo #7)",
+    slug: "portugal-home-kit-ronaldo-7",
+    description: "Legendary Crimson & Green Portugal Home Kit featuring Cristiano Ronaldo #7. Wear the legacy of greatness.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Portugal",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  },
+  {
+    id: "esp-home-19",
+    name: "Spain Home Kit (Yamal #19)",
+    slug: "spain-home-kit-yamal-19",
+    description: "Dynamic La Roja Crimson Home Kit featuring wunderkind Lamine Yamal #19. Designed for agility, passion and style.",
+    price: 299,
+    mrp: 699,
+    category: "star",
+    nation: "Spain",
+    front_img: "/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_front.png",
+    back_img: "/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_Back.png",
+    sizes: ["S", "M", "L", "XL", "XXL"]
+  }
+];

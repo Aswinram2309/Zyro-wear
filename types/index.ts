@@ -1,0 +1,64 @@
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  mrp: number;
+  category: string;
+  nation?: string;
+  front_img: string;
+  back_img: string;
+  images?: string[];
+  sizes?: string[];
+  stock?: number;
+  is_active?: boolean;
+}
+
+export interface CartItem {
+  product: Product;
+  size: string;
+  quantity: number;
+}
+
+export interface CustomerDetails {
+  fullName: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+export interface OrderItem {
+  id?: string;
+  order_id?: string;
+  product_id: string;
+  product_name: string;
+  size: string;
+  quantity: number;
+  price: number;
+  created_at?: string;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  subtotal: number;
+  total_amount: number;
+  payment_status: 'PENDING' | 'PAID' | 'FAILED';
+  order_status: 'NEW' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED';
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  created_at: string;
+  updated_at: string;
+  items?: OrderItem[];
+}
