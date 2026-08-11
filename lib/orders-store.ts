@@ -102,7 +102,7 @@ export async function saveOrderToStore(orderPayload: {
     }
   }
 
-  // 2. Always persist in local JSON store so orders appear in Admin Dashboard immediately
+  // 2. Always persist in local JSON store
   try {
     ensureDataDirExists();
     const raw = fs.readFileSync(ORDERS_FILE_PATH, 'utf-8');
@@ -121,13 +121,22 @@ export async function getAllOrdersFromStore() {
 
   if (supabase) {
     try {
-      const { data: dbOrders, error } = await supabase
+      const { data: dbOrders, error: ordersErr } = await supabase
         .from('orders')
-        .select('*, items:order_items(*)')
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && dbOrders && dbOrders.length > 0) {
-        return dbOrders;
+      if (!ordersErr && dbOrders && dbOrders.length > 0) {
+        const { data: allItems } = await supabase.from('order_items').select('*');
+
+        const ordersWithItems = dbOrders.map((order) => ({
+          ...order,
+          items: allItems
+            ? allItems.filter((i) => i.order_id === order.id)
+            : [],
+        }));
+
+        return ordersWithItems;
       }
     } catch (e) {
       console.error('Supabase fetch error, falling back to local file:', e);
