@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { saveOrderToStore } from '@/lib/orders-store';
+import { sendOrderConfirmationEmail } from '@/lib/email-service';
 
 export async function POST(req: Request) {
   try {
@@ -53,6 +54,28 @@ export async function POST(req: Request) {
       razorpayOrderId,
       razorpayPaymentId,
     });
+
+    // 3. Send Order Confirmation Email via Resend (Server-Side Only)
+    // Non-blocking: Email errors do NOT break order confirmation
+    try {
+      await sendOrderConfirmationEmail({
+        orderNumber: savedOrder.order_number,
+        customerName: customer.fullName,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address,
+        city: customer.city || '',
+        state: customer.state || '',
+        pincode: customer.pincode || '',
+        items: validatedItems,
+        subtotal,
+        totalAmount,
+        paymentStatus: 'PAID (Test Mode)',
+        createdAt: savedOrder.created_at || new Date().toISOString(),
+      });
+    } catch (emailErr) {
+      console.error('Non-critical email dispatch error:', emailErr);
+    }
 
     return NextResponse.json({
       success: true,
