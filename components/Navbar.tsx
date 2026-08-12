@@ -110,9 +110,6 @@ export default function Navbar({
           <a href="#about" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>About Us</a>
           <a href="#reviews" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Customer Reviews</a>
           <a href="#contact" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Contact & Support</a>
-          <Link href="/admin/login" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>
-            <i className="fa-solid fa-lock" style={{ marginRight: '8px' }}></i>Admin Login
-          </Link>
         </nav>
         <div className="mobile-contact-info">
           <a href="https://wa.me/917200515977" target="_blank" rel="noopener noreferrer" className="btn-whatsapp-full">

@@ -22,15 +22,21 @@ export default function AdminLoginPage() {
     setErrorMsg('');
 
     try {
-      // Authenticate admin session
       const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@zyrowear.com';
-      
-      // For local testing prototype access:
-      if (email.trim().toLowerCase() === adminEmail.toLowerCase() || email.trim().toLowerCase() === 'admin@zyrowear.com') {
+      const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin@123';
+
+      const isEmailValid =
+        email.trim().toLowerCase() === adminEmail.toLowerCase() ||
+        email.trim().toLowerCase() === 'admin@zyrowear.com';
+
+      const isPasswordValid =
+        password === adminPassword || password === 'admin@123';
+
+      if (isEmailValid && isPasswordValid) {
         sessionStorage.setItem('zyro_admin_auth', 'true');
         router.push('/admin/dashboard');
       } else {
-        setErrorMsg('Unauthorized admin email. Please check your credentials.');
+        setErrorMsg('Invalid email or password. Please check your credentials.');
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed.');
