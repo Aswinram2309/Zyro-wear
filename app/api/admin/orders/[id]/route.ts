@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { updateOrderStatusInStore } from '@/lib/orders-store';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
