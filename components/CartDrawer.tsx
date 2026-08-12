@@ -29,8 +29,11 @@ export default function CartDrawer({
     <>
       <div className={`cart-drawer ${isOpen ? 'active' : ''}`} id="cartDrawer">
         <div className="cart-drawer-header">
-          <h3>YOUR SHOPPING BAG ({cart.reduce((sum, i) => sum + i.quantity, 0)})</h3>
-          <button className="close-cart" onClick={onClose}>
+          <h3 className="cart-drawer-title">
+            <i className="fa-solid fa-bag-shopping" style={{ color: '#FFC700', marginRight: '8px' }}></i>
+            YOUR SHOPPING BAG ({cart.reduce((sum, i) => sum + i.quantity, 0)})
+          </h3>
+          <button className="close-cart" onClick={onClose} aria-label="Close Shopping Bag">
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -39,9 +42,9 @@ export default function CartDrawer({
         <div className="shipping-bar-container">
           <div className="shipping-bar-text">
             {amountRemaining > 0 ? (
-              <>Add <strong>₹{amountRemaining}</strong> more for <strong>FREE EXPRESS SHIPPING</strong>!</>
+              <>Add <strong className="text-gold-highlight">₹{amountRemaining}</strong> more for <strong className="text-gold-highlight">FREE EXPRESS SHIPPING</strong>!</>
             ) : (
-              <>🎉 <strong>CONGRATS! YOU UNLOCKED FREE SHIPPING!</strong></>
+              <>🎉 <strong className="text-gold-highlight">CONGRATS! YOU UNLOCKED FREE SHIPPING!</strong></>
             )}
           </div>
           <div className="progress-track">
@@ -55,8 +58,8 @@ export default function CartDrawer({
               <i className="fa-solid fa-bag-shopping empty-icon"></i>
               <h4>Your bag is currently empty</h4>
               <p>Explore our 2026 International Collection and pick your jersey!</p>
-              <button className="btn-primary" onClick={onClose}>
-                START SHOPPING
+              <button className="btn-cart-empty-action" onClick={onClose}>
+                <i className="fa-solid fa-shirt"></i> START SHOPPING
               </button>
             </div>
           ) : (
