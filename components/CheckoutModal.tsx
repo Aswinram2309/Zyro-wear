@@ -165,8 +165,8 @@ export default function CheckoutModal({
             {step === 'form'
               ? 'GUEST CHECKOUT — DELIVERY DETAILS'
               : step === 'payment'
-              ? 'TEST PAYMENT PROTOTYPE'
-              : 'PROCESSING ORDER'}
+                ? 'TEST PAYMENT PROTOTYPE'
+                : 'PROCESSING ORDER'}
           </h3>
           {step !== 'processing' && (
             <button className="close-checkout" onClick={onClose}>
@@ -184,7 +184,7 @@ export default function CheckoutModal({
                 <label>Full Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Aswin Ram"
+                  placeholder="e.g. Abinaya"
                   value={customer.fullName}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                   className={formErrors.fullName ? 'error' : ''}
