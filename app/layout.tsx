@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles.css';
+import OfflineStatus from '@/components/OfflineStatus';
 
 export const metadata: Metadata = {
   title: 'ZYRO WEAR — Wear Your Energy | Premium Football Jerseys & Streetwear',
@@ -27,7 +28,10 @@ export default function RootLayout({
         />
         <link rel="icon" type="image/jpeg" href="/Logo/Zyro wears logo.jpeg" />
       </head>
-      <body>{children}</body>
+      <body>
+        <OfflineStatus />
+        {children}
+      </body>
     </html>
   );
 }
