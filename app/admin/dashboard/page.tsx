@@ -105,6 +105,15 @@ export default function AdminDashboardPage() {
             <span className="admin-title">ADMIN DASHBOARD</span>
           </div>
 
+          <div className="admin-nav-tabs-center">
+            <Link href="/admin/dashboard" className="admin-nav-link active">
+              <i className="fa-solid fa-list-check"></i> Orders
+            </Link>
+            <Link href="/admin/stock" className="admin-nav-link">
+              <i className="fa-solid fa-boxes-stacked"></i> Stock Management
+            </Link>
+          </div>
+
           <div className="admin-actions">
             <Link href="/" className="btn-secondary-sm">
               <i className="fa-solid fa-store"></i> View Store

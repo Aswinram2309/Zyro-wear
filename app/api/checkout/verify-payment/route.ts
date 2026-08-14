@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { saveOrderToStore } from '@/lib/orders-store';
 import { sendOrderConfirmationEmail } from '@/lib/email-service';
+import { getProductByIdFromStore, deductSizeStock } from '@/lib/products-store';
 
 export async function POST(req: Request) {
   try {
@@ -16,27 +16,48 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing order items' }, { status: 400 });
     }
 
-    // 1. Calculate trusted server-side total
+    // 1. Calculate trusted server-side total and validate size stock
     let subtotal = 0;
     const validatedItems = [];
 
     for (const item of items) {
-      const product = INITIAL_PRODUCTS.find((p) => p.id === item.productId);
+      const product = await getProductByIdFromStore(item.productId);
       if (!product) {
         return NextResponse.json({ error: `Invalid product ID: ${item.productId}` }, { status: 400 });
       }
 
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-      const price = product.price;
+      const requestedSize = item.size || 'M';
+
+      // Check server-side size stock
+      if (product.stock_by_size && product.stock_by_size[requestedSize] !== undefined) {
+        const avail = Number(product.stock_by_size[requestedSize]) || 0;
+        if (avail < qty) {
+          return NextResponse.json(
+            { error: `Insufficient stock for ${product.name} (Size: ${requestedSize}). Requested: ${qty}, Available: ${avail}` },
+            { status: 400 }
+          );
+        }
+      }
+
+      const price = product.sale_price || product.price;
       subtotal += price * qty;
 
       validatedItems.push({
         product_id: product.id,
         product_name: product.name,
-        size: item.size || 'M',
+        size: requestedSize,
         quantity: qty,
         price,
       });
+    }
+
+    // 2. Perform atomic size-wise stock deduction ONLY after successful payment validation
+    for (const item of validatedItems) {
+      const result = await deductSizeStock(item.product_id, item.size, item.quantity);
+      if (!result.success) {
+        return NextResponse.json({ error: result.message || 'Failed to update stock' }, { status: 400 });
+      }
     }
 
     const shippingFee = subtotal >= 999 ? 0 : 49;

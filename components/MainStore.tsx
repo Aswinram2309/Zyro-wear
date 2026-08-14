@@ -13,7 +13,7 @@ import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { Product, CartItem } from '@/types';
 
 export default function MainStore() {
-  const [products] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -22,6 +22,22 @@ export default function MainStore() {
 
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+
+  // Fetch dynamic products from Supabase / API endpoint
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          setProducts(data.products);
+        }
+      } catch (err) {
+        console.error('Error loading store products from API:', err);
+      }
+    }
+    loadProducts();
+  }, []);
 
   // Sync cart from localStorage
   useEffect(() => {

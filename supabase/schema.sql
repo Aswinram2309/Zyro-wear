@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     description TEXT,
     price NUMERIC NOT NULL DEFAULT 299,
     mrp NUMERIC NOT NULL DEFAULT 699,
+    sale_price NUMERIC,
     category TEXT NOT NULL DEFAULT 'star',
     nation TEXT,
     front_img TEXT NOT NULL,
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     images TEXT[] DEFAULT '{}',
     sizes TEXT[] DEFAULT '{"S", "M", "L", "XL", "XXL"}',
     stock INTEGER DEFAULT 100,
+    stock_by_size JSONB DEFAULT '{"S": 10, "M": 15, "L": 15, "XL": 10, "XXL": 5}'::jsonb,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -83,6 +85,7 @@ ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 -- Orders: Public insert for guest checkout & server/service-role read/update
 CREATE POLICY "Public Read Categories" ON public.categories FOR SELECT USING (true);
 CREATE POLICY "Public Read Products" ON public.products FOR SELECT USING (is_active = true);
+CREATE POLICY "Admin Full Access Products" ON public.products FOR ALL USING (true);
 CREATE POLICY "Public Insert Orders" ON public.orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public Read Orders" ON public.orders FOR SELECT USING (true);
 CREATE POLICY "Public Update Orders" ON public.orders FOR UPDATE USING (true);
@@ -169,7 +172,7 @@ INSERT INTO public.products (id, name, slug, description, price, mrp, category, 
     'portugal-home-kit-ronaldo-7',
     'Legendary Crimson & Green Portugal Home Kit featuring Cristiano Ronaldo #7. Wear the legacy of greatness.',
     299, 699, 'star', 'Portugal',
-    'ZYRO_Wear_Studio_Imgs/Portugal_Home_Front.png',
+    'ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_front.png',
     'ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_Back.png'
 ),
 (
@@ -178,8 +181,8 @@ INSERT INTO public.products (id, name, slug, description, price, mrp, category, 
     'spain-home-kit-yamal-19',
     'Dynamic La Roja Crimson Home Kit featuring wunderkind Lamine Yamal #19. Designed for agility, passion and style.',
     299, 699, 'star', 'Spain',
-    'ZYRO_Wear_Studio_Imgs/Spain_Home_Front.png',
-    'ZYRO_Wear_Studio_Imgs/Spain_Home_Yamal_19_Back.png'
+    'ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_front.png',
+    'ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_Back.png'
 ),
 (
     'aln-away-7',

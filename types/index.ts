@@ -5,6 +5,7 @@ export interface Product {
   description: string;
   price: number;
   mrp: number;
+  sale_price?: number | null;
   category: string;
   nation?: string;
   front_img: string;
@@ -12,7 +13,10 @@ export interface Product {
   images?: string[];
   sizes?: string[];
   stock?: number;
+  stock_by_size?: Record<string, number>;
   is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CartItem {
