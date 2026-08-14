@@ -113,7 +113,23 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
           .filter((p) => includeInactive || p.is_active !== false)
           .map((p) => {
             const localItem = localMap.get(p.id);
-            const stockBySize = p.stock_by_size || localItem?.stock_by_size || DEFAULT_SIZE_STOCK;
+            let stockBySize: Record<string, number> | null = p.stock_by_size || null;
+
+            if (!stockBySize && Array.isArray(p.images)) {
+              const metaStr = p.images.find(
+                (img: any) => typeof img === 'string' && img.startsWith('__stock_by_size:')
+              );
+              if (metaStr) {
+                try {
+                  stockBySize = JSON.parse(metaStr.replace('__stock_by_size:', ''));
+                } catch (e) {}
+              }
+            }
+
+            if (!stockBySize) {
+              stockBySize = localItem?.stock_by_size || DEFAULT_SIZE_STOCK;
+            }
+
             const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
 
           let rawFront = p.front_img;
@@ -277,14 +293,21 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
   let stockBySize = updates.stock_by_size;
   let totalStock: number | undefined;
 
-  if (stockBySize) {
-    totalStock = calculateProductTotalStock(stockBySize);
-  }
-
   const payloadToUpdate: any = {
     ...updates,
     updated_at: now,
   };
+
+  if (stockBySize) {
+    totalStock = calculateProductTotalStock(stockBySize);
+    const metadata = `__stock_by_size:${JSON.stringify(stockBySize)}`;
+    const existingImages = Array.isArray(updates.images) ? updates.images : [];
+    const cleanImages = existingImages.filter(
+      (img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:')
+    );
+    cleanImages.push(metadata);
+    payloadToUpdate.images = cleanImages;
+  }
 
   if (payloadToUpdate.front_img) {
     payloadToUpdate.front_img = formatImageUrl(payloadToUpdate.front_img);
