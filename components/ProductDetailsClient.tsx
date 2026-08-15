@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import CheckoutModal from '@/components/CheckoutModal';
+import SizeChart from '@/components/SizeChart';
 import { formatImageUrl } from '@/lib/stock-config';
 
 interface ProductDetailsClientProps {
@@ -364,6 +365,8 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
               </div>
             </div>
 
+            <SizeChart sizeChart={product.size_chart} />
+
             {/* Quantity Selector */}
             <div className="details-qty-section">
               <span className="qty-title">Quantity:</span>
@@ -586,6 +589,23 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           loadProductDetails();
         }}
       />
+      {/* Mobile Sticky Bottom Bar */}
+      <div className="sticky-bottom-action-bar">
+        <button
+          className="sticky-btn-add"
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+        >
+          <i className="fa-solid fa-bag-shopping"></i> ADD TO CART
+        </button>
+        <button
+          className="sticky-btn-buy"
+          onClick={handleBuyNow}
+          disabled={isOutOfStock}
+        >
+          <i className="fa-solid fa-bolt"></i> BUY NOW
+        </button>
+      </div>
     </div>
   );
 }

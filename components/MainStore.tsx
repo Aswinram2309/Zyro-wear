@@ -11,6 +11,7 @@ import ReviewsSection from './ReviewsSection';
 import Footer from './Footer';
 import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { Product, CartItem } from '@/types';
+import { normalizeCategory } from '@/lib/stock-config';
 
 export default function MainStore() {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -135,10 +136,12 @@ export default function MainStore() {
     // Hide out-of-stock items (totalStock === 0) from the listing
     if (p.stock === 0) return false;
 
+    const normalizedCat = normalizeCategory(p.category, p.name);
     const matchesCategory =
       activeFilter === 'all' ||
-      (activeFilter === 'star' && p.category === 'star') ||
-      (activeFilter === 'national' && p.category !== 'club');
+      (activeFilter === 'football' && normalizedCat === 'Football Jerseys') ||
+      (activeFilter === 'ipl' && normalizedCat === 'IPL Jerseys') ||
+      (activeFilter === 'customize' && normalizedCat === 'Customize Jerseys');
 
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -182,16 +185,22 @@ export default function MainStore() {
                 ALL JERSEYS
               </button>
               <button
-                className={`tab-btn ${activeFilter === 'star' ? 'active' : ''}`}
-                onClick={() => setActiveFilter('star')}
+                className={`tab-btn ${activeFilter === 'football' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('football')}
               >
-                STAR PLAYER EDITION
+                FOOTBALL JERSEYS
               </button>
               <button
-                className={`tab-btn ${activeFilter === 'national' ? 'active' : ''}`}
-                onClick={() => setActiveFilter('national')}
+                className={`tab-btn ${activeFilter === 'ipl' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('ipl')}
               >
-                NATIONAL TEAMS
+                IPL JERSEYS
+              </button>
+              <button
+                className={`tab-btn ${activeFilter === 'customize' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('customize')}
+              >
+                CUSTOMIZE JERSEYS
               </button>
             </div>
             <div className="search-box">

@@ -56,3 +56,26 @@ export function formatImageUrl(url?: string | null): string {
   }
   return cleanUrl;
 }
+
+export function normalizeCategory(category: string, productName: string = ''): 'Football Jerseys' | 'IPL Jerseys' | 'Customize Jerseys' {
+  const cat = (category || '').trim().toLowerCase();
+  
+  if (cat === 'football jerseys') return 'Football Jerseys';
+  if (cat === 'ipl jerseys') return 'IPL Jerseys';
+  if (cat === 'customize jerseys') return 'Customize Jerseys';
+
+  if (cat === 'star' || cat === 'national') return 'Football Jerseys';
+  if (cat === 'ipl' || cat === 'club') return 'IPL Jerseys';
+  if (cat === 'customize' || cat === 'custom') return 'Customize Jerseys';
+
+  const name = productName.toLowerCase();
+  if (name.includes('ipl') || name.includes('rcb') || name.includes('csk') || name.includes('mi') || name.includes('kkr') || name.includes('srh') || name.includes('delhi') || name.includes('punjab') || name.includes('rajasthan')) {
+    return 'IPL Jerseys';
+  }
+  if (name.includes('custom') || name.includes('personal')) {
+    return 'Customize Jerseys';
+  }
+
+  return 'Football Jerseys';
+}
+

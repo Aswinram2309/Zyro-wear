@@ -1,3 +1,9 @@
+export interface SizeMeasurement {
+  length?: string;
+  chest?: string;
+  shoulder?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -14,6 +20,7 @@ export interface Product {
   sizes?: string[];
   stock?: number;
   stock_by_size?: Record<string, number>;
+  size_chart?: Record<string, SizeMeasurement>;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

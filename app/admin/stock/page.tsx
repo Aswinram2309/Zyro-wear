@@ -4,14 +4,14 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Product } from '@/types';
-import { calculateStockStatus, DEFAULT_LOW_STOCK_THRESHOLD, formatImageUrl } from '@/lib/stock-config';
+import { calculateStockStatus, DEFAULT_LOW_STOCK_THRESHOLD, formatImageUrl, normalizeCategory } from '@/lib/stock-config';
 
 const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
 const CATEGORY_OPTIONS = [
-  { label: 'Star Players', value: 'star' },
-  { label: 'National Teams', value: 'national' },
-  { label: 'Clubs', value: 'club' },
+  { label: 'Football Jerseys', value: 'Football Jerseys' },
+  { label: 'IPL Jerseys', value: 'IPL Jerseys' },
+  { label: 'Customize Jerseys', value: 'Customize Jerseys' },
 ];
 
 export default function StockManagementPage() {
@@ -37,19 +37,27 @@ export default function StockManagementPage() {
     sale_price: string;
     sizes: string[];
     stock_by_size: Record<string, number>;
+    size_chart: Record<string, { length: string; chest: string; shoulder: string }>;
     front_img: string;
     back_img: string;
     is_active: boolean;
   }>({
     name: '',
     description: '',
-    category: 'star',
+    category: 'Football Jerseys',
     nation: '',
     price: '',
     mrp: '',
     sale_price: '',
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
     stock_by_size: { S: 10, M: 15, L: 15, XL: 10, XXL: 5 },
+    size_chart: {
+      S: { length: '', chest: '', shoulder: '' },
+      M: { length: '', chest: '', shoulder: '' },
+      L: { length: '', chest: '', shoulder: '' },
+      XL: { length: '', chest: '', shoulder: '' },
+      XXL: { length: '', chest: '', shoulder: '' },
+    },
     front_img: '',
     back_img: '',
     is_active: true,
@@ -123,10 +131,10 @@ export default function StockManagementPage() {
   // Filtered Products
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const matchesCategory = categoryFilter === 'ALL' || p.category === categoryFilter;
+      const matchesCategory = categoryFilter === 'ALL' || normalizeCategory(p.category, p.name) === categoryFilter;
       const matchesSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        normalizeCategory(p.category, p.name).toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.nation && p.nation.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
@@ -138,13 +146,20 @@ export default function StockManagementPage() {
     setFormData({
       name: '',
       description: '',
-      category: 'star',
+      category: 'Football Jerseys',
       nation: '',
       price: '299',
       mrp: '699',
       sale_price: '',
       sizes: ['S', 'M', 'L', 'XL', 'XXL'],
       stock_by_size: { S: 10, M: 15, L: 15, XL: 10, XXL: 5 },
+      size_chart: {
+        S: { length: '', chest: '', shoulder: '' },
+        M: { length: '', chest: '', shoulder: '' },
+        L: { length: '', chest: '', shoulder: '' },
+        XL: { length: '', chest: '', shoulder: '' },
+        XXL: { length: '', chest: '', shoulder: '' },
+      },
       front_img: '',
       back_img: '',
       is_active: true,
@@ -163,16 +178,28 @@ export default function StockManagementPage() {
     const stockMap: Record<string, number> = product.stock_by_size || { S: 10, M: 15, L: 15, XL: 10, XXL: 5 };
     const availSizes = product.sizes && product.sizes.length > 0 ? product.sizes : Object.keys(stockMap);
 
+    const sizeChartMap: Record<string, { length: string; chest: string; shoulder: string }> = {};
+    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    defaultSizes.forEach((sz) => {
+      const dbMeas = product.size_chart?.[sz] || {};
+      sizeChartMap[sz] = {
+        length: dbMeas.length !== undefined ? String(dbMeas.length) : '',
+        chest: dbMeas.chest !== undefined ? String(dbMeas.chest) : '',
+        shoulder: dbMeas.shoulder !== undefined ? String(dbMeas.shoulder) : '',
+      };
+    });
+
     setFormData({
       name: product.name,
       description: product.description || '',
-      category: product.category || 'star',
+      category: normalizeCategory(product.category, product.name),
       nation: product.nation || '',
       price: String(product.price),
       mrp: String(product.mrp || product.price),
       sale_price: product.sale_price !== null && product.sale_price !== undefined ? String(product.sale_price) : '',
       sizes: availSizes,
       stock_by_size: stockMap,
+      size_chart: sizeChartMap,
       front_img: product.front_img,
       back_img: product.back_img,
       is_active: product.is_active !== false,
@@ -363,6 +390,7 @@ export default function StockManagementPage() {
         sale_price: salePriceNum,
         sizes: formData.sizes,
         stock_by_size: formData.stock_by_size,
+        size_chart: formData.size_chart,
         front_img: finalFrontUrl,
         back_img: finalBackUrl,
         images: [finalFrontUrl, finalBackUrl],
@@ -925,6 +953,79 @@ export default function StockManagementPage() {
                           disabled={!isSelected}
                           value={formData.stock_by_size[sz] !== undefined ? formData.stock_by_size[sz] : 0}
                           onChange={(e) => handleSizeStockChange(sz, e.target.value)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step 10: Size Chart Measurements (inch) */}
+              <div className="form-group size-stock-inputs-box">
+                <label>10. SIZE CHART MEASUREMENTS (Inches)</label>
+                <p className="subtext">Set Length, Chest, and Shoulder dimensions for each size to populate the Size Chart.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
+                  {ALL_SIZES.map((sz) => {
+                    const isSelected = formData.sizes.includes(sz);
+                    return (
+                      <div key={sz} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: '0.8rem', alignItems: 'center', opacity: isSelected ? 1 : 0.5 }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#FFC700' }}>{sz} Size:</span>
+                        <input
+                          type="text"
+                          placeholder="Length (in)"
+                          disabled={!isSelected}
+                          value={formData.size_chart?.[sz]?.length || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              size_chart: {
+                                ...prev.size_chart,
+                                [sz]: {
+                                  ...(prev.size_chart?.[sz] || {}),
+                                  length: val,
+                                },
+                              },
+                            }));
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Chest (in)"
+                          disabled={!isSelected}
+                          value={formData.size_chart?.[sz]?.chest || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              size_chart: {
+                                ...prev.size_chart,
+                                [sz]: {
+                                  ...(prev.size_chart?.[sz] || {}),
+                                  chest: val,
+                                },
+                              },
+                            }));
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Shoulder (in)"
+                          disabled={!isSelected}
+                          value={formData.size_chart?.[sz]?.shoulder || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              size_chart: {
+                                ...prev.size_chart,
+                                [sz]: {
+                                  ...(prev.size_chart?.[sz] || {}),
+                                  shoulder: val,
+                                },
+                              },
+                            }));
+                          }}
                         />
                       </div>
                     );

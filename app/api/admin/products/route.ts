@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       back_img,
       sizes,
       stock_by_size,
+      size_chart,
       is_active,
     } = body;
 
@@ -110,6 +111,7 @@ export async function POST(req: Request) {
       images: [front_img, back_img],
       sizes,
       stock_by_size,
+      size_chart,
       is_active: is_active !== undefined ? Boolean(is_active) : true,
     });
 
