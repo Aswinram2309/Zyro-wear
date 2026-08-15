@@ -423,3 +423,9 @@ export async function deductSizeStock(productId: string, size: string, quantity:
 
   return { success: true };
 }
+
+export async function getProductBySlugFromStore(slug: string): Promise<Product | null> {
+  const all = await getAllProductsFromStore(true);
+  return all.find((p) => p.slug === slug || p.id === slug) || null;
+}
+

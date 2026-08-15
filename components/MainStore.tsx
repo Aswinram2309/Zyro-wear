@@ -17,7 +17,6 @@ export default function MainStore() {
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
@@ -153,10 +152,6 @@ export default function MainStore() {
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const activeSelectedProduct = selectedProduct
-    ? (products.find((p) => p.id === selectedProduct.id) || selectedProduct)
-    : null;
-
   return (
     <div className="store-page-wrapper">
       <Navbar
@@ -166,7 +161,7 @@ export default function MainStore() {
         onSearchChange={setSearchQuery}
       />
 
-      <Hero onSelectProduct={(p) => setSelectedProduct(p)} />
+      <Hero />
 
       {/* Product Catalog Section / Trending Now */}
       <section className="catalog-section" id="shop">
@@ -216,7 +211,6 @@ export default function MainStore() {
               <ProductCard
                 key={prod.id}
                 product={prod}
-                onSelectProduct={(p) => setSelectedProduct(p)}
                 onAddToCart={handleAddToCart}
                 onBuyNow={handleBuyNow}
               />
@@ -292,16 +286,6 @@ export default function MainStore() {
       </section>
 
       <Footer />
-
-      {/* Product Detail Modal */}
-      {activeSelectedProduct && (
-        <ProductModal
-          product={activeSelectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
-        />
-      )}
 
       {/* Cart Drawer */}
       <CartDrawer

@@ -1,21 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/types';
 
 interface ProductCardProps {
   product: Product;
-  onSelectProduct: (product: Product) => void;
+  onSelectProduct?: (product: Product) => void;
   onAddToCart: (product: Product, size: string, quantity: number) => void;
   onBuyNow: (product: Product, size: string) => void;
 }
 
 export default function ProductCard({
   product,
-  onSelectProduct,
   onAddToCart,
   onBuyNow,
 }: ProductCardProps) {
+  const router = useRouter();
   const sizesToMap = product.sizes && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
   
   const totalStock = product.stock_by_size
@@ -50,12 +51,17 @@ export default function ProductCard({
   };
 
   return (
-    <div className="product-card" data-id={product.id}>
+    <div
+      className="product-card"
+      data-id={product.id}
+      style={{ cursor: 'pointer' }}
+      onClick={() => router.push(`/product/${product.slug}`)}
+    >
       <div className="card-badge-container">
         <span className="offer-badge">57% OFF</span>
       </div>
 
-      <div className="card-image-wrapper" onClick={() => onSelectProduct(product)}>
+      <div className="card-image-wrapper">
         <img
           src={product.front_img}
           alt={`${product.name} Front`}
@@ -68,13 +74,20 @@ export default function ProductCard({
           className="card-img-back"
           loading="lazy"
         />
-        <button className="quick-view-btn" aria-label="Quick View">
+        <button
+          className="quick-view-btn"
+          aria-label="Quick View"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/product/${product.slug}`);
+          }}
+        >
           <i className="fa-solid fa-eye"></i>
         </button>
       </div>
 
       <div className="card-info">
-        <h3 className="product-title" onClick={() => onSelectProduct(product)} style={{ cursor: 'pointer' }}>
+        <h3 className="product-title">
           {product.name}
         </h3>
         <div className="product-price-row">

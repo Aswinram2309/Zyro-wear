@@ -33,8 +33,13 @@ export default function CartDrawer({
             <i className="fa-solid fa-bag-shopping" style={{ color: '#FFC700', marginRight: '8px' }}></i>
             YOUR SHOPPING BAG ({cart.reduce((sum, i) => sum + i.quantity, 0)})
           </h3>
-          <button className="close-cart" onClick={onClose} aria-label="Close Shopping Bag">
-            <i className="fa-solid fa-xmark"></i>
+          <button
+            type="button"
+            className="close-cart"
+            aria-label="Close shopping cart"
+            onClick={onClose}
+          >
+            &times;
           </button>
         </div>
 

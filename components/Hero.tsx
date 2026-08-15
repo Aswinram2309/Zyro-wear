@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { Product } from '@/types';
 
-interface HeroProps {
-  onSelectProduct: (product: Product) => void;
-}
-
-export default function Hero({ onSelectProduct }: HeroProps) {
+export default function Hero() {
+  const router = useRouter();
   const [heroIndex, setHeroIndex] = useState(0);
   const [fade, setFade] = useState(false);
 
@@ -67,7 +65,7 @@ export default function Hero({ onSelectProduct }: HeroProps) {
           <div className="neon-z-glow"></div>
           <div
             className="featured-jersey-wrapper"
-            onClick={() => onSelectProduct(currentHeroProduct)}
+            onClick={() => router.push(`/product/${currentHeroProduct.slug}`)}
             style={{ cursor: 'pointer' }}
           >
             <img

@@ -66,3 +66,12 @@ export interface Order {
   updated_at: string;
   items?: OrderItem[];
 }
+
+export interface Review {
+  id: string;
+  product_id: string;
+  rating: number;
+  customer_name: string;
+  comment: string;
+  created_at: string;
+}
