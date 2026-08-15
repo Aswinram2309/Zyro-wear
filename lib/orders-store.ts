@@ -126,6 +126,10 @@ export async function getAllOrdersFromStore() {
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (ordersErr) {
+        console.error('Supabase fetch orders error details:', ordersErr);
+      }
+
       if (!ordersErr && dbOrders && dbOrders.length > 0) {
         const { data: allItems } = await supabase.from('order_items').select('*');
 

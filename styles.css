@@ -828,6 +828,51 @@ button {
     color: #FFF;
 }
 
+.size-pill.out-of-stock {
+    opacity: 0.35;
+    text-decoration: line-through;
+    border-style: dashed;
+    pointer-events: none;
+}
+
+/* Stock status labels */
+.stock-status {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.stock-status.low-stock {
+    color: #FFC700;
+    background-color: rgba(255, 199, 0, 0.1);
+    border: 1px solid rgba(255, 199, 0, 0.2);
+}
+
+.stock-status.out-of-stock {
+    color: #EF4444;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Disabled buttons overrides for out-of-stock states */
+.btn-row-add-cart:disabled,
+.btn-row-buy-now:disabled,
+.modal-btn-add-cart:disabled,
+.modal-btn-buy-now:disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    background-color: #374151 !important;
+    color: #9CA3AF !important;
+    border-color: #374151 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
 .btn-card-cart {
     display: flex;
     align-items: center;
@@ -1660,6 +1705,13 @@ button {
     background: #000;
     color: #FFF;
     border-color: #000;
+}
+
+.modal-size-pill.out-of-stock {
+    opacity: 0.35;
+    text-decoration: line-through;
+    border-style: dashed;
+    pointer-events: none;
 }
 
 .modal-actions-container {

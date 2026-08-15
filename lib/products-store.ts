@@ -108,14 +108,19 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error('Supabase fetch products error details:', error);
+      }
+
       if (!error && dbProducts && dbProducts.length > 0) {
         return dbProducts
           .filter((p) => includeInactive || p.is_active !== false)
           .map((p) => {
             const localItem = localMap.get(p.id);
-            let stockBySize: Record<string, number> | null = p.stock_by_size || null;
+            let stockBySize: Record<string, number> | null = null;
 
-            if (!stockBySize && Array.isArray(p.images)) {
+            // 1. Try parsing metadata from images array
+            if (Array.isArray(p.images)) {
               const metaStr = p.images.find(
                 (img: any) => typeof img === 'string' && img.startsWith('__stock_by_size:')
               );
@@ -126,8 +131,33 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
               }
             }
 
+            // 2. Fallback to localItem if available, but only if its sum matches database stock or if database stock is not explicitly set
+            if (!stockBySize && localItem?.stock_by_size) {
+              const localSum = Object.values(localItem.stock_by_size).reduce((sum, v) => sum + v, 0);
+              if (localSum === p.stock || p.stock === undefined) {
+                stockBySize = localItem.stock_by_size;
+              }
+            }
+
+            // 3. If still not set, distribute database stock (p.stock) across active sizes
             if (!stockBySize) {
-              stockBySize = localItem?.stock_by_size || DEFAULT_SIZE_STOCK;
+              const sizes = p.sizes && p.sizes.length > 0 ? p.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
+              stockBySize = {};
+              sizes.forEach((s: string) => {
+                stockBySize![s] = 0;
+              });
+              
+              const total = p.stock !== undefined ? p.stock : 0;
+              if (total > 0) {
+                let remaining = total;
+                let i = 0;
+                while (remaining > 0) {
+                  const sz = sizes[i % sizes.length];
+                  stockBySize[sz] = (stockBySize[sz] || 0) + 1;
+                  remaining--;
+                  i++;
+                }
+              }
             }
 
             const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
@@ -227,6 +257,7 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
   // 1. Persist to Supabase if available
   if (supabase) {
     try {
+      const metadata = `__stock_by_size:${JSON.stringify(stockBySize)}`;
       const dbPayload: any = {
         id: newProduct.id,
         name: newProduct.name,
@@ -238,7 +269,7 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
         nation: newProduct.nation,
         front_img: newProduct.front_img,
         back_img: newProduct.back_img,
-        images: newProduct.images,
+        images: [...(newProduct.images || []), metadata],
         sizes: newProduct.sizes,
         stock: newProduct.stock,
         is_active: newProduct.is_active,

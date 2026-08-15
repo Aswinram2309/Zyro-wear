@@ -18,15 +18,30 @@ export default function ProductModal({
 }: ProductModalProps) {
   if (!product) return null;
 
-  const [activeSize, setActiveSize] = useState<string>('L');
+  const sizesToMap = product.sizes && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
+
+  const totalStock = product.stock_by_size
+    ? Object.values(product.stock_by_size).reduce((sum, v) => sum + v, 0)
+    : (product.stock ?? 0);
+
+  const [activeSize, setActiveSize] = useState<string>(() => {
+    const withStock = sizesToMap.find(sz => (product.stock_by_size?.[sz] ?? 0) > 0);
+    if (withStock) return withStock;
+    return sizesToMap.includes('L') ? 'L' : sizesToMap[0];
+  });
   const [activeImg, setActiveImg] = useState<string>(product.front_img);
 
+  const sizeStock = product.stock_by_size?.[activeSize] ?? 0;
+  const isOutOfStock = sizeStock === 0 || totalStock === 0;
+
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     onAddToCart(product, activeSize, 1);
     onClose();
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) return;
     onBuyNow(product, activeSize);
     onClose();
   };
@@ -72,30 +87,41 @@ export default function ProductModal({
             <p className="modal-desc">{product.description}</p>
 
             <div className="modal-size-section">
-              <span className="modal-size-title">SELECT SIZE:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span className="modal-size-title" style={{ margin: 0 }}>SELECT SIZE:</span>
+                {totalStock === 0 ? (
+                  <span className="stock-status out-of-stock">OUT OF STOCK</span>
+                ) : totalStock >= 1 && totalStock <= 3 ? (
+                  <span className="stock-status low-stock">FEW STOCKS AVAILABLE</span>
+                ) : null}
+              </div>
               <div className="modal-size-options">
-                {['M', 'L', 'XL', 'XXL'].map((sz) => (
-                  <span
-                    key={sz}
-                    className={`modal-size-pill ${activeSize === sz ? 'active' : ''}`}
-                    onClick={() => setActiveSize(sz)}
-                  >
-                    {sz}
-                  </span>
-                ))}
+                {sizesToMap.map((sz) => {
+                  const szStock = product.stock_by_size?.[sz] ?? 0;
+                  const szOutOfStock = szStock === 0 || totalStock === 0;
+                  return (
+                    <span
+                      key={sz}
+                      className={`modal-size-pill ${activeSize === sz ? 'active' : ''} ${szOutOfStock ? 'out-of-stock' : ''}`}
+                      onClick={() => !szOutOfStock && setActiveSize(sz)}
+                    >
+                      {sz}
+                    </span>
+                  );
+                })}
               </div>
             </div>
 
             {/* Modal Buttons matching Image 1 layout */}
             <div className="modal-actions-container">
               {/* Row 1: Full-Width ADD TO CART */}
-              <button className="modal-btn-add-cart" onClick={handleAddToCart}>
+              <button className="modal-btn-add-cart" onClick={handleAddToCart} disabled={isOutOfStock}>
                 <i className="fa-solid fa-bag-shopping"></i> ADD TO CART
               </button>
 
               {/* Row 2: 50/50 BUY NOW & ORDER ON WHATSAPP */}
               <div className="modal-btn-row-2">
-                <button className="modal-btn-buy-now" onClick={handleBuyNow}>
+                <button className="modal-btn-buy-now" onClick={handleBuyNow} disabled={isOutOfStock}>
                   <strong className="btn-main-text">
                     <i className="fa-solid fa-bolt text-gold-icon"></i> BUY NOW
                   </strong>

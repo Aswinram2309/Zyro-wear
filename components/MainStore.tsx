@@ -23,20 +23,43 @@ export default function MainStore() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
 
+  const loadProducts = async () => {
+    try {
+      const res = await fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+        const latestProducts = data.products;
+        setProducts(latestProducts);
+        // Sync cart item product details with the latest database values on reload
+        setCart((prev) =>
+          prev.map((item) => {
+            const fresh = latestProducts.find((p: Product) => p.id === item.product.id);
+            return fresh ? { ...item, product: fresh } : item;
+          })
+        );
+      }
+    } catch (err) {
+      console.error('Error loading store products from API:', err);
+    }
+  };
+
   // Fetch dynamic products from Supabase / API endpoint
   useEffect(() => {
-    async function loadProducts() {
-      try {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
-          setProducts(data.products);
-        }
-      } catch (err) {
-        console.error('Error loading store products from API:', err);
-      }
-    }
     loadProducts();
+
+    // Revalidate when user switches back to the store tab / window gains focus
+    const handleFocus = () => {
+      loadProducts();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Periodic poll every 10 seconds to keep stock synchronized
+    const interval = setInterval(loadProducts, 10000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   // Sync cart from localStorage
@@ -110,6 +133,9 @@ export default function MainStore() {
   };
 
   const filteredProducts = products.filter((p) => {
+    // Hide out-of-stock items (totalStock === 0) from the listing
+    if (p.stock === 0) return false;
+
     const matchesCategory =
       activeFilter === 'all' ||
       (activeFilter === 'star' && p.category === 'star') ||
@@ -126,6 +152,10 @@ export default function MainStore() {
   });
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const activeSelectedProduct = selectedProduct
+    ? (products.find((p) => p.id === selectedProduct.id) || selectedProduct)
+    : null;
 
   return (
     <div className="store-page-wrapper">
@@ -264,9 +294,9 @@ export default function MainStore() {
       <Footer />
 
       {/* Product Detail Modal */}
-      {selectedProduct && (
+      {activeSelectedProduct && (
         <ProductModal
-          product={selectedProduct}
+          product={activeSelectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}

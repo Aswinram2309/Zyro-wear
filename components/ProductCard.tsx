@@ -16,15 +16,30 @@ export default function ProductCard({
   onAddToCart,
   onBuyNow,
 }: ProductCardProps) {
-  const [selectedSize, setSelectedSize] = useState<string>('L');
+  const sizesToMap = product.sizes && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
+  
+  const totalStock = product.stock_by_size
+    ? Object.values(product.stock_by_size).reduce((sum, v) => sum + v, 0)
+    : (product.stock ?? 0);
+
+  const [selectedSize, setSelectedSize] = useState<string>(() => {
+    const withStock = sizesToMap.find(sz => (product.stock_by_size?.[sz] ?? 0) > 0);
+    if (withStock) return withStock;
+    return sizesToMap.includes('L') ? 'L' : sizesToMap[0];
+  });
+
+  const sizeStock = product.stock_by_size?.[selectedSize] ?? 0;
+  const isOutOfStock = sizeStock === 0 || totalStock === 0;
 
   const handleAddCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) return;
     onAddToCart(product, selectedSize, 1);
   };
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) return;
     onBuyNow(product, selectedSize);
   };
 
@@ -65,33 +80,42 @@ export default function ProductCard({
         <div className="product-price-row">
           <span className="current-price">₹{product.price}</span>
           <span className="mrp-price">₹{product.mrp}</span>
+          {totalStock === 0 ? (
+            <span className="stock-status out-of-stock" style={{ marginLeft: 'auto' }}>OUT OF STOCK</span>
+          ) : totalStock >= 1 && totalStock <= 3 ? (
+            <span className="stock-status low-stock" style={{ marginLeft: 'auto' }}>FEW STOCKS AVAILABLE</span>
+          ) : null}
         </div>
 
         {/* Size Selection Pills */}
         <div className="size-selector-row" onClick={(e) => e.stopPropagation()}>
           <div className="size-selector">
-            {['M', 'L', 'XL', 'XXL'].map((sz) => (
-              <span
-                key={sz}
-                className={`size-pill ${selectedSize === sz ? 'active' : ''}`}
-                onClick={() => setSelectedSize(sz)}
-              >
-                {sz}
-              </span>
-            ))}
+            {sizesToMap.map((sz) => {
+              const szStock = product.stock_by_size?.[sz] ?? 0;
+              const szOutOfStock = szStock === 0 || totalStock === 0;
+              return (
+                <span
+                  key={sz}
+                  className={`size-pill ${selectedSize === sz ? 'active' : ''} ${szOutOfStock ? 'out-of-stock' : ''}`}
+                  onClick={() => !szOutOfStock && setSelectedSize(sz)}
+                >
+                  {sz}
+                </span>
+              );
+            })}
           </div>
         </div>
 
         {/* Product Card Buttons - 2 Rows */}
         <div className="card-buttons-layout" onClick={(e) => e.stopPropagation()}>
           {/* Row 1: Full Width ADD TO CART */}
-          <button className="btn-row-add-cart" onClick={handleAddCart}>
+          <button className="btn-row-add-cart" onClick={handleAddCart} disabled={isOutOfStock}>
             <i className="fa-solid fa-bag-shopping"></i> ADD TO CART
           </button>
 
           {/* Row 2: 50/50 BUY NOW | ORDER ON WHATSAPP */}
           <div className="btn-row-two-col">
-            <button className="btn-row-buy-now" onClick={handleBuyNow}>
+            <button className="btn-row-buy-now" onClick={handleBuyNow} disabled={isOutOfStock}>
               <i className="fa-solid fa-bolt"></i> BUY NOW
             </button>
             <button className="btn-row-whatsapp" onClick={handleWhatsApp}>
