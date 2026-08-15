@@ -1,5 +1,39 @@
 [
   {
+    "id": "prod_1786805933986_qw35",
+    "name": "VIRAT KING #18",
+    "slug": "virat-king-18",
+    "description": "test",
+    "price": 299,
+    "mrp": 699,
+    "sale_price": null,
+    "category": "star",
+    "front_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/front_1786805933074.jpg",
+    "back_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/back_1786805933551.jpg",
+    "images": [
+      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/front_1786805933074.jpg",
+      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/back_1786805933551.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "stock": 55,
+    "stock_by_size": {
+      "S": 10,
+      "M": 15,
+      "L": 15,
+      "XL": 10,
+      "XXL": 5
+    },
+    "is_active": false,
+    "created_at": "2026-08-15T14:58:53.986Z",
+    "updated_at": "2026-08-15T14:59:12.524Z"
+  },
+  {
     "id": "prod_1786696215599_s5xe",
     "name": "Morocco Home Kit (Hakimi #2)",
     "slug": "morocco-home-kit-hakimi-2-",
