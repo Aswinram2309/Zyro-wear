@@ -64,21 +64,26 @@ export async function POST(req: Request) {
     }
 
     // 4. Fallback: Local Storage under public/uploads/products/
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'products', productId);
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    try {
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'products', productId);
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      const localFilePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(localFilePath, buffer);
+
+      const publicUrl = `/uploads/products/${productId}/${filename}`;
+
+      return NextResponse.json({
+        success: true,
+        url: publicUrl,
+        path: publicUrl,
+      });
+    } catch (localErr: any) {
+      console.error('Local fallback upload failed:', localErr);
+      throw new Error(`Supabase upload failed, and local filesystem fallback is unavailable (Vercel server is read-only). Error: ${localErr.message}`);
     }
-
-    const localFilePath = path.join(uploadsDir, filename);
-    fs.writeFileSync(localFilePath, buffer);
-
-    const publicUrl = `/uploads/products/${productId}/${filename}`;
-
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      path: publicUrl,
-    });
   } catch (error: any) {
     console.error('Error handling upload:', error);
     return NextResponse.json({ error: error.message || 'Image upload failed' }, { status: 500 });

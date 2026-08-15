@@ -225,20 +225,25 @@ export default function StockManagementPage() {
 
   // Upload image file to API
   const uploadImageFile = async (file: File, type: 'front' | 'back', tempId: string): Promise<string> => {
-    const uploadData = new FormData();
-    uploadData.append('file', file);
-    uploadData.append('type', type);
-    uploadData.append('productId', tempId);
+    try {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('type', type);
+      uploadData.append('productId', tempId);
 
-    const res = await fetch('/api/admin/upload', {
-      method: 'POST',
-      body: uploadData,
-    });
-    const data = await res.json();
-    if (!res.ok || !data.url) {
-      throw new Error(data.error || `Failed to upload ${type} image`);
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || `Failed to upload ${type} image`);
+      }
+      return data.url;
+    } catch (err: any) {
+      console.error(`Error uploading ${type} image:`, err);
+      throw new Error(`Image upload failed for ${type} view: ${err.message || 'Network error'}`);
     }
-    return data.url;
   };
 
   // Toggle Size Selection
@@ -393,8 +398,12 @@ export default function StockManagementPage() {
         setTimeout(() => setSuccessToast(null), 4000);
       }
     } catch (err: any) {
-      console.error(err);
-      setFormError(err.message || 'An error occurred while saving product');
+      console.error('Error saving stock product:', err);
+      let errMsg = err.message || 'An error occurred while saving product';
+      if (errMsg === 'Failed to fetch') {
+        errMsg = 'Failed to connect to the server. If this is development, the server may have restarted due to local file changes, or you have a connection timeout. Please try submitting again.';
+      }
+      setFormError(errMsg);
     } finally {
       setSubmitting(false);
       setUploadingImages(false);
