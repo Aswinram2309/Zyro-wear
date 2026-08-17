@@ -15,6 +15,16 @@ interface ProductDetailsClientProps {
   initialProduct: Product;
 }
 
+const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }> = {
+  XS: { length: '26', chest: '38', shoulder: '9.5', sleeve: '7.5' },
+  S: { length: '27', chest: '40', shoulder: '10', sleeve: '8' },
+  M: { length: '28', chest: '42', shoulder: '10.5', sleeve: '8.5' },
+  L: { length: '29', chest: '44', shoulder: '11', sleeve: '9' },
+  XL: { length: '30', chest: '46', shoulder: '11.5', sleeve: '9.5' },
+  XXL: { length: '31', chest: '48', shoulder: '12', sleeve: '10' },
+  '2XL': { length: '31', chest: '48', shoulder: '12', sleeve: '10' },
+};
+
 export default function ProductDetailsClient({ initialProduct }: ProductDetailsClientProps) {
   const router = useRouter();
   const [product, setProduct] = useState<Product>(initialProduct);
@@ -48,6 +58,65 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
   });
 
   const [quantity, setQuantity] = useState<number>(1);
+
+  const getMeasurement = (size: string, field: 'length' | 'chest' | 'shoulder' | 'sleeve') => {
+    const dbVal = product.size_chart?.[size]?.[field];
+    if (dbVal && dbVal.trim() !== '') return dbVal;
+    return DEFAULT_MEASUREMENTS[size]?.[field] || '—';
+  };
+
+  const parseDescription = (descText: string) => {
+    if (!descText) return [];
+    const text = descText.replace(/\r\n/g, '\n').trim();
+    const headingRegex = /^(Style|Fabric|Style Brief|Design Brief|Description|Details|Specifications|Care|Features|Fit)(?::|\n|$)/im;
+    const hasHeadings = headingRegex.test(text);
+
+    if (!hasHeadings) {
+      return [{ content: text.split('\n').map(p => p.trim()).filter(Boolean) }];
+    }
+
+    const lines = text.split('\n');
+    const sections: { title?: string; content: string[] }[] = [];
+    let currentSection: { title?: string; content: string[] } | null = null;
+
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+
+      const match = line.match(/^(Style|Fabric|Style Brief|Design Brief|Description|Details|Specifications|Care|Features|Fit)(?::)?$/i);
+      if (match) {
+        if (currentSection) {
+          sections.push(currentSection);
+        }
+        currentSection = {
+          title: match[1],
+          content: []
+        };
+      } else {
+        const inlineMatch = line.match(/^(Style|Fabric|Style Brief|Design Brief|Description|Details|Specifications|Care|Features|Fit):\s*(.*)$/i);
+        if (inlineMatch) {
+          if (currentSection) {
+            sections.push(currentSection);
+          }
+          currentSection = {
+            title: inlineMatch[1],
+            content: [inlineMatch[2].trim()]
+          };
+        } else {
+          if (!currentSection) {
+            currentSection = { content: [] };
+          }
+          currentSection.content.push(line);
+        }
+      }
+    }
+
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+
+    return sections;
+  };
 
   const sizeStock = product.stock_by_size?.[activeSize] ?? 0;
   const isOutOfStock = sizeStock === 0 || totalStock === 0;
@@ -331,12 +400,6 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                 <span className="meta-val">{product.nation}</span>
               </div>
             )}
-
-            <div className="details-description">
-              <h3>Product Description</h3>
-              <p>{product.description || 'No description available for this premium jersey.'}</p>
-            </div>
-
             {/* Sizes Selection */}
             <div className="details-sizes-section">
               <div className="sizes-header-row">
@@ -365,8 +428,32 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
               </div>
             </div>
 
-            <SizeChart sizeChart={product.size_chart} />
-
+            {/* Selected Size Measurement Box */}
+            {activeSize && (
+              <div className="selected-size-measurement-box">
+                <div className="box-header">{activeSize}</div>
+                <table className="selected-size-measurement-table">
+                  <tbody>
+                    <tr>
+                      <td className="label-col">Garment Chest</td>
+                      <td className="val-col">{getMeasurement(activeSize, 'chest')}</td>
+                    </tr>
+                    <tr>
+                      <td className="label-col">Length T-Shirt</td>
+                      <td className="val-col">{getMeasurement(activeSize, 'length')}</td>
+                    </tr>
+                    <tr>
+                      <td className="label-col">Shoulder</td>
+                      <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
+                    </tr>
+                    <tr>
+                      <td className="label-col">Length Sleeve</td>
+                      <td className="val-col">{getMeasurement(activeSize, 'sleeve')}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
             {/* Quantity Selector */}
             <div className="details-qty-section">
               <span className="qty-title">Quantity:</span>
@@ -429,6 +516,40 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
             </div>
           </div>
         </div>
+
+        {/* Dynamic Size Chart Section */}
+        <section className="product-sizechart-section">
+          <SizeChart sizeChart={product.size_chart} selectedSize={activeSize} onSizeSelect={setActiveSize} />
+        </section>
+
+        {/* Product Description Section */}
+        <section className="product-description-section">
+          <h2>Description</h2>
+          <div className="description-box">
+            <div className="description-block">
+              <h3 className="description-block-title">Style</h3>
+              <p className="description-block-text">Over Size Fit: Fits loose.</p>
+              <p className="description-block-text">Unisex Fit: Perfectly style for both Men and Women.</p>
+            </div>
+            <div className="description-block">
+              <h3 className="description-block-title">Fabric</h3>
+              <p className="description-block-text">100% Cotton Single Jersey and bio-washed.</p>
+              <p className="description-block-text">• Preshrunked • Super Combed Compact Yarn for soft feel • 60-degree Color Fastness Which Follows International Standards • Don’t Bleach & Wring • Dry in Shade</p>
+            </div>
+            <div className="description-block">
+              <h3 className="description-block-title">Style Brief</h3>
+              <p className="description-block-text">
+                Dressing down has never been easier thanks to our oversized T-Shirts. We've got you covered with everything from off-work vibes to casual and sporty-cool looks. To complement out the slouchy look, pair your oversized T-Shirt with slim jeans or cycling shorts and lace-up sneakers.
+              </p>
+            </div>
+            <div className="description-block">
+              <h3 className="description-block-title">Design Brief</h3>
+              <p className="description-block-text">
+                Gear Up to 5 with luffy and experience the power of evil fruit with our amazing Luffy gear 5 oversize anime t-shirt . Fans Army is the only place in India where you can buy these awesome anime t-shirts
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Customer Reviews Section */}
         <section className="product-reviews-section">

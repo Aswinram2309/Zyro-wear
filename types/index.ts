@@ -2,6 +2,7 @@ export interface SizeMeasurement {
   length?: string;
   chest?: string;
   shoulder?: string;
+  sleeve?: string;
 }
 
 export interface Product {

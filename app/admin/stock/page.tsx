@@ -37,7 +37,7 @@ export default function StockManagementPage() {
     sale_price: string;
     sizes: string[];
     stock_by_size: Record<string, number>;
-    size_chart: Record<string, { length: string; chest: string; shoulder: string }>;
+    size_chart: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }>;
     front_img: string;
     back_img: string;
     is_active: boolean;
@@ -52,11 +52,11 @@ export default function StockManagementPage() {
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
     stock_by_size: { S: 10, M: 15, L: 15, XL: 10, XXL: 5 },
     size_chart: {
-      S: { length: '', chest: '', shoulder: '' },
-      M: { length: '', chest: '', shoulder: '' },
-      L: { length: '', chest: '', shoulder: '' },
-      XL: { length: '', chest: '', shoulder: '' },
-      XXL: { length: '', chest: '', shoulder: '' },
+      S: { length: '', chest: '', shoulder: '', sleeve: '' },
+      M: { length: '', chest: '', shoulder: '', sleeve: '' },
+      L: { length: '', chest: '', shoulder: '', sleeve: '' },
+      XL: { length: '', chest: '', shoulder: '', sleeve: '' },
+      XXL: { length: '', chest: '', shoulder: '', sleeve: '' },
     },
     front_img: '',
     back_img: '',
@@ -154,11 +154,11 @@ export default function StockManagementPage() {
       sizes: ['S', 'M', 'L', 'XL', 'XXL'],
       stock_by_size: { S: 10, M: 15, L: 15, XL: 10, XXL: 5 },
       size_chart: {
-        S: { length: '', chest: '', shoulder: '' },
-        M: { length: '', chest: '', shoulder: '' },
-        L: { length: '', chest: '', shoulder: '' },
-        XL: { length: '', chest: '', shoulder: '' },
-        XXL: { length: '', chest: '', shoulder: '' },
+        S: { length: '', chest: '', shoulder: '', sleeve: '' },
+        M: { length: '', chest: '', shoulder: '', sleeve: '' },
+        L: { length: '', chest: '', shoulder: '', sleeve: '' },
+        XL: { length: '', chest: '', shoulder: '', sleeve: '' },
+        XXL: { length: '', chest: '', shoulder: '', sleeve: '' },
       },
       front_img: '',
       back_img: '',
@@ -178,7 +178,7 @@ export default function StockManagementPage() {
     const stockMap: Record<string, number> = product.stock_by_size || { S: 10, M: 15, L: 15, XL: 10, XXL: 5 };
     const availSizes = product.sizes && product.sizes.length > 0 ? product.sizes : Object.keys(stockMap);
 
-    const sizeChartMap: Record<string, { length: string; chest: string; shoulder: string }> = {};
+    const sizeChartMap: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }> = {};
     const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
     defaultSizes.forEach((sz) => {
       const dbMeas = product.size_chart?.[sz] || {};
@@ -186,6 +186,7 @@ export default function StockManagementPage() {
         length: dbMeas.length !== undefined ? String(dbMeas.length) : '',
         chest: dbMeas.chest !== undefined ? String(dbMeas.chest) : '',
         shoulder: dbMeas.shoulder !== undefined ? String(dbMeas.shoulder) : '',
+        sleeve: (dbMeas as any).sleeve !== undefined ? String((dbMeas as any).sleeve) : '',
       };
     });
 
@@ -963,12 +964,12 @@ export default function StockManagementPage() {
               {/* Step 10: Size Chart Measurements (inch) */}
               <div className="form-group size-stock-inputs-box">
                 <label>10. SIZE CHART MEASUREMENTS (Inches)</label>
-                <p className="subtext">Set Length, Chest, and Shoulder dimensions for each size to populate the Size Chart.</p>
+                <p className="subtext">Set Length, Chest, Shoulder, and Sleeve dimensions for each size to populate the Size Chart.</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
                   {ALL_SIZES.map((sz) => {
                     const isSelected = formData.sizes.includes(sz);
                     return (
-                      <div key={sz} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: '0.8rem', alignItems: 'center', opacity: isSelected ? 1 : 0.5 }}>
+                      <div key={sz} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr 1fr', gap: '0.8rem', alignItems: 'center', opacity: isSelected ? 1 : 0.5 }}>
                         <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#FFC700' }}>{sz} Size:</span>
                         <input
                           type="text"
@@ -1022,6 +1023,25 @@ export default function StockManagementPage() {
                                 [sz]: {
                                   ...(prev.size_chart?.[sz] || {}),
                                   shoulder: val,
+                                },
+                              },
+                            }));
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Sleeve (in)"
+                          disabled={!isSelected}
+                          value={(formData.size_chart?.[sz] as any)?.sleeve || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              size_chart: {
+                                ...prev.size_chart,
+                                [sz]: {
+                                  ...(prev.size_chart?.[sz] || {}),
+                                  sleeve: val,
                                 },
                               },
                             }));

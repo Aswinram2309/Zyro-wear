@@ -5260,6 +5260,370 @@ button {
     }
 }
 
+/* ==============================================================================
+   STAND-ALONE PRODUCT DESCRIPTION STYLES
+   ============================================================================== */
+.product-description-section {
+    border-top: 1px solid #262930;
+    padding-top: 4rem;
+    margin-bottom: 4rem;
+}
+
+.product-description-section h2 {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #FFF;
+}
+
+.description-box {
+    background: #111317;
+    border: 1px solid #262930;
+    border-radius: 12px;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+}
+
+.description-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.description-block-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-gold-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.description-block-text {
+    font-size: 0.95rem;
+    color: #D1D5DB;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ==============================================================================
+   STAND-ALONE DYNAMIC SIZE CHART STYLES
+   ============================================================================== */
+.product-sizechart-section {
+    margin-bottom: 4rem;
+}
+
+.size-chart-section-container {
+    background: #111317;
+    border: 1px solid #262930;
+    border-radius: 12px;
+    padding: 2.5rem;
+}
+
+.size-chart-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #262930;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.size-chart-title-group h2 {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #FFF;
+    margin: 0;
+}
+
+.size-chart-subtitle {
+    font-size: 0.9rem;
+    color: var(--color-gold-primary);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    margin-top: 0.2rem;
+    display: block;
+}
+
+.size-chart-grid-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3.5rem;
+}
+
+.size-measurements-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.active-size-badge {
+    background: rgba(255, 199, 0, 0.1);
+    border: 1px solid rgba(255, 199, 0, 0.25);
+    color: #FFF;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    align-self: flex-start;
+}
+
+.active-size-badge strong {
+    color: var(--color-gold-primary);
+    font-size: 1.1rem;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.metric-box {
+    background: #1C1E24;
+    border: 1px solid #262930;
+    border-radius: 8px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.metric-box:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-gold-primary);
+}
+
+.metric-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 199, 0, 0.08);
+    color: var(--color-gold-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.metric-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-label {
+    font-size: 0.8rem;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #FFF;
+}
+
+.metric-unit {
+    font-size: 0.85rem;
+    color: #9CA3AF;
+    font-weight: 400;
+}
+
+.size-chart-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: #0A0B0C;
+    border-left: 3px solid var(--color-gold-primary);
+    padding: 1.2rem;
+    border-radius: 4px;
+}
+
+.size-chart-notes p {
+    font-size: 0.82rem;
+    color: #D1D5DB;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.size-chart-notes p i {
+    color: var(--color-gold-primary);
+    margin-right: 0.4rem;
+}
+
+.size-chart-notes p.note-approx {
+    font-weight: 600;
+}
+
+.measure-guide-panel h3 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #FFF;
+    margin-bottom: 1.2rem;
+    text-transform: uppercase;
+}
+
+.guide-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.guide-item {
+    background: #1C1E24;
+    border: 1px solid #262930;
+    border-radius: 8px;
+    padding: 0.9rem;
+}
+
+.guide-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.guide-text {
+    font-size: 0.82rem;
+    color: #9CA3AF;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* ==============================================================================
+   RESPONSIVE LAYOUT FOR Stand-alone Size Chart & Description
+   ============================================================================== */
+@media (max-width: 1024px) {
+    .size-chart-grid-layout {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-description-section {
+        padding-top: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .description-box {
+        padding: 1.5rem;
+        gap: 1.2rem;
+    }
+    
+    .size-chart-section-container {
+        padding: 1.5rem;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .product-sizechart-section {
+        margin-bottom: 2.5rem;
+    }
+}
+
+/* Active Size Row Highlight inside Size Chart Table */
+.size-chart-table tr.active-row {
+    background-color: rgba(255, 199, 0, 0.12) !important;
+}
+
+.size-chart-table tr.active-row td {
+    color: var(--color-gold-primary) !important;
+    font-weight: 700;
+}
+
+.size-chart-table tr.active-row td.size-col-label {
+    background-color: #1F2228 !important;
+    border-left: 3px solid var(--color-gold-primary);
+}
+
+.active-dot {
+    margin-left: 4px;
+    font-size: 0.65rem;
+    vertical-align: middle;
+    color: var(--color-gold-primary);
+}
+
+/* ==============================================================================
+   SELECTED SIZE COMPACT MEASUREMENT BOX
+   ============================================================================== */
+.selected-size-measurement-box {
+    margin-top: 1.25rem;
+    margin-bottom: 1.75rem;
+    background: #0A0B0C;
+    border: 1px solid #262930;
+    border-radius: 8px;
+    padding: 0;
+    max-width: 280px;
+    overflow: hidden;
+}
+
+.selected-size-measurement-box .box-header {
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #FFF;
+    background: #111317;
+    border-bottom: 1px solid #262930;
+    padding: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selected-size-measurement-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.selected-size-measurement-table tr {
+    border-bottom: 1px solid #262930;
+}
+
+.selected-size-measurement-table tr:last-child {
+    border-bottom: none;
+}
+
+.selected-size-measurement-table td {
+    padding: 0.55rem 1rem;
+    font-size: 0.82rem;
+    font-family: var(--font-body);
+}
+
+.selected-size-measurement-table td.label-col {
+    color: #9CA3AF;
+    font-weight: 500;
+    text-align: left;
+    border-right: 1px solid #262930;
+}
+
+.selected-size-measurement-table td.val-col {
+    color: #FFF;
+    font-weight: 700;
+    text-align: center;
+    width: 65px;
+}
+
+
+
+
 
 
 
