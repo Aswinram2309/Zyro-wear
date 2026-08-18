@@ -88,9 +88,23 @@ export default function CartDrawer({
                   <span className="cart-item-size">SIZE: {item.size}</span>
                   <div className="cart-item-footer">
                     <div className="qty-controls">
-                      <button onClick={() => onUpdateQty(item.product.id, item.size, -1)}>-</button>
-                      <span>{item.quantity}</span>
-                      <button onClick={() => onUpdateQty(item.product.id, item.size, 1)}>+</button>
+                      <button 
+                        type="button"
+                        className="qty-btn" 
+                        onClick={() => onUpdateQty(item.product.id, item.size, -1)}
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <span className="qty-num">{item.quantity}</span>
+                      <button 
+                        type="button"
+                        className="qty-btn" 
+                        onClick={() => onUpdateQty(item.product.id, item.size, 1)}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
                     </div>
                     <span className="cart-item-price">₹{item.product.price * item.quantity}</span>
                   </div>
