@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -19,7 +18,7 @@ export default function Footer() {
             <a href="https://wa.me/917200515977" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
               <i className="fa-brands fa-whatsapp"></i>
             </a>
-            <a href="mailto:support@zyrowear.com" aria-label="Email">
+            <a href="mailto:zyrowear718@gmail.com" aria-label="Email">
               <i className="fa-solid fa-envelope"></i>
             </a>
           </div>
@@ -32,17 +31,48 @@ export default function Footer() {
             <li><a href="#shop">Shop Collection</a></li>
             <li><a href="#about">About Us</a></li>
             <li><a href="#reviews">Customer Feedback</a></li>
-            <li><Link href="/admin/login">Admin Dashboard</Link></li>
           </ul>
         </div>
 
         <div className="footer-col">
           <h4>HELP & POLICIES</h4>
           <ul>
-            <li><a href="#contact">Shipping & Delivery</a></li>
-            <li><a href="#contact">Returns & Exchanges</a></li>
-            <li><a href="#contact">Size Guide</a></li>
-            <li><a href="#contact">FAQ</a></li>
+            <li>
+              <a
+                href="/ZYRO_Wear_Shipping_and_Delivery_Policy.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Shipping & Delivery
+              </a>
+            </li>
+            <li>
+              <a
+                href="/ZYRO_Wear_Returns_Exchanges_Policy.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Returns & Exchanges
+              </a>
+            </li>
+            <li>
+              <a
+                href="/ZYRO_Wear_Size_Guide.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Size Guide
+              </a>
+            </li>
+            <li>
+              <a
+                href="/ZYRO_Wear_FAQ.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                FAQ
+              </a>
+            </li>
           </ul>
         </div>
 
