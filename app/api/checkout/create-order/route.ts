@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_PRODUCTS } from '@/lib/products-data';
+import { getAllProductsFromStore } from '@/lib/products-store';
 
 export async function POST(req: Request) {
   try {
@@ -10,13 +10,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
+    const allProducts = await getAllProductsFromStore(false);
+
+    // Accumulate requested quantities by productId + size to check total requested stock
+    const requestedQuantities: Record<string, number> = {};
+    for (const item of items) {
+      if (!item.productId || !item.size) {
+        return NextResponse.json({ error: 'Missing product ID or size in checkout items' }, { status: 400 });
+      }
+      const key = `${item.productId}_${item.size}`;
+      const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+      requestedQuantities[key] = (requestedQuantities[key] || 0) + qty;
+    }
+
     let subtotal = 0;
     const validatedItems = [];
 
     for (const item of items) {
-      const product = INITIAL_PRODUCTS.find((p) => p.id === item.productId);
+      const product = allProducts.find((p) => p.id === item.productId);
       if (!product) {
         return NextResponse.json({ error: `Invalid product ID: ${item.productId}` }, { status: 400 });
+      }
+
+      const selectedSize = item.size;
+      const key = `${item.productId}_${selectedSize}`;
+      const totalRequested = requestedQuantities[key];
+      const availableStock = product.stock_by_size?.[selectedSize] ?? 0;
+
+      if (totalRequested > availableStock) {
+        return NextResponse.json({
+          error: `Requested quantity (${totalRequested}) for ${product.name} (Size: ${selectedSize}) exceeds available stock (${availableStock})`
+        }, { status: 400 });
       }
 
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
@@ -26,7 +50,7 @@ export async function POST(req: Request) {
       validatedItems.push({
         productId: product.id,
         productName: product.name,
-        size: item.size || 'M',
+        size: selectedSize,
         quantity: qty,
         price: product.price,
       });

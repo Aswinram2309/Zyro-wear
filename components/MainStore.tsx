@@ -32,10 +32,17 @@ export default function MainStore() {
         setProducts(latestProducts);
         // Sync cart item product details with the latest database values on reload
         setCart((prev) =>
-          prev.map((item) => {
-            const fresh = latestProducts.find((p: Product) => p.id === item.product.id);
-            return fresh ? { ...item, product: fresh } : item;
-          })
+          prev
+            .map((item) => {
+              const fresh = latestProducts.find((p: Product) => p.id === item.product.id);
+              if (fresh) {
+                const availableStock = fresh.stock_by_size?.[item.size] ?? 0;
+                const newQty = Math.min(item.quantity, availableStock);
+                return newQty > 0 ? { ...item, product: fresh, quantity: newQty } : null;
+              }
+              return item;
+            })
+            .filter(Boolean) as CartItem[]
         );
       }
     } catch (err) {
@@ -87,12 +94,14 @@ export default function MainStore() {
       const existingIdx = prev.findIndex(
         (item) => item.product.id === product.id && item.size === size
       );
+      const availableStock = product.stock_by_size?.[size] ?? 0;
       if (existingIdx > -1) {
         const updated = [...prev];
-        updated[existingIdx].quantity += quantity;
+        const newQty = Math.min(updated[existingIdx].quantity + quantity, availableStock);
+        updated[existingIdx].quantity = newQty;
         return updated;
       } else {
-        return [...prev, { product, size, quantity }];
+        return [...prev, { product, size, quantity: Math.min(quantity, availableStock) }];
       }
     });
     setIsCartOpen(true);
@@ -103,8 +112,12 @@ export default function MainStore() {
       const existingIdx = prev.findIndex(
         (item) => item.product.id === product.id && item.size === size
       );
+      const availableStock = product.stock_by_size?.[size] ?? 0;
+      if (availableStock <= 0) return prev;
       if (existingIdx > -1) {
-        return prev;
+        const updated = [...prev];
+        updated[existingIdx].quantity = Math.min(updated[existingIdx].quantity + 1, availableStock);
+        return updated;
       } else {
         return [...prev, { product, size, quantity: 1 }];
       }
@@ -117,7 +130,11 @@ export default function MainStore() {
       prev
         .map((item) => {
           if (item.product.id === productId && item.size === size) {
+            const availableStock = item.product.stock_by_size?.[size] ?? 0;
             const newQty = item.quantity + delta;
+            if (newQty > availableStock) {
+              return item; // Do not allow quantity to exceed stock!
+            }
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
           return item;

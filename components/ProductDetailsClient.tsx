@@ -33,6 +33,46 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
 
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // Construct list of all unique images for the gallery
+  const allImages: string[] = [];
+  if (product.front_img) allImages.push(product.front_img);
+  if (product.back_img) allImages.push(product.back_img);
+  if (product.images && Array.isArray(product.images)) {
+    product.images.forEach((img) => {
+      if (img && !allImages.includes(img)) {
+        allImages.push(img);
+      }
+    });
+  }
+
+  // Find index of active image
+  const activeImgIndex = allImages.indexOf(activeImg) !== -1 ? allImages.indexOf(activeImg) : 0;
+
+  // Handle mobile scroll event
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const index = Math.round(container.scrollLeft / container.clientWidth);
+    if (index >= 0 && index < allImages.length) {
+      if (activeImg !== allImages[index]) {
+        setActiveImg(allImages[index]);
+      }
+    }
+  };
+
+  // Handle thumbnail clicks (scrolling to correct index programmatically)
+  const handleThumbClick = (img: string, index: number) => {
+    setActiveImg(img);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        left: index * scrollContainerRef.current.clientWidth,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // Reviews states
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState<boolean>(true);
@@ -131,6 +171,20 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
         if (fresh) {
           setProduct(fresh);
         }
+        // Sync cart item product details with the latest database values on reload
+        setCart((prev) =>
+          prev
+            .map((item) => {
+              const freshItem = data.products.find((p: Product) => p.id === item.product.id);
+              if (freshItem) {
+                const availableStock = freshItem.stock_by_size?.[item.size] ?? 0;
+                const newQty = Math.min(item.quantity, availableStock);
+                return newQty > 0 ? { ...item, product: freshItem, quantity: newQty } : null;
+              }
+              return item;
+            })
+            .filter(Boolean) as CartItem[]
+        );
       }
     } catch (err) {
       console.error('Error refreshing product details:', err);
@@ -205,12 +259,14 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
       const existingIdx = prev.findIndex(
         (item) => item.product.id === product.id && item.size === activeSize
       );
+      const availableStock = product.stock_by_size?.[activeSize] ?? 0;
       if (existingIdx > -1) {
         const updated = [...prev];
-        updated[existingIdx].quantity += quantity;
+        const newQty = Math.min(updated[existingIdx].quantity + quantity, availableStock);
+        updated[existingIdx].quantity = newQty;
         return updated;
       } else {
-        return [...prev, { product, size: activeSize, quantity }];
+        return [...prev, { product, size: activeSize, quantity: Math.min(quantity, availableStock) }];
       }
     });
     setIsCartOpen(true);
@@ -222,13 +278,13 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
       const existingIdx = prev.findIndex(
         (item) => item.product.id === product.id && item.size === activeSize
       );
+      const availableStock = product.stock_by_size?.[activeSize] ?? 0;
       if (existingIdx > -1) {
-        // If already exists, update its quantity
         const updated = [...prev];
-        updated[existingIdx].quantity = quantity;
+        updated[existingIdx].quantity = Math.min(quantity, availableStock);
         return updated;
       } else {
-        return [...prev, { product, size: activeSize, quantity }];
+        return [...prev, { product, size: activeSize, quantity: Math.min(quantity, availableStock) }];
       }
     });
     setIsCheckoutOpen(true);
@@ -289,7 +345,11 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
       prev
         .map((item) => {
           if (item.product.id === productId && item.size === size) {
+            const availableStock = item.product.stock_by_size?.[size] ?? 0;
             const newQty = item.quantity + delta;
+            if (newQty > availableStock) {
+              return item; // Do not allow quantity to exceed stock!
+            }
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
           return item;
@@ -342,23 +402,38 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           {/* Left Column: Product Gallery */}
           <div className="product-detail-images">
             <div className="main-image-container">
-              <img src={activeImg} alt={product.name} className="product-main-view-img" />
-            </div>
-            <div className="detail-gallery-thumbs">
-              <div
-                className={`detail-thumb-btn ${activeImg === product.front_img ? 'active' : ''}`}
-                onClick={() => setActiveImg(product.front_img)}
+              <div 
+                className="main-image-slider" 
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
               >
-                <img src={product.front_img} alt="Front View Thumbnail" />
+                {allImages.map((img, idx) => (
+                  <div key={idx} className="main-image-slide">
+                    <img 
+                      src={formatImageUrl(img)} 
+                      alt={`${product.name} - View ${idx + 1}`} 
+                      className="product-main-view-img" 
+                      draggable="false"
+                    />
+                  </div>
+                ))}
               </div>
-              {product.back_img && (
-                <div
-                  className={`detail-thumb-btn ${activeImg === product.back_img ? 'active' : ''}`}
-                  onClick={() => setActiveImg(product.back_img)}
-                >
-                  <img src={product.back_img} alt="Back View Thumbnail" />
+              {allImages.length > 1 && (
+                <div className="mobile-gallery-counter">
+                  {activeImgIndex + 1} / {allImages.length}
                 </div>
               )}
+            </div>
+            <div className="detail-gallery-thumbs">
+              {allImages.map((img, idx) => (
+                <div
+                  key={idx}
+                  className={`detail-thumb-btn ${activeImg === img ? 'active' : ''}`}
+                  onClick={() => handleThumbClick(img, idx)}
+                >
+                  <img src={formatImageUrl(img)} alt={`View ${idx + 1} Thumbnail`} />
+                </div>
+              ))}
             </div>
           </div>
 

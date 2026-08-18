@@ -102,6 +102,7 @@ export default function CartDrawer({
                         className="qty-btn" 
                         onClick={() => onUpdateQty(item.product.id, item.size, 1)}
                         aria-label="Increase quantity"
+                        disabled={item.quantity >= (item.product.stock_by_size?.[item.size] ?? 0)}
                       >
                         +
                       </button>
