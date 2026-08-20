@@ -86,7 +86,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
 
   // Dynamic stock values
-  const sizesToMap = product.sizes && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
+  const sizesToMap = (product.sizes && product.sizes.length > 0 ? product.sizes : ['M', 'L', 'XL', 'XXL']).filter(sz => sz !== 'S');
   const totalStock = product.stock_by_size
     ? Object.values(product.stock_by_size).reduce((sum, v) => sum + v, 0)
     : (product.stock ?? 0);
@@ -602,26 +602,26 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           <h2>Description</h2>
           <div className="description-box">
             <div className="description-block">
-              <h3 className="description-block-title">Style</h3>
-              <p className="description-block-text">Over Size Fit: Fits loose.</p>
-              <p className="description-block-text">Unisex Fit: Perfectly style for both Men and Women.</p>
-            </div>
-            <div className="description-block">
-              <h3 className="description-block-title">Fabric</h3>
-              <p className="description-block-text">100% Cotton Single Jersey and bio-washed.</p>
-              <p className="description-block-text">• Preshrunked • Super Combed Compact Yarn for soft feel • 60-degree Color Fastness Which Follows International Standards • Don’t Bleach & Wring • Dry in Shade</p>
-            </div>
-            <div className="description-block">
-              <h3 className="description-block-title">Style Brief</h3>
+              <h3 className="description-block-title">Premium Dotnet Jersey</h3>
               <p className="description-block-text">
-                Dressing down has never been easier thanks to our oversized T-Shirts. We've got you covered with everything from off-work vibes to casual and sporty-cool looks. To complement out the slouchy look, pair your oversized T-Shirt with slim jeans or cycling shorts and lace-up sneakers.
+                Upgrade your jersey collection with our premium Dotnet fabric jersey, designed for a comfortable fit, sporty look, and everyday wear.
               </p>
             </div>
             <div className="description-block">
-              <h3 className="description-block-title">Design Brief</h3>
-              <p className="description-block-text">
-                Gear Up to 5 with luffy and experience the power of evil fruit with our amazing Luffy gear 5 oversize anime t-shirt . Fans Army is the only place in India where you can buy these awesome anime t-shirts
-              </p>
+              <h3 className="description-block-title">Key Features</h3>
+              <p className="description-block-text">• Premium Dotnet fabric</p>
+              <p className="description-block-text">• Lightweight and comfortable</p>
+              <p className="description-block-text">• Breathable feel for better comfort</p>
+              <p className="description-block-text">• Smooth and durable finish</p>
+              <p className="description-block-text">• Stylish football-inspired design</p>
+              <p className="description-block-text">• Suitable for sports, casual wear, and everyday use</p>
+              <p className="description-block-text">• Available in multiple sizes</p>
+            </div>
+            <div className="description-block">
+              <h3 className="description-block-title">Specifications</h3>
+              <p className="description-block-text"><strong>Fabric:</strong> Premium Dotnet</p>
+              <p className="description-block-text"><strong>Fit:</strong> Regular / Comfortable Fit</p>
+              <p className="description-block-text"><strong>Care:</strong> Hand wash or gentle machine wash. Do not bleach. Avoid high heat.</p>
             </div>
           </div>
         </section>

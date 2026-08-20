@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Product } from '@/types';
 import { calculateStockStatus, DEFAULT_LOW_STOCK_THRESHOLD, formatImageUrl, normalizeCategory } from '@/lib/stock-config';
 
-const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const ALL_SIZES = ['M', 'L', 'XL', 'XXL'];
 
 const CATEGORY_OPTIONS = [
   { label: 'Football Jerseys', value: 'Football Jerseys' },
@@ -49,10 +49,9 @@ export default function StockManagementPage() {
     price: '',
     mrp: '',
     sale_price: '',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    stock_by_size: { S: 10, M: 15, L: 15, XL: 10, XXL: 5 },
+    sizes: ['M', 'L', 'XL', 'XXL'],
+    stock_by_size: { M: 15, L: 15, XL: 10, XXL: 5 },
     size_chart: {
-      S: { length: '', chest: '', shoulder: '', sleeve: '' },
       M: { length: '', chest: '', shoulder: '', sleeve: '' },
       L: { length: '', chest: '', shoulder: '', sleeve: '' },
       XL: { length: '', chest: '', shoulder: '', sleeve: '' },
@@ -151,10 +150,9 @@ export default function StockManagementPage() {
       price: '299',
       mrp: '699',
       sale_price: '',
-      sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-      stock_by_size: { S: 10, M: 15, L: 15, XL: 10, XXL: 5 },
+      sizes: ['M', 'L', 'XL', 'XXL'],
+      stock_by_size: { M: 15, L: 15, XL: 10, XXL: 5 },
       size_chart: {
-        S: { length: '', chest: '', shoulder: '', sleeve: '' },
         M: { length: '', chest: '', shoulder: '', sleeve: '' },
         L: { length: '', chest: '', shoulder: '', sleeve: '' },
         XL: { length: '', chest: '', shoulder: '', sleeve: '' },
@@ -175,11 +173,13 @@ export default function StockManagementPage() {
   // Open Modal for Edit Product
   const handleOpenEditModal = (product: Product) => {
     setEditingProduct(product);
-    const stockMap: Record<string, number> = product.stock_by_size || { S: 10, M: 15, L: 15, XL: 10, XXL: 5 };
-    const availSizes = product.sizes && product.sizes.length > 0 ? product.sizes : Object.keys(stockMap);
+    const rawStock = product.stock_by_size || { M: 15, L: 15, XL: 10, XXL: 5 };
+    const stockMap: Record<string, number> = { ...rawStock };
+    delete stockMap['S'];
+    const availSizes = (product.sizes && product.sizes.length > 0 ? product.sizes : Object.keys(stockMap)).filter(s => s !== 'S');
 
     const sizeChartMap: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }> = {};
-    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const defaultSizes = ['M', 'L', 'XL', 'XXL'];
     defaultSizes.forEach((sz) => {
       const dbMeas = product.size_chart?.[sz] || {};
       sizeChartMap[sz] = {

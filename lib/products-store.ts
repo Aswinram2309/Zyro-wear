@@ -141,7 +141,7 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
 
             // 3. If still not set, distribute database stock (p.stock) across active sizes
             if (!stockBySize) {
-              const sizes = p.sizes && p.sizes.length > 0 ? p.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
+              const sizes = (p.sizes && p.sizes.length > 0 ? p.sizes : ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
               stockBySize = {};
               sizes.forEach((s: string) => {
                 stockBySize![s] = 0;
@@ -160,6 +160,12 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
               }
             }
 
+            if (stockBySize) {
+              delete stockBySize['S'];
+            }
+
+            const filteredSizes = (p.sizes || []).filter((s: string) => s !== 'S');
+            const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
             const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
 
           let rawFront = p.front_img;
@@ -184,6 +190,7 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
 
           return {
             ...p,
+            sizes: sanitizedSizes,
             front_img,
             back_img,
             images: [front_img, back_img],
@@ -203,12 +210,16 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
   return localProducts
     .filter((p) => includeInactive || p.is_active !== false)
     .map((p) => {
-      const stockBySize = p.stock_by_size || DEFAULT_SIZE_STOCK;
+      const stockBySize = { ...(p.stock_by_size || DEFAULT_SIZE_STOCK) };
+      delete stockBySize['S'];
+      const filteredSizes = (p.sizes || []).filter((s: string) => s !== 'S');
+      const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
       const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
       const front_img = formatImageUrl(p.front_img);
       const back_img = formatImageUrl(p.back_img);
       return {
         ...p,
+        sizes: sanitizedSizes,
         front_img,
         back_img,
         images: [front_img, back_img],
@@ -229,9 +240,12 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
   const id = productPayload.id || `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const now = new Date().toISOString();
 
-  const stockBySize = productPayload.stock_by_size || DEFAULT_SIZE_STOCK;
+  const rawStock = productPayload.stock_by_size || DEFAULT_SIZE_STOCK;
+  const stockBySize = { ...rawStock };
+  delete stockBySize['S'];
   const totalStock = calculateProductTotalStock(stockBySize, productPayload.stock || 0);
-  const availableSizes = productPayload.sizes || Object.keys(stockBySize).filter((s) => (stockBySize[s] || 0) >= 0);
+  const rawSizes = productPayload.sizes || Object.keys(stockBySize).filter((s) => (stockBySize[s] || 0) >= 0);
+  const availableSizes = rawSizes.filter(s => s !== 'S');
 
   const newProduct: Product = {
     id,
@@ -321,7 +335,14 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
+  if (updates.sizes) {
+    updates.sizes = updates.sizes.filter(sz => sz !== 'S');
+  }
   let stockBySize = updates.stock_by_size;
+  if (stockBySize) {
+    stockBySize = { ...stockBySize };
+    delete stockBySize['S'];
+  }
   let totalStock: number | undefined;
 
   const payloadToUpdate: any = {

@@ -17,7 +17,7 @@ export default function ProductCard({
   onBuyNow,
 }: ProductCardProps) {
   const router = useRouter();
-  const sizesToMap = product.sizes && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL'];
+  const sizesToMap = (product.sizes && product.sizes.length > 0 ? product.sizes : ['M', 'L', 'XL', 'XXL']).filter(sz => sz !== 'S');
   
   const totalStock = product.stock_by_size
     ? Object.values(product.stock_by_size).reduce((sum, v) => sum + v, 0)
