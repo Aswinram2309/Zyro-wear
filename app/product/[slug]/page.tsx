@@ -3,6 +3,9 @@ import { getProductBySlugFromStore } from '@/lib/products-store';
 import { notFound } from 'next/navigation';
 import ProductDetailsClient from '@/components/ProductDetailsClient';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Props {
   params: {
     slug: string;

@@ -15,14 +15,11 @@ interface ProductDetailsClientProps {
   initialProduct: Product;
 }
 
-const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }> = {
-  XS: { length: '26', chest: '38', shoulder: '9.5', sleeve: '7.5' },
-  S: { length: '27', chest: '40', shoulder: '10', sleeve: '8' },
-  M: { length: '28', chest: '42', shoulder: '10.5', sleeve: '8.5' },
-  L: { length: '29', chest: '44', shoulder: '11', sleeve: '9' },
-  XL: { length: '30', chest: '46', shoulder: '11.5', sleeve: '9.5' },
-  XXL: { length: '31', chest: '48', shoulder: '12', sleeve: '10' },
-  '2XL': { length: '31', chest: '48', shoulder: '12', sleeve: '10' },
+const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string }> = {
+  M: { length: '27', chest: '40', shoulder: '10' },
+  L: { length: '29', chest: '42', shoulder: '10' },
+  XL: { length: '28', chest: '44', shoulder: '10' },
+  XXL: { length: '30', chest: '46', shoulder: '10.5' },
 };
 
 export default function ProductDetailsClient({ initialProduct }: ProductDetailsClientProps) {
@@ -132,7 +129,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
 
   const [quantity, setQuantity] = useState<number>(1);
 
-  const getMeasurement = (size: string, field: 'length' | 'chest' | 'shoulder' | 'sleeve') => {
+  const getMeasurement = (size: string, field: 'length' | 'chest' | 'shoulder') => {
     const dbVal = product.size_chart?.[size]?.[field];
     if (dbVal && dbVal.trim() !== '') return dbVal;
     return DEFAULT_MEASUREMENTS[size]?.[field] || '—';
@@ -590,10 +587,6 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                     <tr>
                       <td className="label-col">Shoulder</td>
                       <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
-                    </tr>
-                    <tr>
-                      <td className="label-col">Length Sleeve</td>
-                      <td className="val-col">{getMeasurement(activeSize, 'sleeve')}</td>
                     </tr>
                   </tbody>
                 </table>

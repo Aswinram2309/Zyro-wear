@@ -150,11 +150,39 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
       (p.category && p.category.toLowerCase().includes(activeFilter.toLowerCase()));
 
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      p.name.toLowerCase().includes(q) ||
-      (p.nation && p.nation.toLowerCase().includes(q)) ||
-      (p.description && p.description.toLowerCase().includes(q));
+    let matchesSearch = !q;
+    
+    if (q) {
+      const name = (p.name || '').toLowerCase();
+      const desc = (p.description || '').toLowerCase();
+      const cat = (p.category || '').toLowerCase();
+      const nation = (p.nation || '').toLowerCase();
+      const slug = (p.slug || '').toLowerCase();
+
+      // 1. Direct contains check
+      if (
+        name.includes(q) ||
+        desc.includes(q) ||
+        cat.includes(q) ||
+        nation.includes(q) ||
+        slug.includes(q)
+      ) {
+        matchesSearch = true;
+      } else {
+        // 2. Sliding window initials check
+        const combinedText = `${name} ${desc}`.replace(/[^a-z0-9\s]/g, ' ');
+        const words = combinedText.split(/\s+/).filter(Boolean);
+        if (words.length >= q.length) {
+          for (let i = 0; i <= words.length - q.length; i++) {
+            const chunkInitials = words.slice(i, i + q.length).map(w => w[0]).join('');
+            if (chunkInitials === q) {
+              matchesSearch = true;
+              break;
+            }
+          }
+        }
+      }
+    }
 
     return matchesCategory && matchesSearch;
   });

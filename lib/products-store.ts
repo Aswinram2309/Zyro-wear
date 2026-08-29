@@ -208,39 +208,55 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
     };
   });
 
-  // 4. Strict Deduplication by Slug/Normalized Name so multiple DB/JSON rows for the same product render as ONE product card!
-  const deduplicated = new Map<string, Product>();
+  // 4. Strict Deduplication by ID, Slug or Normalized Name so multiple DB/JSON rows for the same product render as ONE product card!
+  const deduplicatedList: Product[] = [];
 
   rawList.forEach((p) => {
     if (!includeInactive && p.is_active === false) return;
 
-    const key = p.slug || createSlug(p.name, p.id);
-    const existing = deduplicated.get(key);
+    const normSlug = (p.slug || '').toLowerCase().trim();
+    const normName = createSlug(p.name || '');
+    const normId = (p.id || '').toLowerCase().trim();
 
-    if (!existing) {
-      deduplicated.set(key, p);
+    const existingIdx = deduplicatedList.findIndex((item) => {
+      const itemSlug = (item.slug || '').toLowerCase().trim();
+      const itemName = createSlug(item.name || '');
+      const itemId = (item.id || '').toLowerCase().trim();
+
+      return (
+        (normId && itemId === normId) ||
+        (normSlug && itemSlug === normSlug) ||
+        (normName && itemName === normName)
+      );
+    });
+
+    if (existingIdx === -1) {
+      deduplicatedList.push(p);
     } else {
+      const existing = deduplicatedList[existingIdx];
       const existingTime = new Date(existing.updated_at || existing.created_at || 0).getTime();
       const currentTime = new Date(p.updated_at || p.created_at || 0).getTime();
       const mergedImages = Array.from(new Set([...(existing.images || []), ...(p.images || [])]));
 
       if (currentTime >= existingTime) {
-        deduplicated.set(key, {
+        deduplicatedList[existingIdx] = {
           ...p,
           images: mergedImages,
           front_img: p.front_img || existing.front_img,
           back_img: p.back_img || existing.back_img,
-        });
+          id: existing.id || p.id,
+          slug: existing.slug || p.slug,
+        };
       } else {
-        deduplicated.set(key, {
+        deduplicatedList[existingIdx] = {
           ...existing,
           images: mergedImages,
-        });
+        };
       }
     }
   });
 
-  return Array.from(deduplicated.values());
+  return deduplicatedList;
 }
 
 export async function getProductByIdFromStore(id: string): Promise<Product | null> {

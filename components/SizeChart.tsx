@@ -9,20 +9,19 @@ interface SizeChartProps {
   onSizeSelect?: (size: string) => void;
 }
 
-const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }> = {
-  S: { chest: '42', length: '27.5', shoulder: '18', sleeve: '9.5' },
-  M: { chest: '44', length: '28.5', shoulder: '18.5', sleeve: '10' },
-  L: { chest: '46', length: '29.5', shoulder: '19', sleeve: '10.5' },
-  XL: { chest: '48', length: '30.5', shoulder: '19.5', sleeve: '11' },
-  XXL: { chest: '48', length: '30.5', shoulder: '19.5', sleeve: '11' },
+const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string }> = {
+  M: { length: '27', chest: '40', shoulder: '10' },
+  L: { length: '29', chest: '42', shoulder: '10' },
+  XL: { length: '28', chest: '44', shoulder: '10' },
+  XXL: { length: '30', chest: '46', shoulder: '10.5' },
 };
 
 export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: SizeChartProps) {
   const [activeTab, setActiveTab] = useState<'dimensions' | 'measure'>('dimensions');
 
-  const defaultSizes = ['S', 'M', 'L', 'XL'];
+  const defaultSizes = ['M', 'L', 'XL', 'XXL'];
 
-  const getVal = (size: string, field: 'length' | 'chest' | 'shoulder' | 'sleeve') => {
+  const getVal = (size: string, field: 'length' | 'chest' | 'shoulder') => {
     const dbVal = sizeChart?.[size]?.[field];
     if (dbVal && dbVal.trim() !== '') return dbVal;
     return DEFAULT_MEASUREMENTS[size]?.[field] || '—';
@@ -67,20 +66,18 @@ export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: Siz
               <table className="size-chart-table">
                 <thead>
                   <tr>
-                    <th>Size (in)</th>
-                    <th>Chest (in)</th>
-                    <th>Length (in)</th>
-                    <th>Shoulder (in)</th>
-                    <th>Sleeve (in)</th>
+                    <th>SIZE</th>
+                    <th>LENGTH SIZE (INCH)</th>
+                    <th>CHEST SIZE (INCH)</th>
+                    <th>SHOULDER SIZE (INCH)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {defaultSizes.map((sz) => {
                     const isActive = selectedSize === sz;
-                    const chestVal = getVal(sz, 'chest');
                     const lengthVal = getVal(sz, 'length');
+                    const chestVal = getVal(sz, 'chest');
                     const shoulderVal = getVal(sz, 'shoulder');
-                    const sleeveVal = getVal(sz, 'sleeve');
 
                     return (
                       <tr
@@ -92,10 +89,9 @@ export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: Siz
                         <td className="size-col-label">
                           {sz} {isActive && <span className="active-dot">●</span>}
                         </td>
-                        <td>{chestVal}</td>
                         <td>{lengthVal}</td>
+                        <td>{chestVal}</td>
                         <td>{shoulderVal}</td>
-                        <td>{sleeveVal}</td>
                       </tr>
                     );
                   })}
