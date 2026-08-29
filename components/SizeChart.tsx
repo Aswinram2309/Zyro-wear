@@ -9,32 +9,20 @@ interface SizeChartProps {
   onSizeSelect?: (size: string) => void;
 }
 
-const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string }> = {
-  S: { length: '—', chest: '—', shoulder: '—' },
-  M: { length: '27', chest: '40', shoulder: '10' },
-  L: { length: '29', chest: '42', shoulder: '10' },
-  XL: { length: '28', chest: '44', shoulder: '10' },
-  XXL: { length: '30', chest: '46', shoulder: '10.5' },
+const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }> = {
+  S: { chest: '42', length: '27.5', shoulder: '18', sleeve: '9.5' },
+  M: { chest: '44', length: '28.5', shoulder: '18.5', sleeve: '10' },
+  L: { chest: '46', length: '29.5', shoulder: '19', sleeve: '10.5' },
+  XL: { chest: '48', length: '30.5', shoulder: '19.5', sleeve: '11' },
+  XXL: { chest: '48', length: '30.5', shoulder: '19.5', sleeve: '11' },
 };
 
 export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: SizeChartProps) {
   const [activeTab, setActiveTab] = useState<'dimensions' | 'measure'>('dimensions');
-  const [unit, setUnit] = useState<'inch' | 'cm'>('inch');
 
-  const defaultSizes = ['M', 'L', 'XL', 'XXL'];
+  const defaultSizes = ['S', 'M', 'L', 'XL'];
 
-  // Helper to convert inches to cm dynamically
-  const formatVal = (val?: string, targetUnit: 'inch' | 'cm' = 'inch') => {
-    if (!val || val.trim() === '' || val === '—') return '—';
-    const num = parseFloat(val);
-    if (isNaN(num)) return val;
-    if (targetUnit === 'cm') {
-      return (num * 2.54).toFixed(1);
-    }
-    return String(num);
-  };
-
-  const getVal = (size: string, field: 'length' | 'chest' | 'shoulder') => {
+  const getVal = (size: string, field: 'length' | 'chest' | 'shoulder' | 'sleeve') => {
     const dbVal = sizeChart?.[size]?.[field];
     if (dbVal && dbVal.trim() !== '') return dbVal;
     return DEFAULT_MEASUREMENTS[size]?.[field] || '—';
@@ -67,23 +55,11 @@ export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: Siz
         {/* Product Dimensions Panel */}
         {activeTab === 'dimensions' && (
           <div className="dimensions-panel">
-            {/* Unit Selector */}
-            <div className="unit-selector-row">
-              <span className="unit-selector-label">Select measurement unit:</span>
-              <div className="unit-toggle-pills">
-                <button
-                  className={`unit-toggle-btn ${unit === 'inch' ? 'active' : ''}`}
-                  onClick={() => setUnit('inch')}
-                >
-                  inch
-                </button>
-                <button
-                  className={`unit-toggle-btn ${unit === 'cm' ? 'active' : ''}`}
-                  onClick={() => setUnit('cm')}
-                >
-                  cm
-                </button>
-              </div>
+            {/* Unit Indicator (Inch Only) */}
+            <div className="unit-selector-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="unit-selector-label" style={{ fontWeight: 600, color: '#FFC700' }}>
+                All measurements are in Inches (in)
+              </span>
             </div>
 
             {/* Measurement Table */}
@@ -91,18 +67,20 @@ export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: Siz
               <table className="size-chart-table">
                 <thead>
                   <tr>
-                    <th>Size</th>
-                    <th>Length Size ({unit})</th>
-                    <th>Chest Size ({unit})</th>
-                    <th>Shoulder Size ({unit})</th>
+                    <th>Size (in)</th>
+                    <th>Chest (in)</th>
+                    <th>Length (in)</th>
+                    <th>Shoulder (in)</th>
+                    <th>Sleeve (in)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {defaultSizes.map((sz) => {
                     const isActive = selectedSize === sz;
-                    const lengthVal = getVal(sz, 'length');
                     const chestVal = getVal(sz, 'chest');
+                    const lengthVal = getVal(sz, 'length');
                     const shoulderVal = getVal(sz, 'shoulder');
+                    const sleeveVal = getVal(sz, 'sleeve');
 
                     return (
                       <tr
@@ -114,23 +92,26 @@ export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: Siz
                         <td className="size-col-label">
                           {sz} {isActive && <span className="active-dot">●</span>}
                         </td>
-                        <td>{formatVal(lengthVal, unit)}</td>
-                        <td>{formatVal(chestVal, unit)}</td>
-                        <td>{formatVal(shoulderVal, unit)}</td>
+                        <td>{chestVal}</td>
+                        <td>{lengthVal}</td>
+                        <td>{shoulderVal}</td>
+                        <td>{sleeveVal}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            
-            {/* Bottom Tip Section */}
+
+            {/* Bottom Tip & Note Section */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.8rem' }}>
               <p className="size-chart-tip" style={{ fontSize: '0.8rem', color: '#9CA3AF', margin: 0 }}>
-                <i className="fa-solid fa-circle-info" style={{ color: '#FFC700', marginRight: '6px' }}></i> Click any size row in the chart to select it.
+                <i className="fa-solid fa-circle-info" style={{ color: '#FFC700', marginRight: '6px' }}></i>
+                Select the same size you choose in regular fit for over sized look. XXL customer should choose XL for oversize Fit.
               </p>
               <p className="size-chart-tip" style={{ fontSize: '0.8rem', color: '#9CA3AF', margin: 0 }}>
-                <i className="fa-solid fa-circle-exclamation" style={{ color: '#FFC700', marginRight: '6px' }}></i> There might be a variation of 0.5 - 1 inch in measurements.
+                <i className="fa-solid fa-circle-exclamation" style={{ color: '#FFC700', marginRight: '6px' }}></i>
+                All Sizes are approximate and may vary up to +/-0.5 inch.
               </p>
             </div>
           </div>
@@ -138,7 +119,14 @@ export default function SizeChart({ sizeChart, selectedSize, onSizeSelect }: Siz
 
         {/* How to Measure Panel */}
         {activeTab === 'measure' && (
-          <div className="measure-guide-panel">
+          <div className="measure-guide-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <div className="how-to-measure-image-container" style={{ textAlign: 'center', background: '#0F172A', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,199,0,0.2)' }}>
+              <img
+                src="/images/size-guide.jpg"
+                alt="How to Measure Jersey Size Guide"
+                style={{ maxWidth: '100%', height: 'auto', borderRadius: '6px', margin: '0 auto', display: 'block' }}
+              />
+            </div>
             <div className="guide-item">
               <strong className="guide-title">
                 <i className="fa-solid fa-arrows-up-down text-gold"></i> 1. Length

@@ -82,8 +82,41 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
     customerName: '',
     comment: '',
   });
+  const [reviewPhoto, setReviewPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+
+  // Touch gesture refs for mobile gallery swipe
+  const touchStartX = React.useRef<number | null>(null);
+  const touchEndX = React.useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 35;
+
+    if (distance > minSwipeDistance) {
+      // Swipe left -> Next image
+      const nextIndex = Math.min(activeImgIndex + 1, allImages.length - 1);
+      handleThumbClick(allImages[nextIndex], nextIndex);
+    } else if (distance < -minSwipeDistance) {
+      // Swipe right -> Previous image
+      const prevIndex = Math.max(activeImgIndex - 1, 0);
+      handleThumbClick(allImages[prevIndex], prevIndex);
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
 
   // Dynamic stock values
   const sizesToMap = (product.sizes && product.sizes.length > 0 ? product.sizes : ['M', 'L', 'XL', 'XXL']).filter(sz => sz !== 'S');
@@ -290,9 +323,23 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
     setIsCheckoutOpen(true);
   };
 
-  const handleWhatsApp = () => {
-    const message = `Hi ZYRO Wear! 👋 I want to order:\n- ${product.name}\n- Size: ${activeSize}\n- Quantity: ${quantity}\n- Price: ₹${product.price * quantity}\n\nPlease confirm availability and payment details!`;
-    window.open(`https://wa.me/917200515977?text=${encodeURIComponent(message)}`, '_blank');
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const allowedExts = ['jpeg', 'jpg', 'png', 'heic'];
+      const fileExt = (file.name.split('.').pop() || '').toLowerCase();
+      if (!allowedExts.includes(fileExt)) {
+        setReviewError('Invalid file format. Allowed formats: .jpeg, .jpg, .png, .heic');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setReviewError('File size must be under 10MB.');
+        return;
+      }
+      setReviewError(null);
+      setReviewPhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
   };
 
   // Review submission
@@ -312,6 +359,23 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
 
     setSubmittingReview(true);
     try {
+      let photoUrl: string | null = null;
+      if (reviewPhoto) {
+        const formData = new FormData();
+        formData.append('file', reviewPhoto);
+        formData.append('productId', product.id);
+
+        const uploadRes = await fetch('/api/reviews/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok || !uploadData.url) {
+          throw new Error(uploadData.error || 'Failed to upload photo');
+        }
+        photoUrl = uploadData.url;
+      }
+
       const res = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -320,6 +384,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           rating: reviewForm.rating,
           customerName: reviewForm.customerName.trim(),
           comment: reviewForm.comment.trim(),
+          photoUrl: photoUrl,
         }),
       });
 
@@ -330,6 +395,8 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
 
       setReviewSuccess('Thank you! Your review has been posted.');
       setReviewForm({ rating: 5, customerName: '', comment: '' });
+      setReviewPhoto(null);
+      setPhotoPreview(null);
       await loadReviews();
     } catch (err: any) {
       console.error(err);
@@ -406,6 +473,9 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                 className="main-image-slider" 
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
                 {allImages.map((img, idx) => (
                   <div key={idx} className="main-image-slide">
@@ -565,27 +635,18 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                 <i className="fa-solid fa-bag-shopping"></i> ADD TO CART
               </button>
 
-              {/* Row 2: Buy Now & WhatsApp */}
+              {/* Row 2: Buy Now */}
               <div className="details-btn-row-2">
                 <button
                   className="details-btn-buy-now"
                   onClick={handleBuyNow}
                   disabled={isOutOfStock}
+                  style={{ gridColumn: 'span 2', width: '100%' }}
                 >
                   <strong className="btn-main-text">
                     <i className="fa-solid fa-bolt text-gold-icon"></i> BUY NOW
                   </strong>
                   <span className="btn-subtext">Quick Checkout</span>
-                </button>
-
-                <button
-                  className="details-btn-whatsapp"
-                  onClick={handleWhatsApp}
-                >
-                  <strong className="btn-main-text">
-                    <i className="fa-brands fa-whatsapp"></i> ORDER ON WHATSAPP
-                  </strong>
-                  <span className="btn-subtext">Order via Chat</span>
                 </button>
               </div>
             </div>
@@ -599,7 +660,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
 
         {/* Product Description Section */}
         <section className="product-description-section">
-          <h2>Description</h2>
+          <h2>Product Description</h2>
           <div className="description-box">
             <div className="description-block">
               <h3 className="description-block-title">Premium Dotnet Jersey</h3>
@@ -704,6 +765,36 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                   ></textarea>
                 </div>
 
+                <div className="review-form-group">
+                  <label htmlFor="reviewer-photo-field">Upload Photo (Optional)</label>
+                  <input
+                    id="reviewer-photo-field"
+                    type="file"
+                    accept=".jpeg,.jpg,.png,.heic,image/jpeg,image/png,image/heic"
+                    onChange={handlePhotoSelect}
+                    style={{ fontSize: '0.85rem', color: '#D1D5DB' }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '4px', display: 'block' }}>
+                    Allowed formats: .jpeg, .jpg, .png, .heic (Max 10MB)
+                  </span>
+                  {photoPreview && (
+                    <div style={{ marginTop: '8px', position: 'relative', display: 'inline-block' }}>
+                      <img
+                        src={photoPreview}
+                        alt="Photo Preview"
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #FFC700' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setReviewPhoto(null); setPhotoPreview(null); }}
+                        style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#EF4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '11px', cursor: 'pointer' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="submit"
                   className="btn-submit-review"
@@ -749,6 +840,16 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                       ))}
                     </div>
                     <p className="review-card-comment">{r.comment}</p>
+                    {(r.image_url || r.photo_url) && (
+                      <div className="review-card-photo-container" style={{ marginTop: '10px' }}>
+                        <img
+                          src={r.image_url || r.photo_url}
+                          alt="Customer review upload"
+                          style={{ maxWidth: '160px', maxHeight: '160px', borderRadius: '8px', objectFit: 'cover', cursor: 'pointer', border: '1px solid rgba(255,199,0,0.3)' }}
+                          onClick={() => window.open(r.image_url || r.photo_url, '_blank')}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

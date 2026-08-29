@@ -17,11 +17,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Database connection offline' }, { status: 500 });
     }
 
-    const { data: reviews, error } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('product_id', productId)
-      .order('created_at', { ascending: false });
+    let query = supabase.from('reviews').select('*');
+    if (productId !== 'all') {
+      query = query.eq('product_id', productId);
+    }
+    const { data: reviews, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       // If table is missing, return empty reviews list rather than failing
@@ -40,7 +40,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, rating, customerName, comment } = body;
+    const { productId, rating, customerName, comment, photoUrl, imageUrl } = body;
+    const finalPhoto = photoUrl || imageUrl || null;
 
     if (!productId || !rating || !customerName || !comment) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
@@ -75,16 +76,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Product does not exist' }, { status: 400 });
     }
 
-    const { data: review, error: insertError } = await supabase
+    const payload: any = {
+      product_id: productId,
+      rating: numRating,
+      customer_name: customerName.trim(),
+      comment: comment.trim(),
+    };
+    if (finalPhoto) {
+      payload.image_url = finalPhoto;
+    }
+
+    let { data: review, error: insertError } = await supabase
       .from('reviews')
-      .insert({
-        product_id: productId,
-        rating: numRating,
-        customer_name: customerName.trim(),
-        comment: comment.trim(),
-      })
+      .insert(payload)
       .select()
       .single();
+
+    if (insertError && finalPhoto && (insertError.message.includes('image_url') || insertError.message.includes('column'))) {
+      delete payload.image_url;
+      const retry = await supabase
+        .from('reviews')
+        .insert(payload)
+        .select()
+        .single();
+      review = retry.data;
+      insertError = retry.error;
+      if (review) {
+        review.image_url = finalPhoto;
+      }
+    }
 
     if (insertError) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });

@@ -10,14 +10,11 @@ export default function Footer() {
         <div className="footer-col brand-col">
           <img src="/Logo/Zyro wears logo.png" alt="ZYRO WEAR Logo" className="footer-logo" />
           <p className="footer-about">
-            ZYRO Wear delivers top-quality international football jerseys and sportswear. Wear your passion with pride.
+            ZYRO Wear is all about confidence, comfort and standing out. Every piece is designed with premium materials and bold style for the ones who don't follow the trend, they set it.
           </p>
           <div className="social-links">
             <a href="https://www.instagram.com/zyro.__.wear?igsh=N3Bvd3BteG9uYzlt" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
               <i className="fa-brands fa-instagram"></i>
-            </a>
-            <a href="https://wa.me/917200515977" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-              <i className="fa-brands fa-whatsapp"></i>
             </a>
             <a href="mailto:zyrowear718@gmail.com" aria-label="Email">
               <i className="fa-solid fa-envelope"></i>
@@ -79,12 +76,12 @@ export default function Footer() {
 
         <div className="footer-col contact-col">
           <h4>CONNECT WITH US</h4>
-          <p><i className="fa-solid fa-phone"></i> WhatsApp Order Line</p>
-          <a href="https://wa.me/917200515977" target="_blank" rel="noopener noreferrer" className="footer-wa-btn">
-            <i className="fa-brands fa-whatsapp"></i> +91 72005 15977
+          <p><i className="fa-solid fa-envelope"></i> Customer Support</p>
+          <a href="mailto:zyrowear718@gmail.com" className="footer-wa-btn" style={{ background: '#FFC700', color: '#0F172A' }}>
+            <i className="fa-solid fa-envelope"></i> zyrowear718@gmail.com
           </a>
           <p className="sub-text mt-2">
-            <i className="fa-solid fa-clock"></i> Available 24/7 for instant order confirmations
+            <i className="fa-solid fa-clock"></i> Available for instant order updates & support
           </p>
         </div>
       </div>

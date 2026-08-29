@@ -19,7 +19,8 @@ export async function saveOrderToStore(orderPayload: {
   customer: {
     fullName: string;
     phone: string;
-    email: string;
+    altPhone?: string;
+    email?: string;
     address: string;
     city: string;
     state: string;
@@ -44,7 +45,8 @@ export async function saveOrderToStore(orderPayload: {
     order_number: orderPayload.orderNumber,
     customer_name: orderPayload.customer.fullName,
     phone: orderPayload.customer.phone,
-    email: orderPayload.customer.email,
+    alt_phone: orderPayload.customer.altPhone || '',
+    email: orderPayload.customer.email || '',
     address: orderPayload.customer.address,
     city: orderPayload.customer.city || '',
     state: orderPayload.customer.state || '',
@@ -63,26 +65,40 @@ export async function saveOrderToStore(orderPayload: {
   // 1. Try inserting to Supabase if configured
   if (supabase) {
     try {
-      const { data: dbOrder, error: orderErr } = await supabase
+      const insertData: any = {
+        order_number: orderRecord.order_number,
+        customer_name: orderRecord.customer_name,
+        phone: orderRecord.phone,
+        alt_phone: orderRecord.alt_phone,
+        email: orderRecord.email,
+        address: orderRecord.address,
+        city: orderRecord.city,
+        state: orderRecord.state,
+        pincode: orderRecord.pincode,
+        subtotal: orderRecord.subtotal,
+        total_amount: orderRecord.total_amount,
+        payment_status: orderRecord.payment_status,
+        order_status: orderRecord.order_status,
+        razorpay_order_id: orderRecord.razorpay_order_id,
+        razorpay_payment_id: orderRecord.razorpay_payment_id,
+      };
+
+      let { data: dbOrder, error: orderErr } = await supabase
         .from('orders')
-        .insert({
-          order_number: orderRecord.order_number,
-          customer_name: orderRecord.customer_name,
-          phone: orderRecord.phone,
-          email: orderRecord.email,
-          address: orderRecord.address,
-          city: orderRecord.city,
-          state: orderRecord.state,
-          pincode: orderRecord.pincode,
-          subtotal: orderRecord.subtotal,
-          total_amount: orderRecord.total_amount,
-          payment_status: orderRecord.payment_status,
-          order_status: orderRecord.order_status,
-          razorpay_order_id: orderRecord.razorpay_order_id,
-          razorpay_payment_id: orderRecord.razorpay_payment_id,
-        })
+        .insert(insertData)
         .select('id')
         .single();
+
+      if (orderErr && orderErr.message && (orderErr.message.includes('alt_phone') || orderErr.message.includes('column'))) {
+        delete insertData.alt_phone;
+        const retry = await supabase
+          .from('orders')
+          .insert(insertData)
+          .select('id')
+          .single();
+        dbOrder = retry.data;
+        orderErr = retry.error;
+      }
 
       if (orderErr) {
         console.error('Supabase order insert error:', orderErr);

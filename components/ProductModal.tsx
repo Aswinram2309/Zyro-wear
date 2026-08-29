@@ -46,10 +46,6 @@ export default function ProductModal({
     onClose();
   };
 
-  const handleWhatsApp = () => {
-    const message = `Hi ZYRO Wear! 👋 I want to order:\n- ${product.name}\n- Size: ${activeSize}\n- Quantity: 1\n- Price: ₹${product.price}\n\nPlease confirm availability and payment details!`;
-    window.open(`https://wa.me/917200515977?text=${encodeURIComponent(message)}`, '_blank');
-  };
 
   return (
     <>
@@ -112,29 +108,17 @@ export default function ProductModal({
               </div>
             </div>
 
-            {/* Modal Buttons matching Image 1 layout */}
+            {/* Modal Actions */}
             <div className="modal-actions-container">
-              {/* Row 1: Full-Width ADD TO CART */}
               <button className="modal-btn-add-cart" onClick={handleAddToCart} disabled={isOutOfStock}>
                 <i className="fa-solid fa-bag-shopping"></i> ADD TO CART
               </button>
-
-              {/* Row 2: 50/50 BUY NOW & ORDER ON WHATSAPP */}
-              <div className="modal-btn-row-2">
-                <button className="modal-btn-buy-now" onClick={handleBuyNow} disabled={isOutOfStock}>
-                  <strong className="btn-main-text">
-                    <i className="fa-solid fa-bolt text-gold-icon"></i> BUY NOW
-                  </strong>
-                  <span className="btn-subtext">Pay Online (₹{product.price})</span>
-                </button>
-
-                <button className="modal-btn-whatsapp" onClick={handleWhatsApp}>
-                  <strong className="btn-main-text">
-                    <i className="fa-brands fa-whatsapp"></i> ORDER ON WHATSAPP
-                  </strong>
-                  <span className="btn-subtext">Quick Order via WhatsApp</span>
-                </button>
-              </div>
+              <button className="modal-btn-buy-now" onClick={handleBuyNow} disabled={isOutOfStock}>
+                <strong className="btn-main-text">
+                  <i className="fa-solid fa-bolt text-gold-icon"></i> BUY NOW
+                </strong>
+                <span className="btn-subtext">Pay Online (₹{product.price})</span>
+              </button>
             </div>
           </div>
         </div>

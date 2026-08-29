@@ -22,6 +22,7 @@ export default function CheckoutModal({
   const [customer, setCustomer] = useState<CustomerDetails>({
     fullName: '',
     phone: '',
+    altPhone: '',
     email: '',
     address: '',
     city: '',
@@ -50,8 +51,10 @@ export default function CheckoutModal({
     if (!customer.fullName.trim()) errors.fullName = 'Full Name is required';
     if (!customer.phone.trim() || customer.phone.trim().length < 10)
       errors.phone = 'Valid 10-digit Phone Number is required';
-    if (!customer.email.trim() || !customer.email.includes('@'))
-      errors.email = 'Valid Email is required';
+    if (customer.altPhone && customer.altPhone.trim() && customer.altPhone.trim().length < 10)
+      errors.altPhone = 'Valid 10-digit Alternative Phone Number is required';
+    if (customer.email && customer.email.trim() && !customer.email.includes('@'))
+      errors.email = 'Valid Email Address is required';
     if (!customer.address.trim()) errors.address = 'Delivery Address is required';
     if (!customer.city.trim()) errors.city = 'City is required';
     if (!customer.state.trim()) errors.state = 'State is required';
@@ -194,7 +197,7 @@ export default function CheckoutModal({
 
               <div className="form-row-2">
                 <div className="form-group">
-                  <label>Phone Number *</label>
+                  <label>Primary Phone Number *</label>
                   <input
                     type="tel"
                     placeholder="10-digit Mobile Number"
@@ -206,16 +209,28 @@ export default function CheckoutModal({
                 </div>
 
                 <div className="form-group">
-                  <label>Email Address *</label>
+                  <label>Alt. Mobile Number (Optional)</label>
                   <input
-                    type="email"
-                    placeholder="name@domain.com"
-                    value={customer.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={formErrors.email ? 'error' : ''}
+                    type="tel"
+                    placeholder="Alternative Phone (Optional)"
+                    value={customer.altPhone || ''}
+                    onChange={(e) => handleInputChange('altPhone', e.target.value)}
+                    className={formErrors.altPhone ? 'error' : ''}
                   />
-                  {formErrors.email && <span className="field-error">{formErrors.email}</span>}
+                  {formErrors.altPhone && <span className="field-error">{formErrors.altPhone}</span>}
                 </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '12px' }}>
+                <label>Email Address (Optional)</label>
+                <input
+                  type="email"
+                  placeholder="name@domain.com (Optional)"
+                  value={customer.email || ''}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className={formErrors.email ? 'error' : ''}
+                />
+                {formErrors.email && <span className="field-error">{formErrors.email}</span>}
               </div>
 
               <h4 className="form-section-title" style={{ marginTop: '20px' }}>

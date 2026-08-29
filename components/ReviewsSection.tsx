@@ -1,17 +1,53 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+interface ReviewItem {
+  src: string;
+  name: string;
+  comment?: string;
+  isVerified?: boolean;
+}
 
 export default function ReviewsSection() {
-  const reviewImages = [
-    '/Reviews/review 1.png',
-    '/Reviews/review 2.png',
-    '/Reviews/review 3.png',
-    '/Reviews/review 4.png',
+  const defaultReviewImages: ReviewItem[] = [
+    { src: '/Reviews/review 1.png', name: 'Verified Customer', isVerified: true },
+    { src: '/Reviews/review 2.png', name: 'Verified Customer', isVerified: true },
+    { src: '/Reviews/review 3.png', name: 'Verified Customer', isVerified: true },
+    { src: '/Reviews/review 4.png', name: 'Verified Customer', isVerified: true },
   ];
 
-  const doubledReviews = [...reviewImages, ...reviewImages];
+  const [reviewsList, setReviewsList] = useState<ReviewItem[]>(defaultReviewImages);
   const [activeLightboxImg, setActiveLightboxImg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCustomerReviewPhotos = async () => {
+      try {
+        const res = await fetch('/api/reviews?productId=all');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.reviews && Array.isArray(data.reviews)) {
+            const uploadedItems: ReviewItem[] = data.reviews
+              .filter((r: any) => r.image_url || r.photo_url)
+              .map((r: any) => ({
+                src: r.image_url || r.photo_url,
+                name: r.customer_name || 'Verified Buyer',
+                comment: r.comment,
+                isVerified: true,
+              }));
+            if (uploadedItems.length > 0) {
+              setReviewsList([...uploadedItems, ...defaultReviewImages]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching review section photos:', err);
+      }
+    };
+    fetchCustomerReviewPhotos();
+  }, []);
+
+  const displayList = reviewsList.length < 6 ? [...reviewsList, ...reviewsList] : reviewsList;
 
   return (
     <section className="reviews-section" id="reviews">
@@ -27,24 +63,24 @@ export default function ReviewsSection() {
         {/* Auto-Scrolling Cleaned Reviews Slider */}
         <div className="reviews-slider-wrapper">
           <div className="reviews-track" id="reviewsTrack">
-            {doubledReviews.map((imgSrc, idx) => (
+            {displayList.map((item, idx) => (
               <div
                 key={idx}
                 className="review-card"
-                onClick={() => setActiveLightboxImg(imgSrc)}
+                onClick={() => setActiveLightboxImg(item.src)}
                 style={{ cursor: 'pointer' }}
               >
                 <div className="review-card-frame">
                   <img
-                    src={imgSrc}
-                    alt={`Verified Customer Review ${idx + 1}`}
+                    src={item.src}
+                    alt={`Customer Review by ${item.name}`}
                     className="review-img"
                     loading="lazy"
                   />
                 </div>
                 <div className="review-card-footer">
                   <span>
-                    <i className="fa-solid fa-circle-check"></i> VERIFIED CUSTOMER
+                    <i className="fa-solid fa-circle-check"></i> {item.name.toUpperCase()}
                   </span>
                   <i className="fa-solid fa-magnifying-glass-plus"></i>
                 </div>

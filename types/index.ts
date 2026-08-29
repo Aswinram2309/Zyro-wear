@@ -36,7 +36,8 @@ export interface CartItem {
 export interface CustomerDetails {
   fullName: string;
   phone: string;
-  email: string;
+  altPhone?: string;
+  email?: string;
   address: string;
   city: string;
   state: string;
@@ -59,7 +60,8 @@ export interface Order {
   order_number: string;
   customer_name: string;
   phone: string;
-  email: string;
+  alt_phone?: string;
+  email?: string;
   address: string;
   city: string;
   state: string;
@@ -81,5 +83,7 @@ export interface Review {
   rating: number;
   customer_name: string;
   comment: string;
+  image_url?: string;
+  photo_url?: string;
   created_at: string;
 }

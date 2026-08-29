@@ -2026,8 +2026,15 @@ button {
     margin-bottom: 1rem;
 }
 
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
 .form-group label {
-    display: block;
+    display: flex;
+    align-items: flex-end;
+    min-height: 2.2rem;
     font-size: 0.8rem;
     font-weight: 700;
     color: #9CA3AF;
@@ -2065,12 +2072,14 @@ button {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+    align-items: start;
 }
 
 .form-row-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
+    align-items: start;
 }
 
 .summary-column {

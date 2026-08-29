@@ -44,11 +44,6 @@ export default function ProductCard({
     onBuyNow(product, selectedSize);
   };
 
-  const handleWhatsApp = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const message = `Hi ZYRO Wear! 👋 I want to order:\n- ${product.name}\n- Size: ${selectedSize}\n- Quantity: 1\n- Price: ₹${product.price}\n\nPlease confirm availability and payment details!`;
-    window.open(`https://wa.me/917200515977?text=${encodeURIComponent(message)}`, '_blank');
-  };
 
   return (
     <div
@@ -119,22 +114,14 @@ export default function ProductCard({
           </div>
         </div>
 
-        {/* Product Card Buttons - 2 Rows */}
+        {/* Product Card Buttons */}
         <div className="card-buttons-layout" onClick={(e) => e.stopPropagation()}>
-          {/* Row 1: Full Width ADD TO CART */}
           <button className="btn-row-add-cart" onClick={handleAddCart} disabled={isOutOfStock}>
             <i className="fa-solid fa-bag-shopping"></i> ADD TO CART
           </button>
-
-          {/* Row 2: 50/50 BUY NOW | ORDER ON WHATSAPP */}
-          <div className="btn-row-two-col">
-            <button className="btn-row-buy-now" onClick={handleBuyNow} disabled={isOutOfStock}>
-              <i className="fa-solid fa-bolt"></i> BUY NOW
-            </button>
-            <button className="btn-row-whatsapp" onClick={handleWhatsApp}>
-              <i className="fa-brands fa-whatsapp"></i> ORDER ON WHATSAPP
-            </button>
-          </div>
+          <button className="btn-row-buy-now" onClick={handleBuyNow} disabled={isOutOfStock}>
+            <i className="fa-solid fa-bolt"></i> BUY NOW
+          </button>
         </div>
       </div>
     </div>

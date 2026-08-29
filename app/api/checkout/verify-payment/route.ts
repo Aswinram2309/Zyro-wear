@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { customer, items, razorpayOrderId, razorpayPaymentId } = body;
 
-    if (!customer || !customer.fullName || !customer.phone || !customer.email || !customer.address) {
+    if (!customer || !customer.fullName || !customer.phone || !customer.address) {
       return NextResponse.json({ error: 'Missing customer details' }, { status: 400 });
     }
 

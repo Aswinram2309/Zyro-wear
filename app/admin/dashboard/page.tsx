@@ -9,7 +9,8 @@ interface AdminOrder {
   order_number: string;
   customer_name: string;
   phone: string;
-  email: string;
+  alt_phone?: string;
+  email?: string;
   address: string;
   city: string;
   state: string;
@@ -192,7 +193,10 @@ export default function AdminDashboardPage() {
                     <h4><i className="fa-solid fa-user"></i> Customer Details</h4>
                     <p className="cust-name"><strong>Name:</strong> {order.customer_name}</p>
                     <p className="cust-phone"><strong>Phone:</strong> {order.phone}</p>
-                    <p className="cust-email"><strong>Email:</strong> {order.email}</p>
+                    {order.alt_phone && (
+                      <p className="cust-phone"><strong>Alt Phone:</strong> {order.alt_phone}</p>
+                    )}
+                    <p className="cust-email"><strong>Email:</strong> {order.email || 'N/A (Optional)'}</p>
                     <p className="cust-address">
                       <strong>Delivery Address:</strong> {order.address}, {order.city}, {order.state} - {order.pincode}
                     </p>

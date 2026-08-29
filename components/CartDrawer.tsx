@@ -44,27 +44,29 @@ export default function CartDrawer({
         </div>
 
         {/* Free Shipping Progress */}
-        <div className="shipping-bar-container">
-          <div className="shipping-bar-text">
-            {amountRemaining > 0 ? (
-              <>Add <strong className="text-gold-highlight">₹{amountRemaining}</strong> more for <strong className="text-gold-highlight">FREE EXPRESS SHIPPING</strong>!</>
-            ) : (
-              <>🎉 <strong className="text-gold-highlight">CONGRATS! YOU UNLOCKED FREE SHIPPING!</strong></>
-            )}
+        {cart.length > 0 && (
+          <div className="shipping-bar-container">
+            <div className="shipping-bar-text">
+              {amountRemaining > 0 ? (
+                <>Add <strong className="text-gold-highlight">₹{amountRemaining}</strong> more for <strong className="text-gold-highlight">FREE EXPRESS SHIPPING</strong>!</>
+              ) : (
+                <>🎉 <strong className="text-gold-highlight">CONGRATS! YOU UNLOCKED FREE SHIPPING!</strong></>
+              )}
+            </div>
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
+            </div>
           </div>
-          <div className="progress-track">
-            <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
-          </div>
-        </div>
+        )}
 
         <div className="cart-items-container">
           {cart.length === 0 ? (
             <div className="cart-empty-state">
               <i className="fa-solid fa-bag-shopping empty-icon"></i>
-              <h4>Your bag is currently empty</h4>
-              <p>Explore our 2026 International Collection and pick your jersey!</p>
+              <h4>YOUR BAG IS EMPTY</h4>
+              <p>Explore our collection and pick your favorite jersey!</p>
               <button className="btn-cart-empty-action" onClick={onClose}>
-                <i className="fa-solid fa-shirt"></i> START SHOPPING
+                <i className="fa-solid fa-shirt"></i> CONTINUE SHOPPING
               </button>
             </div>
           ) : (
@@ -102,7 +104,7 @@ export default function CartDrawer({
                         className="qty-btn" 
                         onClick={() => onUpdateQty(item.product.id, item.size, 1)}
                         aria-label="Increase quantity"
-                        disabled={item.quantity >= (item.product.stock_by_size?.[item.size] ?? 0)}
+                        disabled={item.quantity >= (item.product.stock_by_size?.[item.size] ?? item.product.stock ?? 0)}
                       >
                         +
                       </button>

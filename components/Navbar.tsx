@@ -36,12 +36,12 @@ export default function Navbar({
           </Link>
 
           <nav className="nav-links">
-            <a href="#home" className="nav-item active">HOME</a>
-            <a href="#shop" className="nav-item">SHOP</a>
-            <a href="#collections" className="nav-item">COLLECTIONS</a>
-            <a href="#about" className="nav-item">ABOUT</a>
-            <a href="#reviews" className="nav-item">REVIEWS</a>
-            <a href="#contact" className="nav-item">CONTACT</a>
+            <Link href="/#home" className="nav-item">HOME</Link>
+            <Link href="/#shop" className="nav-item">SHOP</Link>
+            <Link href="/#collections" className="nav-item">COLLECTIONS</Link>
+            <Link href="/#about" className="nav-item">ABOUT</Link>
+            <Link href="/#reviews" className="nav-item">REVIEWS</Link>
+            <Link href="/#contact" className="nav-item">CONTACT</Link>
           </nav>
 
           <div className="header-actions">
@@ -104,18 +104,12 @@ export default function Navbar({
           </button>
         </div>
         <nav className="mobile-nav-links">
-          <a href="#home" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Home</a>
-          <a href="#shop" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Shop Collection</a>
-          <a href="#collections" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Star Players</a>
-          <a href="#about" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>About Us</a>
-          <a href="#reviews" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Customer Reviews</a>
-          <a href="#contact" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Contact & Support</a>
+          <Link href="/#home" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+          <Link href="/#shop" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Shop Collection</Link>
+          <Link href="/#about" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>About Us</Link>
+          <Link href="/#reviews" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Customer Reviews</Link>
+          <Link href="/#contact" className="mobile-link" onClick={() => setMobileMenuOpen(false)}>Contact & Support</Link>
         </nav>
-        <div className="mobile-contact-info">
-          <a href="https://wa.me/917200515977" target="_blank" rel="noopener noreferrer" className="btn-whatsapp-full">
-            <i className="fa-brands fa-whatsapp"></i> Chat on WhatsApp
-          </a>
-        </div>
       </div>
       {mobileMenuOpen && (
         <div className="backdrop active" onClick={() => setMobileMenuOpen(false)}></div>

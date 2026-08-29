@@ -13,8 +13,14 @@ import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { Product, CartItem } from '@/types';
 import { normalizeCategory } from '@/lib/stock-config';
 
-export default function MainStore() {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+interface MainStoreProps {
+  initialProducts?: Product[];
+}
+
+export default function MainStore({ initialProducts }: MainStoreProps) {
+  const [products, setProducts] = useState<Product[]>(
+    initialProducts && initialProducts.length > 0 ? initialProducts : INITIAL_PRODUCTS
+  );
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -50,26 +56,13 @@ export default function MainStore() {
     }
   };
 
-  // Fetch dynamic products from Supabase / API endpoint
   useEffect(() => {
     loadProducts();
-
-    // Revalidate when user switches back to the store tab / window gains focus
-    const handleFocus = () => {
-      loadProducts();
-    };
-    window.addEventListener('focus', handleFocus);
-
-    // Periodic poll every 10 seconds to keep stock synchronized
     const interval = setInterval(loadProducts, 10000);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
-  // Sync cart from localStorage
+  // Load cart from localStorage on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('zyro_cart');
@@ -81,6 +74,7 @@ export default function MainStore() {
     }
   }, []);
 
+  // Save cart to localStorage on change
   useEffect(() => {
     try {
       localStorage.setItem('zyro_cart', JSON.stringify(cart));
@@ -89,39 +83,28 @@ export default function MainStore() {
     }
   }, [cart]);
 
-  const handleAddToCart = (product: Product, size: string, quantity: number) => {
+  const handleAddToCart = (product: Product, size: string, quantity: number = 1) => {
+    const availableStock = product.stock_by_size?.[size] ?? 0;
+    if (availableStock <= 0) {
+      alert(`Size ${size} for ${product.name} is currently out of stock.`);
+      return;
+    }
+
     setCart((prev) => {
-      const existingIdx = prev.findIndex(
-        (item) => item.product.id === product.id && item.size === size
-      );
-      const availableStock = product.stock_by_size?.[size] ?? 0;
+      const existingIdx = prev.findIndex((item) => item.product.id === product.id && item.size === size);
       if (existingIdx > -1) {
         const updated = [...prev];
         const newQty = Math.min(updated[existingIdx].quantity + quantity, availableStock);
-        updated[existingIdx].quantity = newQty;
+        updated[existingIdx] = { ...updated[existingIdx], quantity: newQty };
         return updated;
-      } else {
-        return [...prev, { product, size, quantity: Math.min(quantity, availableStock) }];
       }
+      return [...prev, { product, size, quantity: Math.min(quantity, availableStock) }];
     });
     setIsCartOpen(true);
   };
 
-  const handleBuyNow = (product: Product, size: string) => {
-    setCart((prev) => {
-      const existingIdx = prev.findIndex(
-        (item) => item.product.id === product.id && item.size === size
-      );
-      const availableStock = product.stock_by_size?.[size] ?? 0;
-      if (availableStock <= 0) return prev;
-      if (existingIdx > -1) {
-        const updated = [...prev];
-        updated[existingIdx].quantity = Math.min(updated[existingIdx].quantity + 1, availableStock);
-        return updated;
-      } else {
-        return [...prev, { product, size, quantity: 1 }];
-      }
-    });
+  const handleBuyNow = (product: Product, size: string, quantity: number = 1) => {
+    handleAddToCart(product, size, quantity);
     setIsCheckoutOpen(true);
   };
 
@@ -132,10 +115,8 @@ export default function MainStore() {
           if (item.product.id === productId && item.size === size) {
             const availableStock = item.product.stock_by_size?.[size] ?? 0;
             const newQty = item.quantity + delta;
-            if (newQty > availableStock) {
-              return item; // Do not allow quantity to exceed stock!
-            }
-            return newQty > 0 ? { ...item, quantity: newQty } : null;
+            if (newQty <= 0) return null;
+            return { ...item, quantity: Math.min(newQty, availableStock) };
           }
           return item;
         })
@@ -144,28 +125,36 @@ export default function MainStore() {
   };
 
   const handleRemoveItem = (productId: string, size: string) => {
-    setCart((prev) =>
-      prev.filter((item) => !(item.product.id === productId && item.size === size))
-    );
+    setCart((prev) => prev.filter((item) => !(item.product.id === productId && item.size === size)));
   };
 
-  const filteredProducts = products.filter((p) => {
-    // Hide out-of-stock items (totalStock === 0) from the listing
-    if (p.stock === 0) return false;
+  const uniqueProducts = Array.from(
+    products
+      .reduce((map, p) => {
+        const key = (p.slug || p.id || '').toLowerCase().trim();
+        if (!map.has(key)) map.set(key, p);
+        return map;
+      }, new Map<string, Product>())
+      .values()
+  );
+
+  const filteredProducts = uniqueProducts.filter((p) => {
+    if (p.is_active === false) return false;
 
     const normalizedCat = normalizeCategory(p.category, p.name);
     const matchesCategory =
       activeFilter === 'all' ||
       (activeFilter === 'football' && normalizedCat === 'Football Jerseys') ||
       (activeFilter === 'ipl' && normalizedCat === 'IPL Jerseys') ||
-      (activeFilter === 'customize' && normalizedCat === 'Customize Jerseys');
+      (activeFilter === 'customize' && normalizedCat === 'Customize Jerseys') ||
+      (p.category && p.category.toLowerCase().includes(activeFilter.toLowerCase()));
 
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
       p.name.toLowerCase().includes(q) ||
       (p.nation && p.nation.toLowerCase().includes(q)) ||
-      p.description.toLowerCase().includes(q);
+      (p.description && p.description.toLowerCase().includes(q));
 
     return matchesCategory && matchesSearch;
   });
@@ -260,9 +249,7 @@ export default function MainStore() {
             <span className="sub-heading-gold">ABOUT ZYRO WEAR</span>
             <h2 className="ethos-heading">BUILT DIFFERENT.<br />MADE FOR YOU.</h2>
             <p className="ethos-desc">
-              ZYRO Wear is all about confidence, comfort, and standing out. Every jersey in our collection is
-              crafted with premium lightweight breathable fabrics and bold, authentic designs for sports
-              enthusiasts who don&apos;t follow trends—they set them.
+              ZYRO Wear is all about confidence, comfort and standing out. Every piece is designed with premium materials and bold style for the ones who don&apos;t follow the trend, they set it.
             </p>
             <div className="ethos-highlights">
               <div className="ethos-pill"><i className="fa-solid fa-bolt"></i> BOLD DESIGNS</div>

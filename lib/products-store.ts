@@ -15,6 +15,19 @@ const DEFAULT_SIZE_STOCK: Record<string, number> = {
   XXL: 5,
 };
 
+export function createSlug(name: string, id?: string): string {
+  if (!name || typeof name !== 'string') return id ? `product-${id}` : `product-${Date.now()}`;
+  let slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (!slug) {
+    slug = id ? `product-${id}` : `product-${Date.now()}`;
+  }
+  return slug;
+}
+
 function ensureProductsFileExists(): Product[] {
   const dir = path.join(process.cwd(), 'data');
   if (!fs.existsSync(dir)) {
@@ -24,6 +37,7 @@ function ensureProductsFileExists(): Product[] {
   if (!fs.existsSync(PRODUCTS_FILE_PATH)) {
     const formattedInitial = INITIAL_PRODUCTS.map((p) => ({
       ...p,
+      slug: createSlug(p.slug || p.name, p.id),
       sale_price: null,
       stock_by_size: DEFAULT_SIZE_STOCK,
       stock: 55,
@@ -41,21 +55,10 @@ function ensureProductsFileExists(): Product[] {
     if (Array.isArray(parsed) && parsed.length > 0) {
       let needsRewrite = false;
       const updatedList = parsed.map((p) => {
-        if (p.id === 'por-home-7' && !p.front_img.includes('Ronaldo_7_front')) {
+        const cleanSlug = createSlug(p.slug || p.name, p.id);
+        if (cleanSlug !== p.slug) {
           needsRewrite = true;
-          return {
-            ...p,
-            front_img: '/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_front.png',
-            back_img: '/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_Back.png',
-          };
-        }
-        if (p.id === 'esp-home-19' && !p.front_img.includes('Lamine_Yamal_19_front')) {
-          needsRewrite = true;
-          return {
-            ...p,
-            front_img: '/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_front.png',
-            back_img: '/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_Back.png',
-          };
+          return { ...p, slug: cleanSlug };
         }
         return p;
       });
@@ -71,6 +74,7 @@ function ensureProductsFileExists(): Product[] {
 
   const fallback = INITIAL_PRODUCTS.map((p) => ({
     ...p,
+    slug: createSlug(p.slug || p.name, p.id),
     sale_price: null,
     stock_by_size: DEFAULT_SIZE_STOCK,
     stock: 55,
@@ -86,21 +90,19 @@ export function calculateProductTotalStock(stock_by_size?: Record<string, number
   return Number(fallbackStock) || 0;
 }
 
-const KNOWN_IMAGE_FIXES: Record<string, { front_img: string; back_img: string }> = {
-  'por-home-7': {
-    front_img: '/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_front.png',
-    back_img: '/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_Back.png',
-  },
-  'esp-home-19': {
-    front_img: '/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_front.png',
-    back_img: '/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_Back.png',
-  },
-};
-
 export async function getAllProductsFromStore(includeInactive: boolean = false): Promise<Product[]> {
-  const supabase = createAdminClient();
-  const localMap = new Map(ensureProductsFileExists().map((lp) => [lp.id, lp]));
+  const localProducts = ensureProductsFileExists();
+  const productMap = new Map<string, Product>();
 
+  // 1. Populate map with local JSON products keyed by ID
+  localProducts.forEach((p) => {
+    if (p && p.id) {
+      productMap.set(p.id, p);
+    }
+  });
+
+  // 2. Fetch from Supabase and merge seamlessly
+  const supabase = createAdminClient();
   if (supabase) {
     try {
       const { data: dbProducts, error } = await supabase
@@ -108,126 +110,137 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase fetch products error details:', error);
-      }
+      if (!error && dbProducts && Array.isArray(dbProducts)) {
+        dbProducts.forEach((dbP) => {
+          const localItem = productMap.get(dbP.id);
+          let stockBySize: Record<string, number> | null = dbP.stock_by_size || null;
 
-      if (!error && dbProducts && dbProducts.length > 0) {
-        return dbProducts
-          .filter((p) => includeInactive || p.is_active !== false)
-          .map((p) => {
-            const localItem = localMap.get(p.id);
-            let stockBySize: Record<string, number> | null = null;
-
-            // 1. Try parsing metadata from images array
-            if (Array.isArray(p.images)) {
-              const metaStr = p.images.find(
-                (img: any) => typeof img === 'string' && img.startsWith('__stock_by_size:')
-              );
-              if (metaStr) {
-                try {
-                  stockBySize = JSON.parse(metaStr.replace('__stock_by_size:', ''));
-                } catch (e) {}
-              }
-            }
-
-            // 2. Fallback to localItem if available, but only if its sum matches database stock or if database stock is not explicitly set
-            if (!stockBySize && localItem?.stock_by_size) {
-              const localSum = Object.values(localItem.stock_by_size).reduce((sum, v) => sum + v, 0);
-              if (localSum === p.stock || p.stock === undefined) {
-                stockBySize = localItem.stock_by_size;
-              }
-            }
-
-            // 3. If still not set, distribute database stock (p.stock) across active sizes
-            if (!stockBySize) {
-              const sizes = (p.sizes && p.sizes.length > 0 ? p.sizes : ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
-              stockBySize = {};
-              sizes.forEach((s: string) => {
-                stockBySize![s] = 0;
-              });
-              
-              const total = p.stock !== undefined ? p.stock : 0;
-              if (total > 0) {
-                let remaining = total;
-                let i = 0;
-                while (remaining > 0) {
-                  const sz = sizes[i % sizes.length];
-                  stockBySize[sz] = (stockBySize[sz] || 0) + 1;
-                  remaining--;
-                  i++;
-                }
-              }
-            }
-
-            if (stockBySize) {
-              delete stockBySize['S'];
-            }
-
-            const filteredSizes = (p.sizes || []).filter((s: string) => s !== 'S');
-            const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
-            const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
-
-          let rawFront = p.front_img;
-          let rawBack = p.back_img;
-
-          if (KNOWN_IMAGE_FIXES[p.id]) {
-            const fix = KNOWN_IMAGE_FIXES[p.id];
-            if (!rawFront || rawFront.includes('Portugal_Home_Front') || rawFront.includes('Spain_Home_Front') || rawFront.includes('\\')) {
-              rawFront = fix.front_img;
-              rawBack = fix.back_img;
-              Promise.resolve(
-                supabase.from('products').update({
-                  front_img: fix.front_img,
-                  back_img: fix.back_img,
-                }).eq('id', p.id)
-              ).catch(() => {});
+          if (!stockBySize && Array.isArray(dbP.images)) {
+            const metaStr = dbP.images.find(
+              (img: any) => typeof img === 'string' && img.startsWith('__stock_by_size:')
+            );
+            if (metaStr) {
+              try {
+                stockBySize = JSON.parse(metaStr.replace('__stock_by_size:', ''));
+              } catch (e) {}
             }
           }
 
-          const front_img = formatImageUrl(rawFront);
-          const back_img = formatImageUrl(rawBack);
+          if (!stockBySize && localItem?.stock_by_size) {
+            stockBySize = localItem.stock_by_size;
+          }
 
-          return {
-            ...p,
-            sizes: sanitizedSizes,
+          if (!stockBySize) {
+            const sizes = (dbP.sizes && dbP.sizes.length > 0 ? dbP.sizes : ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
+            stockBySize = {};
+            sizes.forEach((s: string) => { stockBySize![s] = 10; });
+          }
+
+          if (stockBySize) {
+            delete stockBySize['S'];
+          }
+
+          const filteredSizes = (dbP.sizes || localItem?.sizes || ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
+          const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
+          const totalStock = calculateProductTotalStock(stockBySize, dbP.stock ?? localItem?.stock ?? 0);
+
+          const front_img = formatImageUrl(dbP.front_img || localItem?.front_img);
+          const back_img = formatImageUrl(dbP.back_img || localItem?.back_img);
+          const rawImages = Array.isArray(dbP.images) && dbP.images.length > 0 ? dbP.images : [front_img, back_img];
+          const cleanImages = rawImages
+            .filter((img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:'))
+            .map((img: string) => formatImageUrl(img));
+
+          const mergedProduct: Product = {
+            id: dbP.id,
+            name: dbP.name || localItem?.name || 'Untitled Product',
+            slug: createSlug(dbP.slug || dbP.name || localItem?.slug || localItem?.name || '', dbP.id),
+            description: dbP.description || localItem?.description || '',
+            price: Number(dbP.price ?? localItem?.price ?? 0),
+            mrp: Number(dbP.mrp ?? localItem?.mrp ?? dbP.price ?? 0),
+            sale_price: dbP.sale_price !== undefined ? dbP.sale_price : (localItem?.sale_price ?? null),
+            category: dbP.category || localItem?.category || 'Football Jerseys',
+            nation: dbP.nation || localItem?.nation || undefined,
             front_img,
             back_img,
-            images: [front_img, back_img],
-            stock_by_size: stockBySize,
+            images: cleanImages.length > 0 ? cleanImages : [front_img, back_img].filter(Boolean),
+            sizes: sanitizedSizes,
             stock: totalStock,
-            is_active: p.is_active ?? true,
+            stock_by_size: stockBySize,
+            size_chart: dbP.size_chart || localItem?.size_chart || undefined,
+            is_active: dbP.is_active !== undefined ? dbP.is_active : (localItem?.is_active ?? true),
+            created_at: dbP.created_at || localItem?.created_at || new Date().toISOString(),
+            updated_at: dbP.updated_at || localItem?.updated_at || new Date().toISOString(),
           };
+
+          productMap.set(dbP.id, mergedProduct);
         });
       }
     } catch (e) {
-      console.error('Supabase fetch products error, falling back to JSON file:', e);
+      console.error('Supabase fetch products error, using local file store:', e);
     }
   }
 
-  // Fallback to local JSON store
-  const localProducts = ensureProductsFileExists();
-  return localProducts
-    .filter((p) => includeInactive || p.is_active !== false)
-    .map((p) => {
-      const stockBySize = { ...(p.stock_by_size || DEFAULT_SIZE_STOCK) };
-      delete stockBySize['S'];
-      const filteredSizes = (p.sizes || []).filter((s: string) => s !== 'S');
-      const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
-      const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
-      const front_img = formatImageUrl(p.front_img);
-      const back_img = formatImageUrl(p.back_img);
-      return {
-        ...p,
-        sizes: sanitizedSizes,
-        front_img,
-        back_img,
-        images: [front_img, back_img],
-        stock_by_size: stockBySize,
-        stock: totalStock,
-        is_active: p.is_active ?? true,
-      };
-    });
+  // 3. Convert map values to sanitized product array
+  const rawList = Array.from(productMap.values()).map((p) => {
+    const stockBySize = { ...(p.stock_by_size || DEFAULT_SIZE_STOCK) };
+    delete stockBySize['S'];
+    const filteredSizes = (p.sizes || ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
+    const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
+    const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
+    const front_img = formatImageUrl(p.front_img);
+    const back_img = formatImageUrl(p.back_img);
+    const slug = createSlug(p.slug || p.name, p.id);
+    const cleanImages = (p.images && p.images.length > 0 ? p.images : [front_img, back_img])
+      .map((img) => formatImageUrl(img))
+      .filter(Boolean);
+
+    return {
+      ...p,
+      slug,
+      sizes: sanitizedSizes,
+      front_img,
+      back_img,
+      images: Array.from(new Set(cleanImages)),
+      stock_by_size: stockBySize,
+      stock: totalStock,
+      is_active: p.is_active !== false,
+    };
+  });
+
+  // 4. Strict Deduplication by Slug/Normalized Name so multiple DB/JSON rows for the same product render as ONE product card!
+  const deduplicated = new Map<string, Product>();
+
+  rawList.forEach((p) => {
+    if (!includeInactive && p.is_active === false) return;
+
+    const key = p.slug || createSlug(p.name, p.id);
+    const existing = deduplicated.get(key);
+
+    if (!existing) {
+      deduplicated.set(key, p);
+    } else {
+      const existingTime = new Date(existing.updated_at || existing.created_at || 0).getTime();
+      const currentTime = new Date(p.updated_at || p.created_at || 0).getTime();
+      const mergedImages = Array.from(new Set([...(existing.images || []), ...(p.images || [])]));
+
+      if (currentTime >= existingTime) {
+        deduplicated.set(key, {
+          ...p,
+          images: mergedImages,
+          front_img: p.front_img || existing.front_img,
+          back_img: p.back_img || existing.back_img,
+        });
+      } else {
+        deduplicated.set(key, {
+          ...existing,
+          images: mergedImages,
+        });
+      }
+    }
+  });
+
+  return Array.from(deduplicated.values());
 }
 
 export async function getProductByIdFromStore(id: string): Promise<Product | null> {
@@ -236,6 +249,19 @@ export async function getProductByIdFromStore(id: string): Promise<Product | nul
 }
 
 export async function saveNewProductToStore(productPayload: Partial<Product>): Promise<Product> {
+  const existingProducts = await getAllProductsFromStore(true);
+  const targetSlug = createSlug(productPayload.slug || productPayload.name || '', '');
+
+  // Deduplication check: If product with matching slug/name already exists, update it instead of creating a duplicate
+  const existingMatch = existingProducts.find(
+    (p) => (p.slug && p.slug === targetSlug) || createSlug(p.name, p.id) === targetSlug
+  );
+
+  if (existingMatch) {
+    const updated = await updateProductInStore(existingMatch.id, productPayload);
+    if (updated) return updated;
+  }
+
   const supabase = createAdminClient();
   const id = productPayload.id || `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const now = new Date().toISOString();
@@ -246,24 +272,26 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
   const totalStock = calculateProductTotalStock(stockBySize, productPayload.stock || 0);
   const rawSizes = productPayload.sizes || Object.keys(stockBySize).filter((s) => (stockBySize[s] || 0) >= 0);
   const availableSizes = rawSizes.filter(s => s !== 'S');
+  const slug = createSlug(productPayload.slug || productPayload.name || 'product', id);
 
   const newProduct: Product = {
     id,
     name: productPayload.name || 'Untitled Product',
-    slug: productPayload.slug || (productPayload.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    slug,
     description: productPayload.description || '',
     price: Number(productPayload.price) || 0,
     mrp: Number(productPayload.mrp) || Number(productPayload.price) || 0,
     sale_price: productPayload.sale_price !== undefined ? (productPayload.sale_price === null ? null : Number(productPayload.sale_price)) : null,
-    category: productPayload.category || 'star',
+    category: productPayload.category || 'Football Jerseys',
     nation: productPayload.nation || undefined,
     front_img: formatImageUrl(productPayload.front_img),
     back_img: formatImageUrl(productPayload.back_img),
     images: [formatImageUrl(productPayload.front_img), formatImageUrl(productPayload.back_img)].filter(Boolean),
-    sizes: availableSizes,
+    sizes: availableSizes.length > 0 ? availableSizes : ['M', 'L', 'XL', 'XXL'],
     stock: totalStock,
     stock_by_size: stockBySize,
-    is_active: productPayload.is_active !== undefined ? productPayload.is_active : true,
+    size_chart: productPayload.size_chart || undefined,
+    is_active: productPayload.is_active !== undefined ? Boolean(productPayload.is_active) : true,
     created_at: now,
     updated_at: now,
   };
@@ -301,7 +329,6 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
       const { error } = await supabase.from('products').insert(dbPayload).select().single();
 
       if (error) {
-        // If error is caused by missing sale_price or stock_by_size column in Supabase schema cache, retry without optional columns
         if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('schema cache'))) {
           console.warn('Supabase schema cache lacks optional columns, retrying baseline insert:', error.message);
           delete dbPayload.sale_price;
@@ -322,7 +349,12 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
   // 2. Persist to local JSON file
   try {
     const list = ensureProductsFileExists();
-    list.unshift(newProduct);
+    const existingIndex = list.findIndex((p) => p.id === id);
+    if (existingIndex !== -1) {
+      list[existingIndex] = newProduct;
+    } else {
+      list.unshift(newProduct);
+    }
     fs.writeFileSync(PRODUCTS_FILE_PATH, JSON.stringify(list, null, 2), 'utf-8');
   } catch (e) {
     console.error('Error saving new product to JSON file:', e);
@@ -349,6 +381,10 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
     ...updates,
     updated_at: now,
   };
+
+  if (updates.name || updates.slug) {
+    payloadToUpdate.slug = createSlug(updates.slug || updates.name || '', id);
+  }
 
   if (stockBySize) {
     totalStock = calculateProductTotalStock(stockBySize);
@@ -413,10 +449,6 @@ export async function toggleProductActiveInStore(id: string, is_active: boolean)
   return !!(await updateProductInStore(id, { is_active }));
 }
 
-/**
- * Deducts size-wise stock for a product when order payment is verified.
- * Decrements ONLY the requested size quantity.
- */
 export async function deductSizeStock(productId: string, size: string, quantity: number): Promise<{ success: boolean; message?: string }> {
   const product = await getProductByIdFromStore(productId);
   if (!product) {
@@ -447,6 +479,21 @@ export async function deductSizeStock(productId: string, size: string, quantity:
 
 export async function getProductBySlugFromStore(slug: string): Promise<Product | null> {
   const all = await getAllProductsFromStore(true);
-  return all.find((p) => p.slug === slug || p.id === slug) || null;
-}
+  const decoded = decodeURIComponent(slug || '').toLowerCase().trim();
+  const rawTarget = (slug || '').toLowerCase().trim();
 
+  let found = all.find((p) => {
+    const pSlug = (p.slug || '').toLowerCase().trim();
+    const pId = (p.id || '').toLowerCase().trim();
+    return pSlug === decoded || pId === decoded || pSlug === rawTarget || pId === rawTarget;
+  });
+
+  if (!found) {
+    found = all.find((p) => {
+      const generated = createSlug(p.name, p.id);
+      return generated === decoded || generated === rawTarget;
+    });
+  }
+
+  return found || null;
+}

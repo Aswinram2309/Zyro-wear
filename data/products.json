@@ -3,11 +3,11 @@
     "id": "prod_1786805933986_qw35",
     "name": "VIRAT KING #18",
     "slug": "virat-king-18",
-    "description": "test",
+    "description": "Official Royal Challengers Bengaluru IPL Jersey featuring King Kohli #18.",
     "price": 299,
     "mrp": 699,
     "sale_price": null,
-    "category": "star",
+    "category": "ipl",
     "front_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/front_1786805933074.jpg",
     "back_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/back_1786805933551.jpg",
     "images": [
@@ -29,14 +29,14 @@
       "XL": 10,
       "XXL": 5
     },
-    "is_active": false,
+    "is_active": true,
     "created_at": "2026-08-15T14:58:53.986Z",
     "updated_at": "2026-08-15T14:59:12.524Z"
   },
   {
     "id": "prod_1786696215599_s5xe",
     "name": "Morocco Home Kit (Hakimi #2)",
-    "slug": "morocco-home-kit-hakimi-2-",
+    "slug": "morocco-home-kit-hakimi-2",
     "description": "Official Morocco Home Kit featuring Hakimi #2.",
     "price": 299,
     "mrp": 699,
@@ -66,40 +66,6 @@
     "is_active": true,
     "created_at": "2026-08-14T08:30:15.599Z",
     "updated_at": "2026-08-14T08:50:53.982Z"
-  },
-  {
-    "id": "prod_1786694558868_m0oe",
-    "name": "Morocco Home Kit (Hakimi #2)",
-    "slug": "morocco-home-kit-hakimi-2-",
-    "description": "Official Morocco Home Kit featuring Hakimi #2.",
-    "price": 299,
-    "mrp": 699,
-    "sale_price": null,
-    "category": "star",
-    "front_img": "/uploads/products/prod_1786694555551/front_1786694556231.png",
-    "back_img": "/uploads/products/prod_1786694555551/back_1786694557797.png",
-    "images": [
-      "/uploads/products/prod_1786694555551/front_1786694556231.png",
-      "/uploads/products/prod_1786694555551/back_1786694557797.png"
-    ],
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "stock": 7,
-    "stock_by_size": {
-      "S": 0,
-      "M": 2,
-      "L": 2,
-      "XL": 2,
-      "XXL": 1
-    },
-    "is_active": true,
-    "created_at": "2026-08-14T08:02:38.868Z",
-    "updated_at": "2026-08-14T08:02:38.868Z"
   },
   {
     "id": "arg-home-10",
@@ -132,7 +98,8 @@
     "created_at": "2026-08-14T06:27:46.198Z",
     "updated_at": "2026-08-15T14:44:51.148Z",
     "images": [
-      "__stock_by_size:{\"S\":0,\"M\":0,\"L\":1,\"XL\":0,\"XXL\":0}"
+      "/ZYRO_Wear_Studio_Imgs/Argentina_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Argentina_Home_Messi_10_Back.png"
     ]
   },
   {
@@ -164,7 +131,11 @@
     "stock": 6,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T09:00:19.166Z"
+    "updated_at": "2026-08-14T09:00:19.166Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Belgium_Home_Front (2).png",
+      "/ZYRO_Wear_Studio_Imgs/Belgium_Home_De_Bruyne_7_Back.png"
+    ]
   },
   {
     "id": "bra-home-7",
@@ -195,7 +166,11 @@
     "stock": 55,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T06:27:46.198Z"
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Brazil_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Brazil_Home_Vini_Jr_7_Back.png"
+    ]
   },
   {
     "id": "eng-home-10",
@@ -226,7 +201,11 @@
     "stock": 55,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T06:27:46.198Z"
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/England_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/England_Home_Bellingham_10_Back.png"
+    ]
   },
   {
     "id": "fra-home-10",
@@ -257,7 +236,11 @@
     "stock": 55,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T06:27:46.198Z"
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/France_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/France_Home_Mbappe_10_Back.png"
+    ]
   },
   {
     "id": "ger-home-10",
@@ -288,7 +271,11 @@
     "stock": 55,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T06:27:46.198Z"
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Germany_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png"
+    ]
   },
   {
     "id": "nor-home-9",
@@ -319,7 +306,11 @@
     "stock": 55,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T08:56:02.652Z"
+    "updated_at": "2026-08-14T08:56:02.652Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Norway_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Norway_Home_Haaland_9_Back.png"
+    ]
   },
   {
     "id": "por-home-7",
@@ -352,7 +343,8 @@
     "created_at": "2026-08-14T06:27:46.198Z",
     "updated_at": "2026-08-15T14:45:21.180Z",
     "images": [
-      "__stock_by_size:{\"S\":0,\"M\":0,\"L\":0,\"XL\":0,\"XXL\":0}"
+      "/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_front.png",
+      "/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_Back.png"
     ]
   },
   {
@@ -384,6 +376,10 @@
     "stock": 55,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T06:27:46.198Z"
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_front.png",
+      "/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_Back.png"
+    ]
   }
 ]
