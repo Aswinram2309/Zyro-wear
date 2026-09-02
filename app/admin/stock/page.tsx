@@ -77,6 +77,13 @@ export default function StockManagementPage() {
   const [quickStockData, setQuickStockData] = useState<Record<string, number>>({});
   const [savingQuickStock, setSavingQuickStock] = useState<boolean>(false);
 
+  // Announcement Settings State
+  const [announcementText, setAnnouncementText] = useState<string>('');
+  const [announcementEnabled, setAnnouncementEnabled] = useState<boolean>(true);
+  const [loadingAnnouncement, setLoadingAnnouncement] = useState<boolean>(false);
+  const [savingAnnouncement, setSavingAnnouncement] = useState<boolean>(false);
+  const [announcementMsgStatus, setAnnouncementMsgStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   // Check Auth
   useEffect(() => {
     const isAuthenticated = sessionStorage.getItem('zyro_admin_auth');
@@ -84,8 +91,59 @@ export default function StockManagementPage() {
       router.push('/admin/login');
     } else {
       fetchProducts();
+      fetchAnnouncementSettings();
     }
   }, [router]);
+
+  const fetchAnnouncementSettings = async () => {
+    setLoadingAnnouncement(true);
+    try {
+      const res = await fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) {
+          setAnnouncementText(data.settings.announcement_message || '');
+          setAnnouncementEnabled(data.settings.announcement_enabled !== false);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching announcement settings in admin:', err);
+    } finally {
+      setLoadingAnnouncement(false);
+    }
+  };
+
+  const handleSaveAnnouncement = async () => {
+    if (announcementEnabled && !announcementText.trim()) {
+      setAnnouncementMsgStatus({ type: 'error', text: 'Announcement message cannot be empty when enabled.' });
+      return;
+    }
+    setSavingAnnouncement(true);
+    setAnnouncementMsgStatus(null);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          announcementMessage: announcementText,
+          announcementEnabled: announcementEnabled,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save announcement');
+      }
+      setAnnouncementMsgStatus({ type: 'success', text: 'Announcement updated successfully!' });
+      if (data.settings) {
+        setAnnouncementText(data.settings.announcement_message);
+        setAnnouncementEnabled(data.settings.announcement_enabled);
+      }
+    } catch (err: any) {
+      setAnnouncementMsgStatus({ type: 'error', text: err.message || 'Failed to update announcement' });
+    } finally {
+      setSavingAnnouncement(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -594,13 +652,62 @@ export default function StockManagementPage() {
             </div>
           </div>
 
-          <div className="stock-summary-card danger">
+          <div className="stock-summary-card">
             <div className="card-icon out">
               <i className="fa-solid fa-circle-xmark"></i>
             </div>
             <div className="card-info">
               <span className="card-label">Out of Stock</span>
               <strong className="card-value text-red">{stats.outOfStockCount}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Announcement / Offer Bar Settings Card */}
+        <div className="announcement-admin-card">
+          <div className="card-header">
+            <h3><i className="fa-solid fa-bullhorn text-gold"></i> Top Announcement / Offer Message Settings</h3>
+            <p>Control the top promotional offer message displayed across desktop &amp; mobile customer store.</p>
+          </div>
+
+          {announcementMsgStatus && (
+            <div className={`admin-toast ${announcementMsgStatus.type}`}>
+              <i className={`fa-solid ${announcementMsgStatus.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}`}></i>
+              {announcementMsgStatus.text}
+            </div>
+          )}
+
+          <div className="announcement-form-group">
+            <label htmlFor="announcement-text-input">Announcement Message Text:</label>
+            <textarea
+              id="announcement-text-input"
+              rows={2}
+              value={announcementText}
+              onChange={(e) => setAnnouncementText(e.target.value)}
+              placeholder="e.g. 🔥 SPECIAL LAUNCH OFFER: ALL INTERNATIONAL JERSEYS AT FLAT ₹299 ONLY! FREE SHIPPING ON ORDERS OVER ₹999 🔥"
+              className="admin-input-textarea"
+            />
+            <div className="announcement-toggle-row">
+              <label className="toggle-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={announcementEnabled}
+                  onChange={(e) => setAnnouncementEnabled(e.target.checked)}
+                />
+                <span>Show Announcement Bar on Customer Website</span>
+              </label>
+
+              <button
+                className="btn-primary-gold-prominent"
+                onClick={handleSaveAnnouncement}
+                disabled={savingAnnouncement}
+              >
+                {savingAnnouncement ? (
+                  <><i className="fa-solid fa-spinner fa-spin"></i> Saving...</>
+                ) : (
+                  <><i className="fa-solid fa-floppy-disk"></i> SAVE ANNOUNCEMENT</>
+                )}
+              </button>
             </div>
           </div>
         </div>

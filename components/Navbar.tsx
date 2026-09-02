@@ -129,14 +129,41 @@ export default function Navbar({
     }
   };
 
+  const [announcementMessage, setAnnouncementMessage] = useState<string>(
+    '🔥 SPECIAL LAUNCH OFFER: ALL INTERNATIONAL JERSEYS AT FLAT ₹299 ONLY! FREE SHIPPING ON ORDERS OVER ₹999 🔥'
+  );
+  const [announcementEnabled, setAnnouncementEnabled] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            if (typeof data.settings.announcement_message === 'string') {
+              setAnnouncementMessage(data.settings.announcement_message);
+            }
+            if (typeof data.settings.announcement_enabled === 'boolean') {
+              setAnnouncementEnabled(data.settings.announcement_enabled);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching announcement settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   return (
     <>
       {/* Announcement Bar */}
-      <div className="announcement-bar">
-        <span>
-          🔥 SPECIAL LAUNCH OFFER: ALL INTERNATIONAL JERSEYS AT FLAT <strong>₹299</strong> ONLY! FREE SHIPPING ON ORDERS OVER ₹999 🔥
-        </span>
-      </div>
+      {announcementEnabled && announcementMessage.trim() !== '' && (
+        <div className="announcement-bar">
+          <span>{announcementMessage}</span>
+        </div>
+      )}
 
       {/* Header / Navbar */}
       <header className="navbar" id="header">
