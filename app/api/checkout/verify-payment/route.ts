@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { saveOrderToStore } from '@/lib/orders-store';
+import crypto from 'crypto';
+import { saveOrderToStore, findOrderByPaymentId } from '@/lib/orders-store';
 import { sendOrderConfirmationEmail } from '@/lib/email-service';
-import { getProductByIdFromStore, deductSizeStock } from '@/lib/products-store';
+import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/lib/products-store';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { customer, items, razorpayOrderId, razorpayPaymentId } = body;
+    const { customer, items, razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;
 
     if (!customer || !customer.fullName || !customer.phone || !customer.address) {
       return NextResponse.json({ error: 'Missing customer details' }, { status: 400 });
@@ -16,7 +17,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing order items' }, { status: 400 });
     }
 
-    // 1. Calculate trusted server-side total and validate size stock
+    // 1. IDEMPOTENCY CHECK: Prevent duplicate order processing if payment ID or order ID was already processed
+    if (razorpayPaymentId) {
+      const existingOrder = await findOrderByPaymentId(razorpayPaymentId, razorpayOrderId);
+      if (existingOrder) {
+        return NextResponse.json({
+          success: true,
+          orderNumber: existingOrder.order_number,
+          totalAmount: existingOrder.total_amount,
+          customerName: existingOrder.customer_name,
+          alreadyProcessed: true,
+        });
+      }
+    }
+
+    // 2. SERVER-SIDE RAZORPAY SIGNATURE VERIFICATION (IF KEY SECRET IS CONFIGURED)
+    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (razorpaySecret && razorpayOrderId && razorpayPaymentId && razorpaySignature) {
+      const expectedSignature = crypto
+        .createHmac('sha256', razorpaySecret)
+        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .digest('hex');
+
+      if (expectedSignature !== razorpaySignature) {
+        console.error('Razorpay signature mismatch!');
+        return NextResponse.json({ error: 'Invalid payment signature. Verification failed.' }, { status: 400 });
+      }
+    }
+
+    // 3. Calculate trusted server-side total and validate size stock
     let subtotal = 0;
     const validatedItems = [];
 
@@ -28,19 +57,8 @@ export async function POST(req: Request) {
 
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
       const requestedSize = item.size || 'M';
-
-      // Check server-side size stock
-      if (product.stock_by_size && product.stock_by_size[requestedSize] !== undefined) {
-        const avail = Number(product.stock_by_size[requestedSize]) || 0;
-        if (avail < qty) {
-          return NextResponse.json(
-            { error: `Insufficient stock for ${product.name} (Size: ${requestedSize}). Requested: ${qty}, Available: ${avail}` },
-            { status: 400 }
-          );
-        }
-      }
-
       const price = product.sale_price || product.price;
+
       subtotal += price * qty;
 
       validatedItems.push({
@@ -52,12 +70,21 @@ export async function POST(req: Request) {
       });
     }
 
-    // 2. Perform atomic size-wise stock deduction ONLY after successful payment validation
+    // 4. PERFORM ATOMIC SIZE-WISE STOCK DEDUCTION WITH TRANSACTIONAL ROLLBACK
+    const successfullyDeductedItems: Array<{ product_id: string; size: string; quantity: number }> = [];
+
     for (const item of validatedItems) {
       const result = await deductSizeStock(item.product_id, item.size, item.quantity);
       if (!result.success) {
-        return NextResponse.json({ error: result.message || 'Failed to update stock' }, { status: 400 });
+        // Rollback any previously deducted items in this transaction
+        for (const deducted of successfullyDeductedItems) {
+          await restoreSizeStock(deducted.product_id, deducted.size, deducted.quantity);
+        }
+        return NextResponse.json({
+          error: result.message || `Sorry, ${item.product_name} (Size: ${item.size}) is no longer available in the requested quantity.`
+        }, { status: 400 });
       }
+      successfullyDeductedItems.push(item);
     }
 
     const shippingFee = subtotal >= 999 ? 0 : 49;
@@ -65,7 +92,7 @@ export async function POST(req: Request) {
 
     const orderNumber = `ZY${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 2. Save order to persistent store (Supabase database & local backup)
+    // 5. Save order to persistent store (Supabase database & local backup)
     const savedOrder = await saveOrderToStore({
       orderNumber,
       customer,
@@ -76,8 +103,7 @@ export async function POST(req: Request) {
       razorpayPaymentId,
     });
 
-    // 3. Send Order Confirmation Email via Resend (Server-Side Only)
-    // Non-blocking: Email errors do NOT break order confirmation
+    // 6. Send Order Confirmation Email via Resend (Server-Side Only)
     try {
       await sendOrderConfirmationEmail({
         orderNumber: savedOrder.order_number,
@@ -91,7 +117,7 @@ export async function POST(req: Request) {
         items: validatedItems,
         subtotal,
         totalAmount,
-        paymentStatus: 'PAID (Test Mode)',
+        paymentStatus: 'PAID',
         createdAt: savedOrder.created_at || new Date().toISOString(),
       });
     } catch (emailErr) {

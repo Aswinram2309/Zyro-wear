@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllProductsFromStore, saveNewProductToStore } from '@/lib/products-store';
+import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -114,6 +115,11 @@ export async function POST(req: Request) {
       size_chart,
       is_active: is_active !== undefined ? Boolean(is_active) : true,
     });
+
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/admin/stock');
+    } catch (e) {}
 
     return NextResponse.json({ success: true, product: createdProduct }, { status: 201 });
   } catch (error: any) {

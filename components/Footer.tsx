@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { BUSINESS_CONTACT } from '@/lib/contact-config';
 
 export default function Footer() {
   return (
@@ -16,7 +17,7 @@ export default function Footer() {
             <a href="https://www.instagram.com/zyro.__.wear?igsh=N3Bvd3BteG9uYzlt" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
               <i className="fa-brands fa-instagram"></i>
             </a>
-            <a href="mailto:zyrowear718@gmail.com" aria-label="Email">
+            <a href={`mailto:${BUSINESS_CONTACT.email}`} aria-label="Email">
               <i className="fa-solid fa-envelope"></i>
             </a>
           </div>
@@ -55,7 +56,7 @@ export default function Footer() {
             </li>
             <li>
               <a
-                href="/ZYRO_Wear_Size_Guide.pdf"
+                href="/images/size-guide.jpg"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -76,10 +77,15 @@ export default function Footer() {
 
         <div className="footer-col contact-col">
           <h4>CONNECT WITH US</h4>
-          <p><i className="fa-solid fa-envelope"></i> Customer Support</p>
-          <a href="mailto:zyrowear718@gmail.com" className="footer-wa-btn" style={{ background: '#FFC700', color: '#0F172A' }}>
-            <i className="fa-solid fa-envelope"></i> zyrowear718@gmail.com
-          </a>
+          <p><i className="fa-solid fa-headset"></i> Customer Support</p>
+          <div className="footer-contact-group">
+            <a href={`mailto:${BUSINESS_CONTACT.email}`} className="footer-contact-btn">
+              <i className="fa-solid fa-envelope"></i> {BUSINESS_CONTACT.email}
+            </a>
+            <a href={BUSINESS_CONTACT.phoneTel} className="footer-contact-btn">
+              <i className="fa-solid fa-phone"></i> {BUSINESS_CONTACT.phoneDisplay}
+            </a>
+          </div>
           <p className="sub-text mt-2">
             <i className="fa-solid fa-clock"></i> Available for instant order updates & support
           </p>

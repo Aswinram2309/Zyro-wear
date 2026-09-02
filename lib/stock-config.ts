@@ -57,23 +57,31 @@ export function formatImageUrl(url?: string | null): string {
   return cleanUrl;
 }
 
-export function normalizeCategory(category: string, productName: string = ''): 'Football Jerseys' | 'IPL Jerseys' | 'Customize Jerseys' {
+export type CategoryType =
+  | 'Football Jerseys'
+  | 'IPL Jerseys'
+  | 'Customized T-Shirts'
+  | 'Oversized T-Shirts';
+
+export function normalizeCategory(category: string, productName: string = ''): CategoryType {
   const cat = (category || '').trim().toLowerCase();
   
-  if (cat === 'football jerseys') return 'Football Jerseys';
-  if (cat === 'ipl jerseys') return 'IPL Jerseys';
-  if (cat === 'customize jerseys') return 'Customize Jerseys';
-
+  if (cat === 'football jerseys' || cat === 'football-jerseys') return 'Football Jerseys';
+  if (cat === 'ipl jerseys' || cat === 'ipl-jerseys' || cat === 'ipl' || cat === 'club') return 'IPL Jerseys';
+  if (cat === 'customized t-shirts' || cat === 'customized-t-shirts' || cat === 'customized tshirts' || cat === 'customized' || cat === 'customize jerseys' || cat === 'customize jersey' || cat === 'customize' || cat === 'custom') return 'Customized T-Shirts';
+  if (cat === 'oversized t-shirts' || cat === 'oversized-t-shirts' || cat === 'oversized tshirts' || cat === 'oversized') return 'Oversized T-Shirts';
   if (cat === 'star' || cat === 'national') return 'Football Jerseys';
-  if (cat === 'ipl' || cat === 'club') return 'IPL Jerseys';
-  if (cat === 'customize' || cat === 'custom') return 'Customize Jerseys';
 
-  const name = productName.toLowerCase();
-  if (name.includes('ipl') || name.includes('rcb') || name.includes('csk') || name.includes('mi') || name.includes('kkr') || name.includes('srh') || name.includes('delhi') || name.includes('punjab') || name.includes('rajasthan')) {
-    return 'IPL Jerseys';
+  // Last-resort fallback ONLY if category is completely blank/unspecified
+  const name = (productName || '').toLowerCase();
+  if (name.includes('oversize') || name.includes('over sized')) {
+    return 'Oversized T-Shirts';
   }
   if (name.includes('custom') || name.includes('personal')) {
-    return 'Customize Jerseys';
+    return 'Customized T-Shirts';
+  }
+  if (name.includes('ipl')) {
+    return 'IPL Jerseys';
   }
 
   return 'Football Jerseys';

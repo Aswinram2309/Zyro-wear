@@ -91,18 +91,9 @@ export function calculateProductTotalStock(stock_by_size?: Record<string, number
 }
 
 export async function getAllProductsFromStore(includeInactive: boolean = false): Promise<Product[]> {
-  const localProducts = ensureProductsFileExists();
-  const productMap = new Map<string, Product>();
-
-  // 1. Populate map with local JSON products keyed by ID
-  localProducts.forEach((p) => {
-    if (p && p.id) {
-      productMap.set(p.id, p);
-    }
-  });
-
-  // 2. Fetch from Supabase and merge seamlessly
   const supabase = createAdminClient();
+
+  // 1. Fetch live canonical products directly from Supabase DB (Single Source of Truth)
   if (supabase) {
     try {
       const { data: dbProducts, error } = await supabase
@@ -111,8 +102,7 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
         .order('created_at', { ascending: false });
 
       if (!error && dbProducts && Array.isArray(dbProducts)) {
-        dbProducts.forEach((dbP) => {
-          const localItem = productMap.get(dbP.id);
+        const canonicalProducts: Product[] = dbProducts.map((dbP) => {
           let stockBySize: Record<string, number> | null = dbP.stock_by_size || null;
 
           if (!stockBySize && Array.isArray(dbP.images)) {
@@ -126,10 +116,6 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
             }
           }
 
-          if (!stockBySize && localItem?.stock_by_size) {
-            stockBySize = localItem.stock_by_size;
-          }
-
           if (!stockBySize) {
             const sizes = (dbP.sizes && dbP.sizes.length > 0 ? dbP.sizes : ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
             stockBySize = {};
@@ -140,123 +126,65 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
             delete stockBySize['S'];
           }
 
-          const filteredSizes = (dbP.sizes || localItem?.sizes || ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
+          const filteredSizes = (dbP.sizes || ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
           const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
-          const totalStock = calculateProductTotalStock(stockBySize, dbP.stock ?? localItem?.stock ?? 0);
+          const totalStock = calculateProductTotalStock(stockBySize, dbP.stock ?? 0);
 
-          const front_img = formatImageUrl(dbP.front_img || localItem?.front_img);
-          const back_img = formatImageUrl(dbP.back_img || localItem?.back_img);
+          const front_img = formatImageUrl(dbP.front_img);
+          const back_img = formatImageUrl(dbP.back_img);
           const rawImages = Array.isArray(dbP.images) && dbP.images.length > 0 ? dbP.images : [front_img, back_img];
           const cleanImages = rawImages
             .filter((img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:'))
             .map((img: string) => formatImageUrl(img));
 
-          const mergedProduct: Product = {
+          const slug = dbP.slug || createSlug(dbP.name, dbP.id);
+
+          return {
             id: dbP.id,
-            name: dbP.name || localItem?.name || 'Untitled Product',
-            slug: createSlug(dbP.slug || dbP.name || localItem?.slug || localItem?.name || '', dbP.id),
-            description: dbP.description || localItem?.description || '',
-            price: Number(dbP.price ?? localItem?.price ?? 0),
-            mrp: Number(dbP.mrp ?? localItem?.mrp ?? dbP.price ?? 0),
-            sale_price: dbP.sale_price !== undefined ? dbP.sale_price : (localItem?.sale_price ?? null),
-            category: dbP.category || localItem?.category || 'Football Jerseys',
-            nation: dbP.nation || localItem?.nation || undefined,
+            name: dbP.name || 'Untitled Product',
+            slug: slug,
+            description: dbP.description || '',
+            price: Number(dbP.price ?? 0),
+            mrp: Number(dbP.mrp ?? dbP.price ?? 0),
+            sale_price: dbP.sale_price !== undefined ? dbP.sale_price : null,
+            category: dbP.category || 'Football Jerseys',
+            nation: dbP.nation || undefined,
             front_img,
             back_img,
             images: cleanImages.length > 0 ? cleanImages : [front_img, back_img].filter(Boolean),
             sizes: sanitizedSizes,
             stock: totalStock,
             stock_by_size: stockBySize,
-            size_chart: dbP.size_chart || localItem?.size_chart || undefined,
-            is_active: dbP.is_active !== undefined ? dbP.is_active : (localItem?.is_active ?? true),
-            created_at: dbP.created_at || localItem?.created_at || new Date().toISOString(),
-            updated_at: dbP.updated_at || localItem?.updated_at || new Date().toISOString(),
+            size_chart: dbP.size_chart || undefined,
+            is_active: dbP.is_active !== undefined ? Boolean(dbP.is_active) : true,
+            created_at: dbP.created_at || new Date().toISOString(),
+            updated_at: dbP.updated_at || new Date().toISOString(),
           };
+        });
 
-          productMap.set(dbP.id, mergedProduct);
+        return canonicalProducts.filter((p) => {
+          if (!includeInactive && p.is_active === false) return false;
+          return true;
         });
       }
     } catch (e) {
-      console.error('Supabase fetch products error, using local file store:', e);
+      console.error('Supabase fetch products error:', e);
     }
   }
 
-  // 3. Convert map values to sanitized product array
-  const rawList = Array.from(productMap.values()).map((p) => {
-    const stockBySize = { ...(p.stock_by_size || DEFAULT_SIZE_STOCK) };
-    delete stockBySize['S'];
-    const filteredSizes = (p.sizes || ['M', 'L', 'XL', 'XXL']).filter((s: string) => s !== 'S');
-    const sanitizedSizes = filteredSizes.length > 0 ? filteredSizes : ['M', 'L', 'XL', 'XXL'];
-    const totalStock = calculateProductTotalStock(stockBySize, p.stock || 0);
-    const front_img = formatImageUrl(p.front_img);
-    const back_img = formatImageUrl(p.back_img);
-    const slug = createSlug(p.slug || p.name, p.id);
-    const cleanImages = (p.images && p.images.length > 0 ? p.images : [front_img, back_img])
-      .map((img) => formatImageUrl(img))
-      .filter(Boolean);
-
-    return {
+  // 2. Only if Supabase is completely unreachable (e.g. offline dev), fallback to local JSON
+  const localProducts = ensureProductsFileExists();
+  return localProducts
+    .map((p) => ({
       ...p,
-      slug,
-      sizes: sanitizedSizes,
-      front_img,
-      back_img,
-      images: Array.from(new Set(cleanImages)),
-      stock_by_size: stockBySize,
-      stock: totalStock,
-      is_active: p.is_active !== false,
-    };
-  });
-
-  // 4. Strict Deduplication by ID, Slug or Normalized Name so multiple DB/JSON rows for the same product render as ONE product card!
-  const deduplicatedList: Product[] = [];
-
-  rawList.forEach((p) => {
-    if (!includeInactive && p.is_active === false) return;
-
-    const normSlug = (p.slug || '').toLowerCase().trim();
-    const normName = createSlug(p.name || '');
-    const normId = (p.id || '').toLowerCase().trim();
-
-    const existingIdx = deduplicatedList.findIndex((item) => {
-      const itemSlug = (item.slug || '').toLowerCase().trim();
-      const itemName = createSlug(item.name || '');
-      const itemId = (item.id || '').toLowerCase().trim();
-
-      return (
-        (normId && itemId === normId) ||
-        (normSlug && itemSlug === normSlug) ||
-        (normName && itemName === normName)
-      );
+      front_img: formatImageUrl(p.front_img),
+      back_img: formatImageUrl(p.back_img),
+      slug: p.slug || createSlug(p.name, p.id),
+    }))
+    .filter((p) => {
+      if (!includeInactive && p.is_active === false) return false;
+      return true;
     });
-
-    if (existingIdx === -1) {
-      deduplicatedList.push(p);
-    } else {
-      const existing = deduplicatedList[existingIdx];
-      const existingTime = new Date(existing.updated_at || existing.created_at || 0).getTime();
-      const currentTime = new Date(p.updated_at || p.created_at || 0).getTime();
-      const mergedImages = Array.from(new Set([...(existing.images || []), ...(p.images || [])]));
-
-      if (currentTime >= existingTime) {
-        deduplicatedList[existingIdx] = {
-          ...p,
-          images: mergedImages,
-          front_img: p.front_img || existing.front_img,
-          back_img: p.back_img || existing.back_img,
-          id: existing.id || p.id,
-          slug: existing.slug || p.slug,
-        };
-      } else {
-        deduplicatedList[existingIdx] = {
-          ...existing,
-          images: mergedImages,
-        };
-      }
-    }
-  });
-
-  return deduplicatedList;
 }
 
 export async function getProductByIdFromStore(id: string): Promise<Product | null> {
@@ -265,18 +193,6 @@ export async function getProductByIdFromStore(id: string): Promise<Product | nul
 }
 
 export async function saveNewProductToStore(productPayload: Partial<Product>): Promise<Product> {
-  const existingProducts = await getAllProductsFromStore(true);
-  const targetSlug = createSlug(productPayload.slug || productPayload.name || '', '');
-
-  // Deduplication check: If product with matching slug/name already exists, update it instead of creating a duplicate
-  const existingMatch = existingProducts.find(
-    (p) => (p.slug && p.slug === targetSlug) || createSlug(p.name, p.id) === targetSlug
-  );
-
-  if (existingMatch) {
-    const updated = await updateProductInStore(existingMatch.id, productPayload);
-    if (updated) return updated;
-  }
 
   const supabase = createAdminClient();
   const id = productPayload.id || `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -391,74 +307,113 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
     stockBySize = { ...stockBySize };
     delete stockBySize['S'];
   }
-  let totalStock: number | undefined;
 
-  const payloadToUpdate: any = {
-    ...updates,
+  // Construct dbPayload with ONLY valid columns of the Supabase products table
+  const dbPayload: any = {
     updated_at: now,
   };
 
-  if (updates.name || updates.slug) {
-    payloadToUpdate.slug = createSlug(updates.slug || updates.name || '', id);
+  if (updates.name !== undefined && typeof updates.name === 'string') {
+    dbPayload.name = updates.name.trim();
+  }
+
+  if (updates.slug !== undefined && typeof updates.slug === 'string' && updates.slug.trim()) {
+    dbPayload.slug = createSlug(updates.slug, id);
+  } else if (updates.name !== undefined && typeof updates.name === 'string' && updates.name.trim()) {
+    dbPayload.slug = createSlug(updates.name, id);
+  }
+
+  if (updates.description !== undefined) {
+    dbPayload.description = (updates.description || '').trim();
+  }
+
+  if (updates.price !== undefined) {
+    dbPayload.price = Number(updates.price);
+  }
+
+  if (updates.mrp !== undefined) {
+    dbPayload.mrp = Number(updates.mrp);
+  }
+
+  if (updates.sale_price !== undefined) {
+    dbPayload.sale_price = updates.sale_price === null || (updates.sale_price as any) === '' ? null : Number(updates.sale_price);
+  }
+
+  if (updates.category !== undefined && typeof updates.category === 'string') {
+    dbPayload.category = updates.category.trim();
+  }
+
+  if (updates.nation !== undefined) {
+    dbPayload.nation = updates.nation ? String(updates.nation).trim() : null;
+  }
+
+  if (updates.front_img !== undefined) {
+    dbPayload.front_img = formatImageUrl(updates.front_img);
+  }
+
+  if (updates.back_img !== undefined) {
+    dbPayload.back_img = formatImageUrl(updates.back_img);
+  }
+
+  if (updates.sizes !== undefined && Array.isArray(updates.sizes)) {
+    dbPayload.sizes = updates.sizes.filter(sz => sz !== 'S');
+  }
+
+  if (updates.is_active !== undefined) {
+    dbPayload.is_active = Boolean(updates.is_active);
   }
 
   if (stockBySize) {
-    totalStock = calculateProductTotalStock(stockBySize);
+    dbPayload.stock_by_size = stockBySize;
+    dbPayload.stock = calculateProductTotalStock(stockBySize);
     const metadata = `__stock_by_size:${JSON.stringify(stockBySize)}`;
     const existingImages = Array.isArray(updates.images) ? updates.images : [];
     const cleanImages = existingImages.filter(
       (img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:')
     );
     cleanImages.push(metadata);
-    payloadToUpdate.images = cleanImages;
+    dbPayload.images = cleanImages;
+  } else if (updates.stock !== undefined) {
+    dbPayload.stock = Number(updates.stock);
   }
 
-  if (payloadToUpdate.front_img) {
-    payloadToUpdate.front_img = formatImageUrl(payloadToUpdate.front_img);
-  }
-  if (payloadToUpdate.back_img) {
-    payloadToUpdate.back_img = formatImageUrl(payloadToUpdate.back_img);
-  }
-
-  if (totalStock !== undefined) {
-    payloadToUpdate.stock = totalStock;
-  }
-
-  // 1. Update in Supabase if available
+  // 1. Update in Supabase (Single Source of Truth)
   if (supabase) {
     try {
-      const { error } = await supabase.from('products').update(payloadToUpdate).eq('id', id);
-      if (error && error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('schema cache'))) {
-        const retryPayload = { ...payloadToUpdate };
-        delete retryPayload.sale_price;
-        delete retryPayload.stock_by_size;
-        await supabase.from('products').update(retryPayload).eq('id', id);
+      const { error } = await supabase.from('products').update(dbPayload).eq('id', id);
+      if (error) {
+        console.error('Supabase update product error:', error);
+        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('schema cache'))) {
+          const retryPayload = { ...dbPayload };
+          delete retryPayload.sale_price;
+          delete retryPayload.stock_by_size;
+          await supabase.from('products').update(retryPayload).eq('id', id);
+        }
       }
     } catch (e) {
-      console.error('Supabase update product error:', e);
+      console.error('Supabase update product exception:', e);
     }
   }
 
-  // 2. Update in local JSON file
-  let updatedProduct: Product | null = null;
+  // 2. Sync to local JSON file fallback
   try {
     const list = ensureProductsFileExists();
     const index = list.findIndex((p) => p.id === id);
     if (index !== -1) {
       list[index] = {
         ...list[index],
-        ...payloadToUpdate,
+        ...dbPayload,
         stock_by_size: stockBySize || list[index].stock_by_size || DEFAULT_SIZE_STOCK,
-        stock: totalStock !== undefined ? totalStock : calculateProductTotalStock(list[index].stock_by_size),
+        stock: dbPayload.stock !== undefined ? dbPayload.stock : calculateProductTotalStock(list[index].stock_by_size),
       };
-      updatedProduct = list[index];
       fs.writeFileSync(PRODUCTS_FILE_PATH, JSON.stringify(list, null, 2), 'utf-8');
     }
   } catch (e) {
     console.error('Local update product error:', e);
   }
 
-  return updatedProduct || (await getProductByIdFromStore(id));
+  // 3. Re-query and return the fresh, authoritative product row directly from Supabase DB
+  return await getProductByIdFromStore(id);
 }
 
 export async function toggleProductActiveInStore(id: string, is_active: boolean): Promise<boolean> {
@@ -466,6 +421,33 @@ export async function toggleProductActiveInStore(id: string, is_active: boolean)
 }
 
 export async function deductSizeStock(productId: string, size: string, quantity: number): Promise<{ success: boolean; message?: string }> {
+  const supabase = createAdminClient();
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('deduct_product_stock_atomic', {
+        p_product_id: productId,
+        p_size: size,
+        p_quantity: quantity,
+      });
+
+      if (!error && data) {
+        if (data.success) {
+          return { success: true };
+        }
+        return {
+          success: false,
+          message: data.error === 'Insufficient stock'
+            ? `Sorry, Size ${size} is no longer available in the requested quantity (${quantity}).`
+            : data.error || 'Failed to update stock',
+        };
+      }
+    } catch (e) {
+      console.error('Supabase RPC deduct stock error:', e);
+    }
+  }
+
+  // Fallback for offline dev mode
   const product = await getProductByIdFromStore(productId);
   if (!product) {
     return { success: false, message: `Product ${productId} not found` };
@@ -477,7 +459,7 @@ export async function deductSizeStock(productId: string, size: string, quantity:
   if (currentSizeStock < quantity) {
     return {
       success: false,
-      message: `Insufficient stock for ${product.name} (Size: ${size}). Requested: ${quantity}, Available: ${currentSizeStock}`,
+      message: `Sorry, Size ${size} is no longer available for ${product.name}.`,
     };
   }
 
@@ -493,21 +475,67 @@ export async function deductSizeStock(productId: string, size: string, quantity:
   return { success: true };
 }
 
+export async function restoreSizeStock(productId: string, size: string, quantity: number): Promise<{ success: boolean }> {
+  const supabase = createAdminClient();
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('restore_product_stock_atomic', {
+        p_product_id: productId,
+        p_size: size,
+        p_quantity: quantity,
+      });
+      if (!error && data?.success) {
+        return { success: true };
+      }
+    } catch (e) {
+      console.error('Supabase RPC restore stock error:', e);
+    }
+  }
+
+  const product = await getProductByIdFromStore(productId);
+  if (!product) return { success: false };
+
+  const stockMap = { ...(product.stock_by_size || DEFAULT_SIZE_STOCK) };
+  const currentSizeStock = Number(stockMap[size]) || 0;
+  stockMap[size] = currentSizeStock + quantity;
+  const newTotalStock = calculateProductTotalStock(stockMap);
+
+  await updateProductInStore(productId, {
+    stock_by_size: stockMap,
+    stock: newTotalStock,
+  });
+
+  return { success: true };
+}
+
 export async function getProductBySlugFromStore(slug: string): Promise<Product | null> {
   const all = await getAllProductsFromStore(true);
-  const decoded = decodeURIComponent(slug || '').toLowerCase().trim();
-  const rawTarget = (slug || '').toLowerCase().trim();
+  if (!slug) return null;
 
+  const decoded = decodeURIComponent(slug).toLowerCase().trim();
+  const rawTarget = slug.toLowerCase().trim();
+
+  // 1. Direct ID or Slug match
   let found = all.find((p) => {
     const pSlug = (p.slug || '').toLowerCase().trim();
     const pId = (p.id || '').toLowerCase().trim();
     return pSlug === decoded || pId === decoded || pSlug === rawTarget || pId === rawTarget;
   });
 
+  // 2. Generated slug match from current name
   if (!found) {
     found = all.find((p) => {
       const generated = createSlug(p.name, p.id);
       return generated === decoded || generated === rawTarget;
+    });
+  }
+
+  // 3. Product ID partial match fallback (safely handles legacy URL redirects)
+  if (!found) {
+    found = all.find((p) => {
+      const pId = (p.id || '').toLowerCase().trim();
+      return pId && (decoded.includes(pId) || rawTarget.includes(pId));
     });
   }
 

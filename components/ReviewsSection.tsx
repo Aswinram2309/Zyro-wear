@@ -6,12 +6,12 @@ interface ReviewItem {
   src: string;
   name: string;
   comment?: string;
+  rating?: number;
   isVerified?: boolean;
 }
 
 export default function ReviewsSection() {
   const defaultReviewImages: ReviewItem[] = [
-    { src: '/Reviews/review 1.png', name: 'Verified Customer', isVerified: true },
     { src: '/Reviews/review 2.png', name: 'Verified Customer', isVerified: true },
     { src: '/Reviews/review 3.png', name: 'Verified Customer', isVerified: true },
     { src: '/Reviews/review 4.png', name: 'Verified Customer', isVerified: true },
@@ -32,7 +32,8 @@ export default function ReviewsSection() {
               .map((r: any) => ({
                 src: r.image_url || r.photo_url,
                 name: r.customer_name || 'Verified Buyer',
-                comment: r.comment,
+                comment: r.comment && typeof r.comment === 'string' && r.comment.trim() !== '' ? r.comment.trim() : undefined,
+                rating: r.rating ? Number(r.rating) : undefined,
                 isVerified: true,
               }));
             if (uploadedItems.length > 0) {
@@ -63,29 +64,46 @@ export default function ReviewsSection() {
         {/* Auto-Scrolling Cleaned Reviews Slider */}
         <div className="reviews-slider-wrapper">
           <div className="reviews-track" id="reviewsTrack">
-            {displayList.map((item, idx) => (
-              <div
-                key={idx}
-                className="review-card"
-                onClick={() => setActiveLightboxImg(item.src)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="review-card-frame">
-                  <img
-                    src={item.src}
-                    alt={`Customer Review by ${item.name}`}
-                    className="review-img"
-                    loading="lazy"
-                  />
+            {displayList.map((item, idx) => {
+              const hasComment = Boolean(item.comment && item.comment.trim() !== '');
+
+              return (
+                <div
+                  key={idx}
+                  className="review-card"
+                  onClick={() => setActiveLightboxImg(item.src)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="review-card-frame">
+                    <img
+                      src={item.src}
+                      alt={`Customer Review by ${item.name}`}
+                      className="review-img"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  <div className="review-card-footer">
+                    <span>
+                      <i className="fa-solid fa-circle-check"></i> {item.name.toUpperCase()}
+                    </span>
+                    <i className="fa-solid fa-magnifying-glass-plus"></i>
+                  </div>
+
+                  {hasComment && (
+                    <div className="showcase-comment-box">
+                      {item.rating && item.rating > 0 && (
+                        <div className="showcase-stars">
+                          {'★'.repeat(Math.min(5, Math.max(1, item.rating)))}
+                          {'☆'.repeat(5 - Math.min(5, Math.max(1, item.rating)))}
+                        </div>
+                      )}
+                      <p className="showcase-comment-text">&ldquo;{item.comment}&rdquo;</p>
+                    </div>
+                  )}
                 </div>
-                <div className="review-card-footer">
-                  <span>
-                    <i className="fa-solid fa-circle-check"></i> {item.name.toUpperCase()}
-                  </span>
-                  <i className="fa-solid fa-magnifying-glass-plus"></i>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

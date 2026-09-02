@@ -96,9 +96,10 @@ CREATE POLICY "Admin Full Access Order Items" ON public.order_items FOR ALL USIN
 
 -- SEED DATA: CATEGORIES
 INSERT INTO public.categories (name, slug) VALUES
-('Star Players', 'star'),
-('National Teams', 'national'),
-('Clubs', 'club')
+('Football Jerseys', 'football-jerseys'),
+('IPL Jerseys', 'ipl-jerseys'),
+('Customized T-Shirts', 'customized-t-shirts'),
+('Oversized T-Shirts', 'oversized-t-shirts')
 ON CONFLICT (slug) DO NOTHING;
 
 -- SEED DATA: PRODUCTS (12 OFFICIAL ZYRO WEAR JERSEYS)

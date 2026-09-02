@@ -83,6 +83,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+  const [activeReviewLightboxImg, setActiveReviewLightboxImg] = useState<string | null>(null);
 
   // Touch gesture refs for mobile gallery swipe
   const touchStartX = React.useRef<number | null>(null);
@@ -327,10 +328,16 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
       const fileExt = (file.name.split('.').pop() || '').toLowerCase();
       if (!allowedExts.includes(fileExt)) {
         setReviewError('Invalid file format. Allowed formats: .jpeg, .jpg, .png, .heic');
+        e.target.value = '';
+        setReviewPhoto(null);
+        setPhotoPreview(null);
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
         setReviewError('File size must be under 10MB.');
+        e.target.value = '';
+        setReviewPhoto(null);
+        setPhotoPreview(null);
         return;
       }
       setReviewError(null);
@@ -357,6 +364,8 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
     setSubmittingReview(true);
     try {
       let photoUrl: string | null = null;
+      let storagePath: string | null = null;
+
       if (reviewPhoto) {
         const formData = new FormData();
         formData.append('file', reviewPhoto);
@@ -371,6 +380,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           throw new Error(uploadData.error || 'Failed to upload photo');
         }
         photoUrl = uploadData.url;
+        storagePath = uploadData.path || null;
       }
 
       const res = await fetch('/api/reviews', {
@@ -382,6 +392,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           customerName: reviewForm.customerName.trim(),
           comment: reviewForm.comment.trim(),
           photoUrl: photoUrl,
+          storagePath: storagePath,
         }),
       });
 
@@ -834,12 +845,12 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                     </div>
                     <p className="review-card-comment">{r.comment}</p>
                     {(r.image_url || r.photo_url) && (
-                      <div className="review-card-photo-container" style={{ marginTop: '10px' }}>
+                      <div className="review-card-photo-container">
                         <img
                           src={r.image_url || r.photo_url}
-                          alt="Customer review upload"
-                          style={{ maxWidth: '160px', maxHeight: '160px', borderRadius: '8px', objectFit: 'cover', cursor: 'pointer', border: '1px solid rgba(255,199,0,0.3)' }}
-                          onClick={() => window.open(r.image_url || r.photo_url, '_blank')}
+                          alt={`Customer review upload by ${r.customer_name}`}
+                          className="review-card-photo"
+                          onClick={() => setActiveReviewLightboxImg(r.image_url || r.photo_url || null)}
                         />
                       </div>
                     )}
@@ -879,6 +890,63 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           loadProductDetails();
         }}
       />
+
+      {/* Review Photo Lightbox Modal */}
+      {activeReviewLightboxImg && (
+        <div
+          className="lightbox active"
+          id="reviewImageLightbox"
+          onClick={() => setActiveReviewLightboxImg(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px',
+          }}
+        >
+          <button
+            className="lightbox-close"
+            onClick={() => setActiveReviewLightboxImg(null)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              fontSize: '20px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+          <img
+            src={activeReviewLightboxImg}
+            alt="Enlarged Customer Review Photo"
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+              borderRadius: '10px',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+            }}
+          />
+        </div>
+      )}
+
       {/* Mobile Sticky Bottom Bar */}
       <div className="sticky-bottom-action-bar">
         <button

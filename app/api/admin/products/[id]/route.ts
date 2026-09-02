@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { updateProductInStore, toggleProductActiveInStore } from '@/lib/products-store';
+import { revalidatePath } from 'next/cache';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -41,6 +42,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return NextResponse.json({ error: 'Product not found or failed to update' }, { status: 404 });
     }
 
+    // Invalidate server-side page cache so storefront and product details update instantly
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/admin/stock');
+      revalidatePath('/product/[slug]', 'page');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, product: updated });
   } catch (error: any) {
     console.error('Error updating product:', error);
@@ -56,6 +64,12 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     const ok = await toggleProductActiveInStore(id, false);
+
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/admin/stock');
+    } catch (e) {}
+
     return NextResponse.json({ success: ok, message: 'Product deactivated successfully' });
   } catch (error: any) {
     console.error('Error deactivating product:', error);

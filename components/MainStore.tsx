@@ -18,9 +18,7 @@ interface MainStoreProps {
 }
 
 export default function MainStore({ initialProducts }: MainStoreProps) {
-  const [products, setProducts] = useState<Product[]>(
-    initialProducts && initialProducts.length > 0 ? initialProducts : INITIAL_PRODUCTS
-  );
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -146,7 +144,8 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
       activeFilter === 'all' ||
       (activeFilter === 'football' && normalizedCat === 'Football Jerseys') ||
       (activeFilter === 'ipl' && normalizedCat === 'IPL Jerseys') ||
-      (activeFilter === 'customize' && normalizedCat === 'Customize Jerseys') ||
+      (activeFilter === 'customized' && normalizedCat === 'Customized T-Shirts') ||
+      (activeFilter === 'oversized' && normalizedCat === 'Oversized T-Shirts') ||
       (p.category && p.category.toLowerCase().includes(activeFilter.toLowerCase()));
 
     const q = searchQuery.toLowerCase().trim();
@@ -198,7 +197,7 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
         onSearchChange={setSearchQuery}
       />
 
-      <Hero />
+      <Hero products={products} />
 
       {/* Product Catalog Section / Trending Now */}
       <section className="catalog-section" id="shop">
@@ -231,10 +230,16 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
                 IPL JERSEYS
               </button>
               <button
-                className={`tab-btn ${activeFilter === 'customize' ? 'active' : ''}`}
-                onClick={() => setActiveFilter('customize')}
+                className={`tab-btn ${activeFilter === 'customized' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('customized')}
               >
-                CUSTOMIZE JERSEYS
+                CUSTOMIZED T-SHIRTS
+              </button>
+              <button
+                className={`tab-btn ${activeFilter === 'oversized' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('oversized')}
+              >
+                OVERSIZED T-SHIRTS
               </button>
             </div>
             <div className="search-box">

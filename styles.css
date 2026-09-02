@@ -1100,6 +1100,34 @@ button {
     font-weight: 700;
 }
 
+.showcase-comment-box {
+    padding: 0.65rem 0.9rem 0.85rem;
+    background: rgba(12, 14, 18, 0.98);
+    border-top: 1px solid rgba(255, 199, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.showcase-stars {
+    color: var(--color-gold-primary);
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+}
+
+.showcase-comment-text {
+    font-size: 0.82rem;
+    color: #E2E8F0;
+    line-height: 1.45;
+    font-style: italic;
+    word-break: break-word;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    margin: 0;
+}
+
 /* Value Props Grid */
 .value-props-section {
     background-color: #121417;
@@ -1211,6 +1239,36 @@ button {
 
 .footer-col ul li a:hover {
     color: var(--color-gold-primary);
+}
+
+.footer-contact-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.footer-contact-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    background-color: #FFC700;
+    color: #0F172A;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    width: fit-content;
+}
+
+.footer-contact-btn:hover {
+    transform: translateY(-2px);
+    background-color: #E6B200;
+    color: #0F172A;
+    box-shadow: 0 4px 12px rgba(255, 199, 0, 0.25);
 }
 
 .footer-wa-btn {
@@ -5018,6 +5076,30 @@ button {
     line-height: 1.5;
 }
 
+.review-card-photo-container {
+    margin-top: 1rem;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.review-card-photo {
+    max-width: 100%;
+    max-height: 220px;
+    width: auto;
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 199, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.review-card-photo:hover {
+    transform: scale(1.02);
+    border-color: #FFC700;
+}
+
 /* ==============================================================================
    RESPONSIVE OVERRIDES
    ============================================================================== */
@@ -5884,6 +5966,97 @@ button {
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
+    /* 1. Global Reset & Body Safety */
+    html, body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    .section-container {
+        width: 92%;
+        padding: 2.5rem 0;
+    }
+
+    .section-header h2, .main-heading {
+        font-size: 1.75rem !important;
+        line-height: 1.2;
+    }
+
+    .sub-heading {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+    }
+
+    .section-intro {
+        font-size: 0.9rem;
+    }
+
+    /* 2. Announcement Bar */
+    .announcement-bar {
+        font-size: 0.72rem;
+        padding: 0.4rem 0.5rem;
+        text-align: center;
+        line-height: 1.3;
+    }
+
+    /* 3. Header & Navbar */
+    .navbar {
+        height: 70px;
+    }
+
+    .nav-container {
+        width: 94%;
+        height: 100%;
+        justify-content: space-between;
+    }
+
+    .brand-logo {
+        height: 34px;
+        width: auto;
+    }
+
+    .nav-links {
+        display: none !important;
+    }
+
+    .mobile-menu-btn {
+        display: flex !important;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .search-trigger, .cart-trigger, .mobile-menu-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+    }
+
+    .mobile-nav-drawer {
+        width: 85vw;
+        max-width: 320px;
+    }
+
+    /* 4. Search Bar Overlay */
+    .search-bar-overlay {
+        top: 70px;
+        padding: 0.75rem 0;
+    }
+
+    .search-inner {
+        width: 94%;
+    }
+
+    .search-inner input {
+        font-size: 0.95rem;
+    }
+
     .search-dropdown {
         width: 95%;
         margin-top: 0.5rem;
@@ -5905,6 +6078,411 @@ button {
     }
     .suggestion-tag {
         font-size: 0.65rem;
+    }
+
+    /* 5. Hero Section (Homepage) */
+    .hero-section {
+        padding: 1.5rem 0 3rem 0;
+    }
+
+    .hero-container {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 1.5rem !important;
+        text-align: center;
+    }
+
+    /* Mobile Structure Requirement: ONE Product Showcase comes FIRST */
+    .hero-visual {
+        order: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto 0.5rem auto !important;
+        position: relative !important;
+        overflow: visible !important;
+    }
+
+    .neon-z-glow {
+        width: 220px !important;
+        height: 300px !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    .featured-jersey-wrapper {
+        width: 100% !important;
+        max-width: 320px !important;
+        margin: 0 auto !important;
+        padding: 0.5rem 0 0 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important;
+    }
+
+    .featured-jersey-img {
+        max-height: 250px !important;
+        width: auto !important;
+        max-width: 85vw !important;
+        object-fit: contain !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }
+
+    .hero-product-tag {
+        position: relative !important;
+        bottom: auto !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+        margin: 0.85rem auto 0 auto !important;
+        width: auto !important;
+        max-width: 90vw !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.5rem 1.2rem !important;
+    }
+
+    .tag-title {
+        font-size: 0.85rem !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    .tag-price {
+        font-size: 0.9rem !important;
+    }
+
+    /* Mobile Structure Requirement: Content (Badge, Title, Description, Buttons) comes SECOND */
+    .hero-content {
+        order: 2 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .hero-badge {
+        margin-bottom: 0.85rem;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.8rem;
+    }
+
+    .hero-title {
+        font-size: 2.1rem !important;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin-bottom: 0.85rem;
+        word-break: break-word;
+    }
+
+    .hero-description {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+        max-width: 100%;
+        padding: 0 0.25rem;
+    }
+
+    /* Hero Buttons: Stacked vertically on mobile, full width inside viewport */
+    .hero-actions {
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 360px;
+        gap: 0.85rem !important;
+        margin-bottom: 2rem !important;
+        align-items: stretch !important;
+    }
+
+    .btn-gold, .btn-outline {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.85rem 1.25rem !important;
+        font-size: 0.9rem !important;
+        box-sizing: border-box !important;
+        text-align: center;
+    }
+
+    /* Hero Trust Badges: Stacked vertically or responsive flex row */
+    .hero-trust-badges {
+        flex-direction: column !important;
+        gap: 0.85rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        padding-top: 1.25rem !important;
+    }
+
+    .trust-item {
+        font-size: 0.8rem !important;
+        gap: 0.5rem !important;
+        font-weight: 700;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tag-title {
+        font-size: 0.85rem;
+    }
+
+    .tag-price {
+        font-size: 0.9rem;
+    }
+
+    /* 6. Shop & Product Grid */
+    .category-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 2rem !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .category-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category-btn {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        font-size: 0.78rem !important;
+        padding: 0.5rem 0.85rem !important;
+    }
+
+    .products-grid, .product-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+        width: 100% !important;
+    }
+
+    .product-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 auto !important;
+    }
+
+    .product-img-container, .product-image-frame {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 380px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .product-info {
+        padding: 1rem !important;
+    }
+
+    .product-title, .product-name {
+        font-size: 0.95rem !important;
+        line-height: 1.35 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    .product-prices {
+        gap: 0.5rem !important;
+    }
+
+    .sale-price, .product-price {
+        font-size: 1.1rem !important;
+    }
+
+    .regular-price, .old-price {
+        font-size: 0.85rem !important;
+    }
+
+    /* 7. Value Props Section */
+    .value-props-section {
+        padding: 2.5rem 0;
+    }
+
+    .props-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    .prop-card {
+        padding: 1rem;
+    }
+
+    /* 8. Customer Feedback / Reviews Slider Showcase */
+    .reviews-section {
+        padding: 3rem 0;
+    }
+
+    .reviews-slider-wrapper {
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+
+    .review-card {
+        width: 270px !important;
+        max-width: 80vw !important;
+    }
+
+    /* 9. Footer Section */
+    .footer {
+        padding-top: 2.5rem;
+    }
+
+    .footer-container {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+        padding-bottom: 2rem;
+    }
+
+    .footer-about {
+        max-width: 100%;
+    }
+
+    .footer-contact-group {
+        width: 100%;
+    }
+
+    .footer-contact-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-content: flex-start !important;
+        font-size: 0.8rem !important;
+        word-break: break-all;
+        padding: 0.6rem 0.8rem !important;
+    }
+
+    .footer-bottom-container {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        text-align: center;
+        padding: 1.25rem 0 !important;
+    }
+
+    /* 10. Product Details Page */
+    .product-details-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.75rem !important;
+    }
+
+    .product-title-large {
+        font-size: 1.6rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .size-selector-row {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .size-pill {
+        min-width: 44px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .action-buttons-group {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0.75rem !important;
+    }
+
+    .btn-add-to-cart, .btn-buy-now {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* 11. Size Chart Accordion & Tables */
+    .size-chart-accordion {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .size-chart-table-container {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .size-chart-table {
+        min-width: 320px;
+        font-size: 0.78rem !important;
+    }
+
+    .size-chart-table th, .size-chart-table td {
+        padding: 0.45rem 0.35rem !important;
+    }
+
+    /* 12. Cart Drawer & Checkout Modal */
+    .cart-drawer {
+        width: 100vw !important;
+        max-width: 100vw !important;
+    }
+
+    .checkout-modal-container, .modal-box {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        padding: 1.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .form-grid, .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+    }
+
+    input, select, textarea {
+        font-size: 16px !important; /* Prevents auto-zoom on mobile safari */
+    }
+
+    /* 13. Admin Dashboard & Stock Table */
+    .admin-container {
+        width: 95% !important;
+        padding: 1.5rem 0 !important;
+    }
+
+    .stock-table-wrapper {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .stock-table {
+        min-width: 600px;
+    }
+}
+
+/* Extra Small Mobile Screens (Below 380px Viewport Width: 320px, 360px, 375px) */
+@media (max-width: 380px) {
+    .hero-title {
+        font-size: 1.9rem !important;
+    }
+
+    .products-grid, .product-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .review-card {
+        width: 240px !important;
     }
 }
 

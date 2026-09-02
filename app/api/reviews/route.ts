@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, rating, customerName, comment, photoUrl, imageUrl } = body;
+    const { productId, rating, customerName, comment, photoUrl, imageUrl, storagePath } = body;
     const finalPhoto = photoUrl || imageUrl || null;
 
     if (!productId || !rating || !customerName || !comment) {
@@ -73,6 +73,10 @@ export async function POST(req: Request) {
       .single();
 
     if (prodError || !product) {
+      // Clean up orphaned image if uploaded
+      if (storagePath) {
+        await supabase.storage.from('review-images').remove([storagePath]).catch(() => {});
+      }
       return NextResponse.json({ error: 'Product does not exist' }, { status: 400 });
     }
 
@@ -92,21 +96,11 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    if (insertError && finalPhoto && (insertError.message.includes('image_url') || insertError.message.includes('column'))) {
-      delete payload.image_url;
-      const retry = await supabase
-        .from('reviews')
-        .insert(payload)
-        .select()
-        .single();
-      review = retry.data;
-      insertError = retry.error;
-      if (review) {
-        review.image_url = finalPhoto;
-      }
-    }
-
     if (insertError) {
+      // Clean up orphaned image if uploaded
+      if (storagePath) {
+        await supabase.storage.from('review-images').remove([storagePath]).catch(() => {});
+      }
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 

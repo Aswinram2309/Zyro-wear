@@ -5,23 +5,29 @@ import { useRouter } from 'next/navigation';
 import { INITIAL_PRODUCTS } from '@/lib/products-data';
 import { Product } from '@/types';
 
-export default function Hero() {
+interface HeroProps {
+  products?: Product[];
+}
+
+export default function Hero({ products }: HeroProps) {
   const router = useRouter();
   const [heroIndex, setHeroIndex] = useState(0);
   const [fade, setFade] = useState(false);
+
+  const displayProducts = products || [];
 
   useEffect(() => {
     const timer = setInterval(() => {
       setFade(true);
       setTimeout(() => {
-        setHeroIndex((prev) => (prev + 1) % INITIAL_PRODUCTS.length);
+        setHeroIndex((prev) => (prev + 1) % displayProducts.length);
         setFade(false);
       }, 400);
     }, 3200);
     return () => clearInterval(timer);
-  }, []);
+  }, [displayProducts.length]);
 
-  const currentHeroProduct = INITIAL_PRODUCTS[heroIndex] || INITIAL_PRODUCTS[0];
+  const currentHeroProduct = displayProducts[heroIndex] || displayProducts[0];
 
   return (
     <section className="hero-section" id="home">

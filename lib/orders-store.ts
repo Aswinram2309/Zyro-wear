@@ -132,6 +132,41 @@ export async function saveOrderToStore(orderPayload: {
   return orderRecord;
 }
 
+export async function findOrderByPaymentId(paymentId: string, orderId?: string) {
+  const supabase = createAdminClient();
+
+  if (supabase && (paymentId || orderId)) {
+    try {
+      let query = supabase.from('orders').select('*');
+      if (paymentId) {
+        query = query.eq('razorpay_payment_id', paymentId);
+      } else if (orderId) {
+        query = query.eq('razorpay_order_id', orderId);
+      }
+
+      const { data, error } = await query.maybeSingle();
+      if (!error && data) {
+        return data;
+      }
+    } catch (e) {
+      console.error('Supabase order lookup error:', e);
+    }
+  }
+
+  try {
+    ensureDataDirExists();
+    const raw = fs.readFileSync(ORDERS_FILE_PATH, 'utf-8');
+    const ordersList = JSON.parse(raw || '[]');
+    return ordersList.find(
+      (o: any) =>
+        (paymentId && o.razorpay_payment_id === paymentId) ||
+        (orderId && o.razorpay_order_id === orderId)
+    ) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function getAllOrdersFromStore() {
   const supabase = createAdminClient();
 

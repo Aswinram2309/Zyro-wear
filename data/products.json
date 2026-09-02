@@ -1,37 +1,62 @@
 [
   {
-    "id": "prod_1786805933986_qw35",
-    "name": "VIRAT KING #18",
-    "slug": "virat-king-18",
-    "description": "Official Royal Challengers Bengaluru IPL Jersey featuring King Kohli #18.",
+    "id": "prod_1788330287467_8ywp",
+    "name": "Virat Kohil #18 2026 RCB Home",
+    "slug": "virat-kohil-18-2026-rcb-home",
+    "description": "2026 RCb home Kit with one Star",
     "price": 299,
     "mrp": 699,
     "sale_price": null,
-    "category": "ipl",
-    "front_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/front_1786805933074.jpg",
-    "back_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/back_1786805933551.jpg",
+    "category": "IPL Jerseys",
+    "front_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/front_1788330284714.jpeg",
+    "back_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/back_1788330286332.jpeg",
     "images": [
-      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/front_1786805933074.jpg",
-      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1786805932880/back_1786805933551.jpg"
+      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/front_1788330284714.jpeg",
+      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/back_1788330286332.jpeg",
+      "__stock_by_size:{\"M\":15,\"L\":15,\"XL\":10,\"XXL\":5}"
     ],
     "sizes": [
-      "S",
       "M",
       "L",
       "XL",
       "XXL"
     ],
-    "stock": 55,
+    "stock": 45,
     "stock_by_size": {
-      "S": 10,
       "M": 15,
       "L": 15,
       "XL": 10,
       "XXL": 5
     },
+    "size_chart": {
+      "M": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      },
+      "L": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      },
+      "XL": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      },
+      "XXL": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      }
+    },
     "is_active": true,
-    "created_at": "2026-08-15T14:58:53.986Z",
-    "updated_at": "2026-08-15T14:59:12.524Z"
+    "created_at": "2026-09-02T06:24:47.467Z",
+    "updated_at": "2026-09-02T06:28:39.055Z"
   },
   {
     "id": "prod_1786696215599_s5xe",
@@ -45,8 +70,7 @@
     "front_img": "/uploads/products/prod_1786696212079/front_1786696212798.png",
     "back_img": "/uploads/products/prod_1786696212079/back_1786696214195.png",
     "images": [
-      "/uploads/products/prod_1786696212079/front_1786696212798.png",
-      "/uploads/products/prod_1786696212079/back_1786696214195.png"
+      "__stock_by_size:{\"M\":1,\"L\":2,\"XL\":2,\"XXL\":1}"
     ],
     "sizes": [
       "S",
@@ -55,17 +79,16 @@
       "XL",
       "XXL"
     ],
-    "stock": 7,
+    "stock": 6,
     "stock_by_size": {
-      "S": 0,
-      "M": 2,
+      "M": 1,
       "L": 2,
       "XL": 2,
       "XXL": 1
     },
     "is_active": true,
     "created_at": "2026-08-14T08:30:15.599Z",
-    "updated_at": "2026-08-14T08:50:53.982Z"
+    "updated_at": "2026-08-31T05:28:47.054Z"
   },
   {
     "id": "arg-home-10",
@@ -244,17 +267,16 @@
   },
   {
     "id": "ger-home-10",
-    "name": "Germany Home Kit (Musiala #10)",
-    "slug": "germany-home-kit-musiala-10",
+    "name": "Germany Home(Musiala #10)",
+    "slug": "germany-home-musiala-10",
     "description": "Modern DFB White & Flame Graphic Home Kit featuring Jamal Musiala #10. Precision engineering and breathable texture.",
     "price": 299,
     "mrp": 699,
-    "category": "star",
+    "category": "Football Jerseys",
     "nation": "Germany",
     "front_img": "/ZYRO_Wear_Studio_Imgs/Germany_Home_Front.png",
     "back_img": "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png",
     "sizes": [
-      "S",
       "M",
       "L",
       "XL",
@@ -262,19 +284,19 @@
     ],
     "sale_price": null,
     "stock_by_size": {
-      "S": 10,
-      "M": 15,
-      "L": 15,
-      "XL": 10,
-      "XXL": 5
+      "M": 0,
+      "L": 2,
+      "XL": 2,
+      "XXL": 0
     },
-    "stock": 55,
+    "stock": 4,
     "is_active": true,
     "created_at": "2026-08-14T06:27:46.198Z",
-    "updated_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-09-02T06:13:48.278Z",
     "images": [
       "/ZYRO_Wear_Studio_Imgs/Germany_Home_Front.png",
-      "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png"
+      "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png",
+      "__stock_by_size:{\"M\":0,\"L\":2,\"XL\":2,\"XXL\":0}"
     ]
   },
   {

@@ -11,7 +11,8 @@ const ALL_SIZES = ['M', 'L', 'XL', 'XXL'];
 const CATEGORY_OPTIONS = [
   { label: 'Football Jerseys', value: 'Football Jerseys' },
   { label: 'IPL Jerseys', value: 'IPL Jerseys' },
-  { label: 'Customize Jerseys', value: 'Customize Jerseys' },
+  { label: 'Customized T-Shirts', value: 'Customized T-Shirts' },
+  { label: 'Oversized T-Shirts', value: 'Oversized T-Shirts' },
 ];
 
 export default function StockManagementPage() {
@@ -89,7 +90,7 @@ export default function StockManagementPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/products');
+      const res = await fetch(`/api/admin/products?t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.products && Array.isArray(data.products)) {
         setProducts(data.products);
