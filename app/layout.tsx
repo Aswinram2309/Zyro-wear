@@ -3,9 +3,30 @@ import '@/styles.css';
 import OfflineStatus from '@/components/OfflineStatus';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://zyrowearonline.in'),
   title: 'ZYRO WEAR — Wear Your Energy | Premium Football Jerseys & Streetwear',
   description:
     'Shop official premium international football jerseys at ZYRO Wear. High quality, comfortable fit, bold designs. Only ₹299.',
+  alternates: {
+    canonical: 'https://zyrowearonline.in',
+  },
+  openGraph: {
+    title: 'ZYRO WEAR — Wear Your Energy',
+    description:
+      'Shop official premium international football jerseys at ZYRO Wear. High quality, comfortable fit, bold designs. Only ₹299.',
+    url: 'https://zyrowearonline.in',
+    siteName: 'ZYRO WEAR',
+    images: [
+      {
+        url: '/Logo/Zyro wears logo.jpeg',
+        width: 800,
+        height: 600,
+        alt: 'ZYRO WEAR',
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
