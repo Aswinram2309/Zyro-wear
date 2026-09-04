@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CartItem, CustomerDetails } from '@/types';
+import { CartItem, CustomerDetails } from '@/shared/types';
 
 interface CheckoutModalProps {
   isOpen: boolean;

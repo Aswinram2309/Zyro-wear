@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateProductInStore, toggleProductActiveInStore } from '@/lib/products-store';
+import { updateProductInStore, toggleProductActiveInStore } from '@/database/stores/products-store';
 import { revalidatePath } from 'next/cache';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {

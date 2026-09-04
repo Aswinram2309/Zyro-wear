@@ -9,9 +9,9 @@ import CartDrawer from './CartDrawer';
 import CheckoutModal from './CheckoutModal';
 import ReviewsSection from './ReviewsSection';
 import Footer from './Footer';
-import { INITIAL_PRODUCTS } from '@/lib/products-data';
-import { Product, CartItem } from '@/types';
-import { normalizeCategory } from '@/lib/stock-config';
+import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
+import { Product, CartItem } from '@/shared/types';
+import { normalizeCategory } from '@/shared/constants/stock-config';
 
 interface MainStoreProps {
   initialProducts?: Product[];

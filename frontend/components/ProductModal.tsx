@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Product } from '@/types';
+import { Product } from '@/shared/types';
 
 interface ProductModalProps {
   product: Product | null;

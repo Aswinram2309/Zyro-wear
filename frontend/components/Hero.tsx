@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { INITIAL_PRODUCTS } from '@/lib/products-data';
-import { Product } from '@/types';
+import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
+import { Product } from '@/shared/types';
 
 interface HeroProps {
   products?: Product[];

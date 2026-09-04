@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 
 // Dedicated in-memory deduplication set for Sent Order Numbers (prevents duplicate emails on retries/webhooks)
 const sentOrderEmails = new Set<string>();
+const sentAdminOrderEmails = new Set<string>();
 
 export interface OrderEmailPayload {
   orderNumber: string;
@@ -195,6 +196,115 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
   } catch (error: any) {
     console.error(`[Resend Email Service Error] Failed to send email for Order #${orderData.orderNumber}:`, error);
     // Return error without throwing so checkout process is never broken
+    return { success: false, error: error.message || error };
+  }
+}
+
+export async function sendAdminNewOrderEmail(orderData: OrderEmailPayload, razorpayPaymentId: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!apiKey || !adminEmail) {
+    console.warn('[Resend Email Service] RESEND_API_KEY or ADMIN_EMAIL is missing. Admin email skipped.');
+    return { success: false, reason: 'CONFIG_MISSING' };
+  }
+
+  // Duplicate protection check
+  if (sentAdminOrderEmails.has(orderData.orderNumber)) {
+    console.log(`[Resend Email Service] Admin email for Order #${orderData.orderNumber} already sent. Skipping.`);
+    return { success: true, reason: 'DUPLICATE_SKIPPED' };
+  }
+
+  const resend = new Resend(apiKey);
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'ZYRO Wear <onboarding@resend.dev>';
+
+  const itemsHtml = orderData.items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">
+          ${item.product_name} <br> <small>Size: ${item.size}</small>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">₹${item.price * item.quantity}</td>
+      </tr>
+      `
+    )
+    .join('');
+
+  const shippingFee = orderData.subtotal >= 999 ? 0 : 49;
+
+  const emailHtml = `
+  <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto;">
+    <h2 style="color: #000; border-bottom: 2px solid #ffc700; padding-bottom: 10px;">🛍️ New Order Received: #${orderData.orderNumber}</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+      <h3 style="margin-top: 0;">Customer Details</h3>
+      <p style="margin: 5px 0;"><strong>Name:</strong> ${orderData.customerName}</p>
+      <p style="margin: 5px 0;"><strong>Email:</strong> ${orderData.email}</p>
+      <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.phone}</p>
+    </div>
+
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+      <h3 style="margin-top: 0;">Payment Details</h3>
+      <p style="margin: 5px 0;"><strong>Status:</strong> ${orderData.paymentStatus}</p>
+      <p style="margin: 5px 0;"><strong>Razorpay Payment ID:</strong> ${razorpayPaymentId}</p>
+      <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date(orderData.createdAt).toLocaleString('en-IN')}</p>
+    </div>
+
+    <h3 style="border-bottom: 1px solid #eee; padding-bottom: 8px;">Order Summary</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+      <thead>
+        <tr style="background-color: #f1f1f1;">
+          <th style="padding: 10px; text-align: left;">Product</th>
+          <th style="padding: 10px; text-align: center;">Qty</th>
+          <th style="padding: 10px; text-align: right;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+    </table>
+
+    <table style="width: 100%; margin-bottom: 20px;">
+      <tr>
+        <td style="text-align: right; padding: 5px 0;">Subtotal:</td>
+        <td style="text-align: right; font-weight: bold; width: 100px;">₹${orderData.subtotal}</td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding: 5px 0;">Shipping:</td>
+        <td style="text-align: right; font-weight: bold;">₹${shippingFee}</td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding: 10px 0; font-size: 18px; border-top: 2px solid #000;"><strong>Total:</strong></td>
+        <td style="text-align: right; padding: 10px 0; font-size: 18px; border-top: 2px solid #000; color: #ffc700;"><strong>₹${orderData.totalAmount}</strong></td>
+      </tr>
+    </table>
+
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px;">
+      <h3 style="margin-top: 0;">Delivery Address</h3>
+      <p style="margin: 0; line-height: 1.5;">
+        ${orderData.customerName}<br>
+        ${orderData.address}<br>
+        ${orderData.city}, ${orderData.state} - ${orderData.pincode}
+      </p>
+    </div>
+  </div>
+  `;
+
+  try {
+    const data = await resend.emails.send({
+      from: fromEmail,
+      to: [adminEmail],
+      subject: `🛍️ New Order Received - #${orderData.orderNumber}`,
+      html: emailHtml,
+    });
+
+    sentAdminOrderEmails.add(orderData.orderNumber);
+    console.log(`[Resend Email Service] Successfully sent Admin notification for Order #${orderData.orderNumber}`);
+    return { success: true, data };
+  } catch (error: any) {
+    console.error(`[Resend Email Service Error] Failed to send Admin email for Order #${orderData.orderNumber}:`, error);
     return { success: false, error: error.message || error };
   }
 }

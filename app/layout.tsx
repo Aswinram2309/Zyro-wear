@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import '@/styles.css';
-import OfflineStatus from '@/components/OfflineStatus';
+import '@/frontend/styles/globals.css';
+import OfflineStatus from '@/frontend/components/OfflineStatus';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://zyrowearonline.in'),

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { BUSINESS_CONTACT } from '@/lib/contact-config';
+import { BUSINESS_CONTACT } from '@/shared/constants/contact-config';
 
 export default function Footer() {
   return (

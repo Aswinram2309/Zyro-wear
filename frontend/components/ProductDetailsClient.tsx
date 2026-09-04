@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Product, CartItem, Review } from '@/types';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import CartDrawer from '@/components/CartDrawer';
-import CheckoutModal from '@/components/CheckoutModal';
-import SizeChart from '@/components/SizeChart';
-import { formatImageUrl } from '@/lib/stock-config';
+import { Product, CartItem, Review } from '@/shared/types';
+import Navbar from '@/frontend/components/Navbar';
+import Footer from '@/frontend/components/Footer';
+import CartDrawer from '@/frontend/components/CartDrawer';
+import CheckoutModal from '@/frontend/components/CheckoutModal';
+import SizeChart from '@/frontend/components/SizeChart';
+import { formatImageUrl } from '@/shared/constants/stock-config';
 
 interface ProductDetailsClientProps {
   initialProduct: Product;

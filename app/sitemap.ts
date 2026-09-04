@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { INITIAL_PRODUCTS } from '@/lib/products-data';
+import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://zyrowearonline.in';

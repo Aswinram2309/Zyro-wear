@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateSiteSettingsInStore } from '@/lib/settings-store';
+import { updateSiteSettingsInStore } from '@/database/stores/settings-store';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

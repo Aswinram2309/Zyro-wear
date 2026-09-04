@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient } from '@/database/client/admin';
 
 export interface SiteSettings {
   id: string;

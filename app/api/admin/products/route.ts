@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllProductsFromStore, saveNewProductToStore } from '@/lib/products-store';
+import { getAllProductsFromStore, saveNewProductToStore } from '@/database/stores/products-store';
 import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';

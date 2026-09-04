@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { createAdminClient } from './supabase/admin';
-import { INITIAL_PRODUCTS } from './products-data';
-import { Product } from '@/types';
-import { formatImageUrl } from './stock-config';
+import { createAdminClient } from '@/database/client/admin';
+import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
+import { Product } from '@/shared/types';
+import { formatImageUrl } from '@/shared/constants/stock-config';
 
 const PRODUCTS_FILE_PATH = path.join(process.cwd(), 'data', 'products.json');
 

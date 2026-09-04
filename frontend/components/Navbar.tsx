@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Product } from '@/types';
+import { Product } from '@/shared/types';
 
 interface NavbarProps {
   cartCount: number;

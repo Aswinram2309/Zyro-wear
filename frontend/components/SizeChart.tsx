@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SizeMeasurement } from '@/types';
+import { SizeMeasurement } from '@/shared/types';
 
 interface SizeChartProps {
   sizeChart?: Record<string, SizeMeasurement>;

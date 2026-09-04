@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateOrderStatusInStore } from '@/lib/orders-store';
+import { updateOrderStatusInStore } from '@/database/stores/orders-store';
 
 export const dynamic = 'force-dynamic';
 

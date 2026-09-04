@@ -1,4 +1,4 @@
-import { Product } from '@/types';
+import { Product } from '@/shared/types';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {

@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Product } from '@/types';
-import { calculateStockStatus, DEFAULT_LOW_STOCK_THRESHOLD, formatImageUrl, normalizeCategory } from '@/lib/stock-config';
+import { Product } from '@/shared/types';
+import { calculateStockStatus, DEFAULT_LOW_STOCK_THRESHOLD, formatImageUrl, normalizeCategory } from '@/shared/constants/stock-config';
 
 const ALL_SIZES = ['M', 'L', 'XL', 'XXL'];
 

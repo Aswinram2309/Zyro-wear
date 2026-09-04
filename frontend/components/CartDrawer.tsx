@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CartItem } from '@/types';
+import { CartItem } from '@/shared/types';
 
 interface CartDrawerProps {
   isOpen: boolean;

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { saveOrderToStore, findOrderByPaymentId } from '@/lib/orders-store';
-import { sendOrderConfirmationEmail } from '@/lib/email-service';
-import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/lib/products-store';
+import { saveOrderToStore, findOrderByPaymentId } from '@/database/stores/orders-store';
+import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
+import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
 
 export async function POST(req: Request) {
   try {
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 
     // 6. Send Order Confirmation Email via Resend (Server-Side Only)
     try {
-      await sendOrderConfirmationEmail({
+      const orderPayload = {
         orderNumber: savedOrder.order_number,
         customerName: customer.fullName,
         email: customer.email,
@@ -119,7 +119,13 @@ export async function POST(req: Request) {
         totalAmount,
         paymentStatus: 'PAID',
         createdAt: savedOrder.created_at || new Date().toISOString(),
-      });
+      };
+      
+      // Send to Customer
+      await sendOrderConfirmationEmail(orderPayload);
+      
+      // Send to Admin
+      await sendAdminNewOrderEmail(orderPayload, razorpayPaymentId);
     } catch (emailErr) {
       console.error('Non-critical email dispatch error:', emailErr);
     }

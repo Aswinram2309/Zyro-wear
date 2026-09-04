@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import { getProductBySlugFromStore } from '@/lib/products-store';
+import { getProductBySlugFromStore } from '@/database/stores/products-store';
 import { notFound } from 'next/navigation';
-import ProductDetailsClient from '@/components/ProductDetailsClient';
+import ProductDetailsClient from '@/frontend/components/ProductDetailsClient';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

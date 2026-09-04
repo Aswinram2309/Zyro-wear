@@ -1,5 +1,5 @@
-import { getAllProductsFromStore } from '@/lib/products-store';
-import MainStore from '@/components/MainStore';
+import { getAllProductsFromStore } from '@/database/stores/products-store';
+import MainStore from '@/frontend/components/MainStore';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

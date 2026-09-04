@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllOrdersFromStore } from '@/lib/orders-store';
+import { getAllOrdersFromStore } from '@/database/stores/orders-store';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Product } from '@/types';
+import { Product } from '@/shared/types';
 
 interface ProductCardProps {
   product: Product;

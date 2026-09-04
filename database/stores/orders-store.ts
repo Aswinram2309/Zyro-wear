@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { createAdminClient } from './supabase/admin';
+import { createAdminClient } from '@/database/client/admin';
 
 const ORDERS_FILE_PATH = path.join(process.cwd(), 'data', 'orders.json');
 

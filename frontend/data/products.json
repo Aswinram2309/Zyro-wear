@@ -1,5 +1,96 @@
 [
   {
+    "id": "prod_1788330287467_8ywp",
+    "name": "Virat Kohil #18 2026 RCB Home",
+    "slug": "virat-kohil-18-2026-rcb-home",
+    "description": "2026 RCb home Kit with one Star",
+    "price": 299,
+    "mrp": 699,
+    "sale_price": null,
+    "category": "IPL Jerseys",
+    "front_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/front_1788330284714.jpeg",
+    "back_img": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/back_1788330286332.jpeg",
+    "images": [
+      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/front_1788330284714.jpeg",
+      "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/product/prod_1788330284240/back_1788330286332.jpeg",
+      "__stock_by_size:{\"M\":15,\"L\":15,\"XL\":10,\"XXL\":5}"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "stock": 45,
+    "stock_by_size": {
+      "M": 15,
+      "L": 15,
+      "XL": 10,
+      "XXL": 5
+    },
+    "size_chart": {
+      "M": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      },
+      "L": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      },
+      "XL": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      },
+      "XXL": {
+        "length": "",
+        "chest": "",
+        "shoulder": "",
+        "sleeve": ""
+      }
+    },
+    "is_active": true,
+    "created_at": "2026-09-02T06:24:47.467Z",
+    "updated_at": "2026-09-02T06:28:39.055Z"
+  },
+  {
+    "id": "prod_1786696215599_s5xe",
+    "name": "Morocco Home Kit (Hakimi #2)",
+    "slug": "morocco-home-kit-hakimi-2",
+    "description": "Official Morocco Home Kit featuring Hakimi #2.",
+    "price": 299,
+    "mrp": 699,
+    "sale_price": null,
+    "category": "star",
+    "front_img": "/uploads/products/prod_1786696212079/front_1786696212798.png",
+    "back_img": "/uploads/products/prod_1786696212079/back_1786696214195.png",
+    "images": [
+      "__stock_by_size:{\"M\":1,\"L\":2,\"XL\":2,\"XXL\":1}"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "stock": 6,
+    "stock_by_size": {
+      "M": 1,
+      "L": 2,
+      "XL": 2,
+      "XXL": 1
+    },
+    "is_active": true,
+    "created_at": "2026-08-14T08:30:15.599Z",
+    "updated_at": "2026-08-31T05:28:47.054Z"
+  },
+  {
     "id": "arg-home-10",
     "name": "Argentina Home Kit (Messi #10)",
     "slug": "argentina-home-kit-messi-10",
@@ -19,17 +110,19 @@
     ],
     "sale_price": null,
     "stock_by_size": {
+      "S": 0,
       "M": 0,
       "L": 1,
-      "XL": 6,
+      "XL": 0,
       "XXL": 0
     },
-    "stock": 7,
+    "stock": 1,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.762Z",
-    "updated_at": "2026-09-04T08:11:17.154Z",
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-15T14:44:51.148Z",
     "images": [
-      "__stock_by_size:{\"M\":0,\"L\":1,\"XL\":6,\"XXL\":0}"
+      "/ZYRO_Wear_Studio_Imgs/Argentina_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Argentina_Home_Messi_10_Back.png"
     ]
   },
   {
@@ -52,16 +145,20 @@
     ],
     "sale_price": null,
     "stock_by_size": {
-      "S": 10,
-      "M": 15,
-      "L": 15,
-      "XL": 10,
-      "XXL": 5
+      "S": 0,
+      "M": 2,
+      "L": 2,
+      "XL": 2,
+      "XXL": 0
     },
-    "stock": 55,
+    "stock": 6,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T08:11:17.763Z"
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-14T09:00:19.166Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Belgium_Home_Front (2).png",
+      "/ZYRO_Wear_Studio_Imgs/Belgium_Home_De_Bruyne_7_Back.png"
+    ]
   },
   {
     "id": "bra-home-7",
@@ -91,8 +188,12 @@
     },
     "stock": 55,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T08:11:17.763Z"
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Brazil_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Brazil_Home_Vini_Jr_7_Back.png"
+    ]
   },
   {
     "id": "eng-home-10",
@@ -114,17 +215,19 @@
     ],
     "sale_price": null,
     "stock_by_size": {
-      "M": 0,
-      "L": 0,
-      "XL": 2,
-      "XXL": 0
+      "S": 10,
+      "M": 15,
+      "L": 15,
+      "XL": 10,
+      "XXL": 5
     },
-    "stock": 2,
+    "stock": 55,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T08:35:26.279Z",
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-14T06:27:46.198Z",
     "images": [
-      "__stock_by_size:{\"M\":0,\"L\":0,\"XL\":2,\"XXL\":0}"
+      "/ZYRO_Wear_Studio_Imgs/England_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/England_Home_Bellingham_10_Back.png"
     ]
   },
   {
@@ -148,31 +251,30 @@
     "sale_price": null,
     "stock_by_size": {
       "M": 0,
-      "L": 0,
+      "L": 2,
       "XL": 2,
       "XXL": 1
     },
-    "stock": 3,
+    "stock": 5,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T14:18:33.190Z",
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-09-04T07:14:43.667Z",
     "images": [
-      "__stock_by_size:{\"M\":0,\"L\":0,\"XL\":2,\"XXL\":1}"
+      "__stock_by_size:{\"M\":0,\"L\":2,\"XL\":2,\"XXL\":1}"
     ]
   },
   {
     "id": "ger-home-10",
-    "name": "Germany Home Kit (Musiala #10)",
-    "slug": "germany-home-kit-musiala-10",
+    "name": "Germany Home(Musiala #10)",
+    "slug": "germany-home-musiala-10",
     "description": "Modern DFB White & Flame Graphic Home Kit featuring Jamal Musiala #10. Precision engineering and breathable texture.",
     "price": 299,
     "mrp": 699,
-    "category": "star",
+    "category": "Football Jerseys",
     "nation": "Germany",
     "front_img": "/ZYRO_Wear_Studio_Imgs/Germany_Home_Front.png",
     "back_img": "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png",
     "sizes": [
-      "S",
       "M",
       "L",
       "XL",
@@ -180,16 +282,20 @@
     ],
     "sale_price": null,
     "stock_by_size": {
-      "S": 10,
-      "M": 15,
-      "L": 15,
-      "XL": 10,
-      "XXL": 5
+      "M": 0,
+      "L": 2,
+      "XL": 2,
+      "XXL": 0
     },
-    "stock": 55,
+    "stock": 4,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T08:11:17.763Z"
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-09-02T06:13:48.278Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Germany_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Germany_Home_Musiala_10_Back.png",
+      "__stock_by_size:{\"M\":0,\"L\":2,\"XL\":2,\"XXL\":0}"
+    ]
   },
   {
     "id": "nor-home-9",
@@ -211,17 +317,19 @@
     ],
     "sale_price": null,
     "stock_by_size": {
-      "M": 0,
-      "L": 0,
-      "XL": 2,
-      "XXL": 2
+      "S": 10,
+      "M": 15,
+      "L": 15,
+      "XL": 10,
+      "XXL": 5
     },
-    "stock": 4,
+    "stock": 55,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T14:06:55.666Z",
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-14T08:56:02.652Z",
     "images": [
-      "__stock_by_size:{\"M\":0,\"L\":0,\"XL\":2,\"XXL\":2}"
+      "/ZYRO_Wear_Studio_Imgs/Norway_Home_Front.png",
+      "/ZYRO_Wear_Studio_Imgs/Norway_Home_Haaland_9_Back.png"
     ]
   },
   {
@@ -244,16 +352,20 @@
     ],
     "sale_price": null,
     "stock_by_size": {
-      "S": 10,
-      "M": 15,
-      "L": 15,
-      "XL": 10,
-      "XXL": 5
+      "S": 0,
+      "M": 0,
+      "L": 0,
+      "XL": 0,
+      "XXL": 0
     },
-    "stock": 55,
+    "stock": 0,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T08:11:17.763Z"
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-15T14:45:21.180Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_front.png",
+      "/ZYRO_Wear_Studio_Imgs/Portugal_Home_Ronaldo_7_Back.png"
+    ]
   },
   {
     "id": "esp-home-19",
@@ -283,7 +395,11 @@
     },
     "stock": 55,
     "is_active": true,
-    "created_at": "2026-09-04T08:11:17.763Z",
-    "updated_at": "2026-09-04T08:11:17.763Z"
+    "created_at": "2026-08-14T06:27:46.198Z",
+    "updated_at": "2026-08-14T06:27:46.198Z",
+    "images": [
+      "/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_front.png",
+      "/ZYRO_Wear_Studio_Imgs/Spain_Home_Lamine_Yamal_19_Back.png"
+    ]
   }
 ]
