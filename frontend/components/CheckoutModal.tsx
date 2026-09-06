@@ -33,12 +33,17 @@ export default function CheckoutModal({
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof CustomerDetails, string>>>({});
   const [step, setStep] = useState<'form' | 'payment' | 'processing'>('form');
   const [loading, setLoading] = useState<boolean>(false);
-  const [orderSession, setOrderSession] = useState<{
-    razorpayOrderId: string;
-    amount: number;
-    subtotal: number;
-    shippingFee: number;
-  } | null>(null);
+
+  // Helper to load Razorpay script
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -97,23 +102,53 @@ export default function CheckoutModal({
         return;
       }
 
-      setOrderSession({
-        razorpayOrderId: data.razorpayOrderId,
-        amount: data.amount,
-        subtotal: data.subtotal,
-        shippingFee: data.shippingFee,
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        alert('Failed to load Razorpay checkout. Please check your internet connection.');
+        setLoading(false);
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Ensure this is set in environment
+        amount: data.amount * 100, // paise
+        currency: 'INR',
+        name: 'ZYRO Wear',
+        description: 'Test Payment',
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: customer.fullName,
+          email: customer.email || '',
+          contact: customer.phone,
+        },
+        theme: {
+          color: '#FFE600',
+        },
+        handler: async function (response: any) {
+          await verifyPayment(response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature);
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        alert(`Payment Failed: ${response.error.description}`);
+        setLoading(false);
       });
-      setStep('payment');
+      
+      rzp.open();
     } catch (err: any) {
       console.error(err);
       alert('Error starting payment session.');
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleSimulatePayment = async () => {
-    if (!orderSession) return;
+  const verifyPayment = async (razorpayPaymentId: string, razorpayOrderId: string, razorpaySignature: string) => {
     setStep('processing');
     setLoading(true);
 
@@ -130,15 +165,16 @@ export default function CheckoutModal({
         body: JSON.stringify({
           customer,
           items: itemsPayload,
-          razorpayOrderId: orderSession.razorpayOrderId,
-          razorpayPaymentId: `pay_test_${Date.now()}`,
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature,
         }),
       });
 
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok) {
         alert(verifyData.error || 'Payment verification failed.');
-        setStep('payment');
+        setStep('form');
         setLoading(false);
         return;
       }
@@ -153,7 +189,7 @@ export default function CheckoutModal({
     } catch (err: any) {
       console.error(err);
       alert('Error verifying payment.');
-      setStep('payment');
+      setStep('form');
       setLoading(false);
     }
   };
@@ -167,9 +203,7 @@ export default function CheckoutModal({
             <i className="fa-solid fa-shield-halved" style={{ color: '#FFE600', marginRight: '8px' }}></i>
             {step === 'form'
               ? 'GUEST CHECKOUT — DELIVERY DETAILS'
-              : step === 'payment'
-                ? 'TEST PAYMENT PROTOTYPE'
-                : 'PROCESSING ORDER'}
+              : 'PROCESSING ORDER'}
           </h3>
           {step !== 'processing' && (
             <button className="close-checkout" onClick={onClose}>
@@ -337,39 +371,6 @@ export default function CheckoutModal({
               </div>
             </div>
           </form>
-        ) : step === 'payment' ? (
-          <div className="payment-simulation-box">
-            <div className="test-badge-banner">⚡ RAZORPAY & UPI TEST MODE PROTOTYPE ⚡</div>
-
-            <div className="payment-amount-display">
-              <span className="amount-label">AMOUNT PAYABLE</span>
-              <span className="amount-value">₹{orderSession?.amount}</span>
-              <span className="order-ref">Order Ref: {orderSession?.razorpayOrderId}</span>
-            </div>
-
-            {/* Dummy QR Code Visual for Prototype */}
-            <div className="qr-container">
-              <div className="qr-box">
-                <div className="qr-code-dummy">
-                  <i className="fa-solid fa-qrcode qr-icon"></i>
-                  <span className="qr-text">ZYRO WEAR TEST UPI QR</span>
-                </div>
-              </div>
-              <p className="qr-instruction">
-                Scan with any UPI App or click below to simulate instant test payment completion.
-              </p>
-            </div>
-
-            <div className="simulated-payment-actions">
-              <button className="btn-simulate-success" onClick={handleSimulatePayment} disabled={loading}>
-                <i className="fa-solid fa-circle-check"></i> SIMULATE SUCCESSFUL TEST PAYMENT
-              </button>
-
-              <button className="btn-simulate-cancel" onClick={() => setStep('form')} disabled={loading}>
-                <i className="fa-solid fa-arrow-left"></i> BACK TO DETAILS
-              </button>
-            </div>
-          </div>
         ) : (
           /* Processing Screen */
           <div className="processing-order-box">

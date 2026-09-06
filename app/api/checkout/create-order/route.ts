@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import Razorpay from 'razorpay';
 import { getAllProductsFromStore } from '@/database/stores/products-store';
 
 export async function POST(req: Request) {
@@ -59,11 +60,26 @@ export async function POST(req: Request) {
     const shippingFee = subtotal >= 999 ? 0 : 49;
     const totalAmount = subtotal + shippingFee;
 
-    const testOrderId = `order_test_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    // Create Razorpay Order
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Razorpay keys are missing from environment variables');
+      return NextResponse.json({ error: 'Payment gateway configuration error' }, { status: 500 });
+    }
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: totalAmount * 100, // Amount in paise
+      currency: 'INR',
+      receipt: `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    });
 
     return NextResponse.json({
       success: true,
-      razorpayOrderId: testOrderId,
+      razorpayOrderId: razorpayOrder.id,
       amount: totalAmount,
       subtotal,
       shippingFee,

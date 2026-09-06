@@ -31,18 +31,26 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. SERVER-SIDE RAZORPAY SIGNATURE VERIFICATION (IF KEY SECRET IS CONFIGURED)
+    // 2. SERVER-SIDE RAZORPAY SIGNATURE VERIFICATION
     const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (razorpaySecret && razorpayOrderId && razorpayPaymentId && razorpaySignature) {
-      const expectedSignature = crypto
-        .createHmac('sha256', razorpaySecret)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest('hex');
+    
+    if (!razorpaySecret) {
+      console.error('Razorpay key secret is not configured.');
+      return NextResponse.json({ error: 'Payment gateway configuration error.' }, { status: 500 });
+    }
 
-      if (expectedSignature !== razorpaySignature) {
-        console.error('Razorpay signature mismatch!');
-        return NextResponse.json({ error: 'Invalid payment signature. Verification failed.' }, { status: 400 });
-      }
+    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+      return NextResponse.json({ error: 'Missing Razorpay payment parameters.' }, { status: 400 });
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', razorpaySecret)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest('hex');
+
+    if (expectedSignature !== razorpaySignature) {
+      console.error('Razorpay signature mismatch!');
+      return NextResponse.json({ error: 'Invalid payment signature. Verification failed.' }, { status: 400 });
     }
 
     // 3. Calculate trusted server-side total and validate size stock
