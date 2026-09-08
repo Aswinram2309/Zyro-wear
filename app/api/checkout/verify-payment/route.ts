@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { verifyRazorpaySignature } from '@/lib/razorpay';
 import { saveOrderToStore, findOrderByPaymentId } from '@/database/stores/orders-store';
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
 import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
@@ -7,7 +7,11 @@ import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/da
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { customer, items, razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;
+    const customer = body.customer;
+    const items = body.items;
+    const razorpayOrderId = body.razorpayOrderId || body.razorpay_order_id || body.order_id;
+    const razorpayPaymentId = body.razorpayPaymentId || body.razorpay_payment_id || body.payment_id;
+    const razorpaySignature = body.razorpaySignature || body.razorpay_signature || body.signature;
 
     if (!customer || !customer.fullName || !customer.phone || !customer.address) {
       return NextResponse.json({ error: 'Missing customer details' }, { status: 400 });
@@ -17,38 +21,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing order items' }, { status: 400 });
     }
 
-    // 1. IDEMPOTENCY CHECK: Prevent duplicate order processing if payment ID or order ID was already processed
-    if (razorpayPaymentId) {
-      const existingOrder = await findOrderByPaymentId(razorpayPaymentId, razorpayOrderId);
-      if (existingOrder) {
-        return NextResponse.json({
-          success: true,
-          orderNumber: existingOrder.order_number,
-          totalAmount: existingOrder.total_amount,
-          customerName: existingOrder.customer_name,
-          alreadyProcessed: true,
-        });
-      }
-    }
-
-    // 2. SERVER-SIDE RAZORPAY SIGNATURE VERIFICATION
-    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
-    
-    if (!razorpaySecret) {
-      console.error('Razorpay key secret is not configured.');
-      return NextResponse.json({ error: 'Payment gateway configuration error.' }, { status: 500 });
-    }
-
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
       return NextResponse.json({ error: 'Missing Razorpay payment parameters.' }, { status: 400 });
     }
 
-    const expectedSignature = crypto
-      .createHmac('sha256', razorpaySecret)
-      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest('hex');
+    // 1. IDEMPOTENCY CHECK: Prevent duplicate order processing if payment ID or order ID was already processed
+    const existingOrder = await findOrderByPaymentId(razorpayPaymentId, razorpayOrderId);
+    if (existingOrder) {
+      return NextResponse.json({
+        success: true,
+        orderNumber: existingOrder.order_number,
+        totalAmount: existingOrder.total_amount,
+        customerName: existingOrder.customer_name,
+        alreadyProcessed: true,
+      });
+    }
 
-    if (expectedSignature !== razorpaySignature) {
+    // 2. SERVER-SIDE RAZORPAY SIGNATURE VERIFICATION
+    let isValid = false;
+    try {
+      isValid = verifyRazorpaySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
+    } catch (configError: any) {
+      console.error('Razorpay secret config error:', configError);
+      return NextResponse.json({ error: 'Payment gateway configuration error.' }, { status: 500 });
+    }
+
+    if (!isValid) {
       console.error('Razorpay signature mismatch!');
       return NextResponse.json({ error: 'Invalid payment signature. Verification failed.' }, { status: 400 });
     }
@@ -143,6 +141,8 @@ export async function POST(req: Request) {
       orderNumber: savedOrder.order_number,
       totalAmount: savedOrder.total_amount,
       customerName: customer.fullName,
+      order_id: razorpayOrderId,
+      payment_id: razorpayPaymentId,
     });
   } catch (error: any) {
     console.error('Error verifying payment:', error);

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import Razorpay from 'razorpay';
+import { getRazorpayClient } from '@/lib/razorpay';
 import { getAllProductsFromStore } from '@/database/stores/products-store';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { items } = body;
+    const { items, customer } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
@@ -45,7 +45,8 @@ export async function POST(req: Request) {
       }
 
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-      const itemSubtotal = product.price * qty;
+      const price = product.sale_price || product.price;
+      const itemSubtotal = price * qty;
       subtotal += itemSubtotal;
 
       validatedItems.push({
@@ -53,32 +54,39 @@ export async function POST(req: Request) {
         productName: product.name,
         size: selectedSize,
         quantity: qty,
-        price: product.price,
+        price,
       });
     }
 
     const shippingFee = subtotal >= 999 ? 0 : 49;
     const totalAmount = subtotal + shippingFee;
+    const totalAmountPaise = totalAmount * 100;
 
-    // Create Razorpay Order
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      console.error('Razorpay keys are missing from environment variables');
-      return NextResponse.json({ error: 'Payment gateway configuration error' }, { status: 500 });
+    if (totalAmountPaise < 100) {
+      return NextResponse.json({ error: 'Order amount must be at least ₹1.00' }, { status: 400 });
     }
 
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
+    let razorpay;
+    try {
+      razorpay = getRazorpayClient();
+    } catch (authError: any) {
+      console.error('Razorpay Auth/Config Error:', authError.message);
+      return NextResponse.json({ error: 'Payment gateway configuration error' }, { status: 401 });
+    }
 
     const razorpayOrder = await razorpay.orders.create({
-      amount: totalAmount * 100, // Amount in paise
+      amount: totalAmountPaise, // Amount in paise
       currency: 'INR',
       receipt: `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      notes: {
+        customerName: customer?.fullName || '',
+        customerPhone: customer?.phone || '',
+      },
     });
 
     return NextResponse.json({
       success: true,
+      order_id: razorpayOrder.id,
       razorpayOrderId: razorpayOrder.id,
       amount: totalAmount,
       subtotal,
@@ -88,6 +96,10 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error('Error creating order:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    const statusCode = error.statusCode || 500;
+    return NextResponse.json(
+      { error: error.error?.description || error.message || 'Internal server error' },
+      { status: statusCode === 401 ? 401 : 500 }
+    );
   }
 }

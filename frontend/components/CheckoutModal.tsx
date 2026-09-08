@@ -109,13 +109,22 @@ export default function CheckoutModal({
         return;
       }
 
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TZaCJ2Et6ERjcc';
+      const orderId = data.razorpayOrderId || data.order_id || data.id;
+
+      if (!orderId) {
+        alert('Could not retrieve valid Razorpay Order ID. Please try again.');
+        setLoading(false);
+        return;
+      }
+
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Ensure this is set in environment
-        amount: data.amount * 100, // paise
-        currency: 'INR',
+        key: razorpayKey,
+        amount: data.amount ? (data.amount <= 10000 && !Number.isInteger(data.amount) ? Math.round(data.amount * 100) : (data.amount < 1000 ? data.amount * 100 : data.amount)) : totalAmount * 100,
+        currency: data.currency || 'INR',
         name: 'ZYRO Wear',
-        description: 'Test Payment',
-        order_id: data.razorpayOrderId,
+        description: 'Order Payment',
+        order_id: orderId,
         prefill: {
           name: customer.fullName,
           email: customer.email || '',
@@ -136,14 +145,15 @@ export default function CheckoutModal({
 
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
-        alert(`Payment Failed: ${response.error.description}`);
+        console.error('Razorpay payment failed:', response.error);
+        alert(`Payment Failed: ${response.error?.description || response.error?.reason || 'Transaction could not be completed.'}`);
         setLoading(false);
       });
       
       rzp.open();
     } catch (err: any) {
-      console.error(err);
-      alert('Error starting payment session.');
+      console.error('Checkout error:', err);
+      alert('Error starting payment session: ' + (err.message || 'Please try again.'));
       setLoading(false);
     }
   };
@@ -357,17 +367,17 @@ export default function CheckoutModal({
               <button type="submit" className="btn-pay-submit" disabled={loading}>
                 {loading ? (
                   <>
-                    <i className="fa-solid fa-spinner fa-spin"></i> PREPARING TEST PAYMENT...
+                    <i className="fa-solid fa-spinner fa-spin"></i> PREPARING PAYMENT...
                   </>
                 ) : (
                   <>
-                    <i className="fa-solid fa-lock"></i> PROCEED TO TEST PAYMENT — ₹{totalAmount}
+                    <i className="fa-solid fa-lock"></i> PROCEED TO PAY — ₹{totalAmount}
                   </>
                 )}
               </button>
 
               <div className="checkout-security-note">
-                <i className="fa-solid fa-shield-check"></i> Guest Checkout • No Account Registration Required
+                <i className="fa-solid fa-shield-check"></i> 100% Secure Checkout • UPI, Cards & NetBanking
               </div>
             </div>
           </form>
@@ -379,18 +389,18 @@ export default function CheckoutModal({
             </div>
             <h3 className="processing-title">PROCESSING YOUR ORDER...</h3>
             <p className="processing-desc">
-              Please wait while we verify your test payment and confirm your delivery details.
+              Please wait while we verify your payment and confirm your delivery details.
             </p>
 
             <div className="processing-checklist">
               <div className="checklist-item done">
-                <i className="fa-solid fa-circle-check"></i> Test Payment Authorized
+                <i className="fa-solid fa-circle-check"></i> Payment Authorized
               </div>
               <div className="checklist-item active">
                 <i className="fa-solid fa-spinner fa-spin"></i> Verifying Server Signature & Security
               </div>
               <div className="checklist-item pending">
-                <i className="fa-solid fa-circle text-muted"></i> Generating Order Reference & Saving to Supabase
+                <i className="fa-solid fa-circle text-muted"></i> Generating Order Reference & Saving Order
               </div>
             </div>
           </div>
