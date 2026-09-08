@@ -1,13 +1,18 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
+function cleanEnv(val?: string): string {
+  if (!val) return '';
+  return val.trim().replace(/^["']|["']$/g, '');
+}
+
 /**
  * Initializes and returns a Razorpay SDK instance.
- * Checks for required environment variables.
+ * Checks for required environment variables with automatic trimming of whitespace and quotes.
  */
 export function getRazorpayClient(): Razorpay {
-  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const keyId = cleanEnv(process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID);
+  const keySecret = cleanEnv(process.env.RAZORPAY_KEY_SECRET);
 
   if (!keyId || !keySecret) {
     throw new Error('Razorpay credentials (RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET) are missing from environment variables.');
@@ -28,7 +33,7 @@ export function verifyRazorpaySignature(
   paymentId: string,
   signature: string
 ): boolean {
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const keySecret = cleanEnv(process.env.RAZORPAY_KEY_SECRET);
   if (!keySecret) {
     throw new Error('RAZORPAY_KEY_SECRET is not configured on server.');
   }
@@ -39,8 +44,8 @@ export function verifyRazorpaySignature(
 
   const generatedSignature = crypto
     .createHmac('sha256', keySecret)
-    .update(`${orderId}|${paymentId}`)
+    .update(`${orderId.trim()}|${paymentId.trim()}`)
     .digest('hex');
 
-  return generatedSignature === signature;
+  return generatedSignature === signature.trim();
 }
