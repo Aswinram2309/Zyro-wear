@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CartItem, CustomerDetails } from '@/shared/types';
 
@@ -34,6 +34,20 @@ export default function CheckoutModal({
   const [step, setStep] = useState<'form' | 'payment' | 'processing'>('form');
   const [loading, setLoading] = useState<boolean>(false);
 
+  // PIN Code Auto-Lookup State
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const [pincodeLoading, setPincodeLoading] = useState<boolean>(false);
+  const [pincodeStatus, setPincodeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [pincodeMessage, setPincodeMessage] = useState<string>('');
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   // Helper to load Razorpay script
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -51,6 +65,115 @@ export default function CheckoutModal({
   const shippingFee = subtotal >= 999 ? 0 : 49;
   const totalAmount = subtotal + shippingFee;
 
+  const fetchLocationByPincode = async (pin: string) => {
+    setPincodeLoading(true);
+    setPincodeStatus('loading');
+    setPincodeMessage('Fetching location...');
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`, {
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('API request failed');
+
+      const data = await res.json();
+
+      if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0].Status === 'Success' &&
+        Array.isArray(data[0].PostOffice) &&
+        data[0].PostOffice.length > 0
+      ) {
+        const po = data[0].PostOffice[0];
+        const fetchedCity = po.District || po.Division || po.Block || po.Name || '';
+        const fetchedState = po.State || '';
+
+        if (fetchedCity || fetchedState) {
+          setCustomer((prev) => ({
+            ...prev,
+            city: fetchedCity || prev.city,
+            state: fetchedState || prev.state,
+          }));
+          setPincodeStatus('success');
+          setPincodeMessage(`Location detected: ${[fetchedCity, fetchedState].filter(Boolean).join(', ')}`);
+          setFormErrors((prev) => ({
+            ...prev,
+            pincode: undefined,
+            city: undefined,
+            state: undefined,
+          }));
+        } else {
+          setPincodeStatus('error');
+          setPincodeMessage('Invalid PIN code. Please check and try again.');
+          setFormErrors((prev) => ({
+            ...prev,
+            pincode: 'Invalid PIN code. Please check and try again.',
+          }));
+        }
+      } else {
+        setPincodeStatus('error');
+        setPincodeMessage('Invalid PIN code. Please check and try again.');
+        setCustomer((prev) => ({ ...prev, city: '', state: '' }));
+        setFormErrors((prev) => ({
+          ...prev,
+          pincode: 'Invalid PIN code. Please check and try again.',
+        }));
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      console.warn('Pincode auto-lookup fallback:', err);
+      setPincodeStatus('error');
+      setPincodeMessage('Could not auto-fetch location. Please enter City and State manually.');
+    } finally {
+      setPincodeLoading(false);
+    }
+  };
+
+  const handlePincodeChange = (value: string) => {
+    const cleanPin = value.replace(/\D/g, '').slice(0, 6);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    setCustomer((prev) => {
+      // When pincode is modified or cleared, reset auto-fetched city and state
+      if (prev.pincode !== cleanPin) {
+        return {
+          ...prev,
+          pincode: cleanPin,
+          city: cleanPin.length < 6 ? '' : prev.city,
+          state: cleanPin.length < 6 ? '' : prev.state,
+        };
+      }
+      return { ...prev, pincode: cleanPin };
+    });
+
+    if (formErrors.pincode) {
+      setFormErrors((prev) => ({ ...prev, pincode: undefined }));
+    }
+
+    if (cleanPin.length < 6) {
+      setPincodeLoading(false);
+      setPincodeStatus('idle');
+      setPincodeMessage('');
+      return;
+    }
+
+    if (cleanPin.length === 6) {
+      fetchLocationByPincode(cleanPin);
+    }
+  };
+
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof CustomerDetails, string>> = {};
     if (!customer.fullName.trim()) errors.fullName = 'Full Name is required';
@@ -61,10 +184,16 @@ export default function CheckoutModal({
     if (customer.email && customer.email.trim() && !customer.email.includes('@'))
       errors.email = 'Valid Email Address is required';
     if (!customer.address.trim()) errors.address = 'Delivery Address is required';
+    
+    // Pincode validation
+    if (!customer.pincode.trim() || customer.pincode.trim().length !== 6 || !/^\d{6}$/.test(customer.pincode.trim())) {
+      errors.pincode = 'Valid 6-digit Indian PIN code is required';
+    } else if (pincodeStatus === 'error' && pincodeMessage.includes('Invalid PIN code')) {
+      errors.pincode = 'Invalid PIN code. Please check and try again.';
+    }
+
     if (!customer.city.trim()) errors.city = 'City is required';
     if (!customer.state.trim()) errors.state = 'State is required';
-    if (!customer.pincode.trim() || customer.pincode.trim().length < 6)
-      errors.pincode = 'Valid 6-digit Pincode is required';
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -293,12 +422,55 @@ export default function CheckoutModal({
                 {formErrors.address && <span className="field-error">{formErrors.address}</span>}
               </div>
 
+              {/* Pincode with Auto-Fetch State, followed by City and State */}
               <div className="form-row-3">
+                <div className="form-group pincode-group">
+                  <label>Pincode (6 digits) *</label>
+                  <div className="pincode-input-wrapper">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      placeholder="e.g. 625009"
+                      value={customer.pincode}
+                      onChange={(e) => handlePincodeChange(e.target.value)}
+                      className={formErrors.pincode ? 'error' : pincodeStatus === 'success' ? 'success' : ''}
+                    />
+                    {pincodeLoading && (
+                      <span className="pincode-spinner">
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                      </span>
+                    )}
+                    {!pincodeLoading && pincodeStatus === 'success' && (
+                      <span className="pincode-check">
+                        <i className="fa-solid fa-circle-check"></i>
+                      </span>
+                    )}
+                  </div>
+                  {pincodeLoading && (
+                    <span className="pincode-status-text loading">
+                      <i className="fa-solid fa-spinner fa-spin"></i> Fetching location...
+                    </span>
+                  )}
+                  {!pincodeLoading && pincodeStatus === 'success' && (
+                    <span className="pincode-status-text success">
+                      <i className="fa-solid fa-circle-check"></i> {pincodeMessage}
+                    </span>
+                  )}
+                  {formErrors.pincode && (
+                    <span className="field-error">{formErrors.pincode}</span>
+                  )}
+                  {!formErrors.pincode && pincodeStatus === 'error' && (
+                    <span className="pincode-status-text error">{pincodeMessage}</span>
+                  )}
+                </div>
+
                 <div className="form-group">
-                  <label>City *</label>
+                  <label>City / District *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Chennai"
+                    placeholder="e.g. Madurai"
                     value={customer.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
                     className={formErrors.city ? 'error' : ''}
@@ -316,18 +488,6 @@ export default function CheckoutModal({
                     className={formErrors.state ? 'error' : ''}
                   />
                   {formErrors.state && <span className="field-error">{formErrors.state}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label>Pincode *</label>
-                  <input
-                    type="text"
-                    placeholder="6 digits"
-                    value={customer.pincode}
-                    onChange={(e) => handleInputChange('pincode', e.target.value)}
-                    className={formErrors.pincode ? 'error' : ''}
-                  />
-                  {formErrors.pincode && <span className="field-error">{formErrors.pincode}</span>}
                 </div>
               </div>
             </div>

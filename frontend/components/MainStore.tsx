@@ -280,23 +280,16 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
         <div className="ethos-container">
           <div className="ethos-content">
             <span className="sub-heading-gold">ABOUT ZYRO WEAR</span>
-            <h2 className="ethos-heading">BUILT DIFFERENT.<br />MADE FOR YOU.</h2>
+            <h2 className="ethos-heading">WEAR YOUR PASSION.<br />OWN YOUR STYLE.</h2>
             <p className="ethos-desc">
-              ZYRO Wear is all about confidence, comfort and standing out. Every piece is designed with premium materials and bold style for the ones who don&apos;t follow the trend, they set it.
+              ZYRO Wear is all about Built with bold designs, everyday comfort, and a streetwear attitude — Every Outfit is created to make you feel confident, look sharp, and own your style.
             </p>
             <div className="ethos-highlights">
               <div className="ethos-pill"><i className="fa-solid fa-bolt"></i> BOLD DESIGNS</div>
               <div className="ethos-pill"><i className="fa-solid fa-feather"></i> PREMIUM FABRIC</div>
               <div className="ethos-pill"><i className="fa-solid fa-award"></i> MADE TO LAST</div>
             </div>
-            <a href="#shop" className="btn-gold mt-4">SHOP NOW</a>
-          </div>
-          <div className="ethos-visual">
-            <div className="ethos-card-preview">
-              <img src="/Logo/Zyro wears logo.png" alt="ZYRO Brand" className="ethos-logo-watermark" />
-              <h3>AUTHENTIC JERSEY STORE</h3>
-              <p>Designed for performance, durability & everyday streetwear style.</p>
-            </div>
+            <a href="#shop" className="btn-gold ethos-btn">SHOP NOW</a>
           </div>
         </div>
       </section>

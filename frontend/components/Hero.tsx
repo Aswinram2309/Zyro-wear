@@ -1,93 +1,69 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
+import React, { useRef, useEffect } from 'react';
 import { Product } from '@/shared/types';
 
 interface HeroProps {
   products?: Product[];
+  videoSrc?: string;
+  ctaText?: string;
+  ctaLink?: string;
 }
 
-export default function Hero({ products }: HeroProps) {
-  const router = useRouter();
-  const [heroIndex, setHeroIndex] = useState(0);
-  const [fade, setFade] = useState(false);
+const DEFAULT_HERO_VIDEO = '/ZYRO_Wear_Studio_Imgs/hero-showcase.mp4';
 
-  const displayProducts = products || [];
+export default function Hero({
+  videoSrc = DEFAULT_HERO_VIDEO,
+  ctaText = 'EXPLORE COLLECTION',
+  ctaLink = '#shop',
+}: HeroProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setFade(true);
-      setTimeout(() => {
-        setHeroIndex((prev) => (prev + 1) % displayProducts.length);
-        setFade(false);
-      }, 400);
-    }, 3200);
-    return () => clearInterval(timer);
-  }, [displayProducts.length]);
-
-  const currentHeroProduct = displayProducts[heroIndex] || displayProducts[0];
+    const video = videoRef.current;
+    if (video) {
+      video.defaultMuted = true;
+      video.muted = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn('Autoplay prevented by browser:', error);
+        });
+      }
+    }
+  }, [videoSrc]);
 
   return (
-    <section className="hero-section" id="home">
-      <div className="hero-container">
-        <div className="hero-content">
-          <div className="hero-badge">OFFICIAL 2026 EDITION</div>
-          <h1 className="hero-title">WEAR YOUR <span className="text-gold">ENERGY.</span></h1>
-          <p className="hero-description">
-            Premium Quality. Bold Designs. Built for Comfort. Made for You.
-            Discover top-tier international football jerseys crafted for champions.
-          </p>
+    <section className="cinematic-hero-section" id="home">
+      {/* Background ambient lighting/glow */}
+      <div className="hero-ambient-glow" aria-hidden="true" />
 
-          <div className="hero-actions">
-            <a href="#shop" className="btn-gold">
-              EXPLORE COLLECTION <i className="fa-solid fa-arrow-right"></i>
-            </a>
-            <a href="#reviews" className="btn-outline">
-              SEE CUSTOMER REVIEWS
-            </a>
-          </div>
+      {/* 1. Large Full-Width Cinematic Video Hero with seamless edge blending */}
+      <div className="cinematic-video-container">
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="cinematic-hero-video"
+        />
+        {/* Soft edge blend overlays so video melts seamlessly into the page */}
+        <div className="cinematic-video-fade-top" aria-hidden="true" />
+        <div className="cinematic-video-fade-bottom" aria-hidden="true" />
+      </div>
 
-          {/* Trust Badges */}
-          <div className="hero-trust-badges">
-            <div className="trust-item">
-              <i className="fa-solid fa-shield-halved"></i>
-              <span>PREMIUM QUALITY</span>
-            </div>
-            <div className="trust-item">
-              <i className="fa-solid fa-shirt"></i>
-              <span>COMFORT FIT</span>
-            </div>
-            <div className="trust-item">
-              <i className="fa-solid fa-truck-fast"></i>
-              <span>FAST DELIVERY</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Featured Hero Product Visual Showcase */}
-        <div className="hero-visual">
-          <div className="neon-z-glow"></div>
-          <div
-            className="featured-jersey-wrapper"
-            onClick={() => router.push(`/product/${currentHeroProduct.slug}`)}
-            style={{ cursor: 'pointer' }}
-          >
-            <img
-              src={currentHeroProduct.front_img}
-              alt={currentHeroProduct.name}
-              className={`featured-jersey-img ${fade ? 'fade-out' : ''}`}
-            />
-            <div className={`hero-product-tag ${fade ? 'fade-out' : ''}`}>
-              <span className="tag-title">{currentHeroProduct.name}</span>
-              <span className="tag-price">
-                ₹{currentHeroProduct.price} <s className="old-price">₹{currentHeroProduct.mrp}</s>
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* 2. Clean Integrated CTA Section */}
+      <div className="hero-cta-section">
+        <a href={ctaLink} className="btn-gold hero-cta-btn">
+          {ctaText} <i className="fa-solid fa-arrow-right"></i>
+        </a>
       </div>
     </section>
   );
 }
+
+
+
