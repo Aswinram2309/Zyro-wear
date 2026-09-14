@@ -6851,31 +6851,26 @@ button {
         text-align: center !important;
     }
 
-    .size-selector-row {
+    .product-card .size-selector-row {
         margin-bottom: 0.3rem !important;
         width: 100% !important;
     }
 
-    .size-selector {
+    .product-card .size-selector {
         display: flex !important;
         gap: 0.2rem !important;
         flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        scrollbar-width: none !important;
+        width: 100% !important;
     }
 
-    .size-selector::-webkit-scrollbar {
-        display: none !important;
-    }
-
-    .size-pill {
+    .product-card .size-pill {
         font-size: 0.62rem !important;
         font-weight: 700 !important;
-        padding: 0.15rem 0.35rem !important;
-        min-width: 22px !important;
+        padding: 0.15rem 0 !important;
+        min-width: 0 !important;
         text-align: center !important;
         border-radius: 3px !important;
-        flex-shrink: 0 !important;
+        flex: 1 1 0 !important;
     }
 
     .card-buttons-layout {
@@ -6977,12 +6972,12 @@ button {
         line-height: 1.2 !important;
     }
 
-    .size-selector-row {
+    .product-details-grid .size-selector-row {
         flex-wrap: wrap !important;
         gap: 0.5rem !important;
     }
 
-    .size-pill {
+    .product-details-grid .size-pill {
         min-width: 44px !important;
         padding: 0.5rem 0.75rem !important;
         font-size: 0.85rem !important;
@@ -7098,6 +7093,10 @@ button {
 
     .product-title {
         font-size: 0.72rem !important;
+    }
+
+    .product-card .size-pill {
+        font-size: 0.55rem !important;
     }
 
     .current-price {
