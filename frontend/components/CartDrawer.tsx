@@ -47,14 +47,7 @@ export default function CartDrawer({
         {cart.length > 0 && (
           <div className="shipping-bar-container">
             <div className="shipping-bar-text">
-              {amountRemaining > 0 ? (
-                <>Add <strong className="text-gold-highlight">₹{amountRemaining}</strong> more for <strong className="text-gold-highlight">FREE EXPRESS SHIPPING</strong>!</>
-              ) : (
-                <>🎉 <strong className="text-gold-highlight">CONGRATS! YOU UNLOCKED FREE SHIPPING!</strong></>
-              )}
-            </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
+              <strong>DELIVERY CHARGE CALCULATED AT CHECKOUT</strong>
             </div>
           </div>
         )}
@@ -125,11 +118,11 @@ export default function CartDrawer({
             </div>
             <div className="cart-summary-line subtext">
               <span>SHIPPING</span>
-              <span>{subtotal >= freeShippingThreshold ? 'FREE' : '₹49'}</span>
+              <span>Calculated at checkout</span>
             </div>
 
             <button className="btn-checkout-primary" onClick={onProceedToCheckout}>
-              <i className="fa-solid fa-lock"></i> PROCEED TO CHECKOUT — ₹{subtotal >= freeShippingThreshold ? subtotal : subtotal + 49}
+              <i className="fa-solid fa-lock"></i> PROCEED TO CHECKOUT
             </button>
 
             <div className="guarantee-badge">

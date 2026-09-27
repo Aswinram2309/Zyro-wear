@@ -3,6 +3,7 @@ import { verifyRazorpaySignature } from '@/lib/razorpay';
 import { saveOrderToStore, findOrderByPaymentId } from '@/database/stores/orders-store';
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
 import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
+import { calculateDeliveryCharge } from '@/lib/delivery';
 
 export async function POST(req: Request) {
   try {
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
         successfullyDeductedItems.push(item);
       }
 
-      const shippingFee = subtotal >= 999 ? 0 : 49;
+      const shippingFee = calculateDeliveryCharge(customer?.state);
       const totalAmount = subtotal + shippingFee;
       const orderNumber = `ZY${Math.floor(1000 + Math.random() * 9000)}`;
 

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CartItem, CustomerDetails } from '@/shared/types';
-
+import { calculateDeliveryCharge } from '@/lib/delivery';
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -62,8 +62,8 @@ export default function CheckoutModal({
   if (!isOpen) return null;
 
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shippingFee = subtotal >= 999 ? 0 : 49;
-  const totalAmount = subtotal + shippingFee;
+  const shippingFee = customer.state ? calculateDeliveryCharge(customer.state) : null;
+  const totalAmount = subtotal + (shippingFee || 0);
 
   const fetchLocationByPincode = async (pin: string) => {
     setPincodeLoading(true);
@@ -515,8 +515,8 @@ export default function CheckoutModal({
                   <span>₹{subtotal}</span>
                 </div>
                 <div className="breakdown-row">
-                  <span>Express Shipping</span>
-                  <span>{shippingFee === 0 ? 'FREE' : '₹49'}</span>
+                  <span>Delivery</span>
+                  <span>{shippingFee !== null ? `₹${shippingFee}` : '--'}</span>
                 </div>
                 <div className="breakdown-row total-row">
                   <span>Grand Total</span>

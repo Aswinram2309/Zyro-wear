@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getRazorpayClient } from '@/lib/razorpay';
 import { getAllProductsFromStore } from '@/database/stores/products-store';
+import { calculateDeliveryCharge } from '@/lib/delivery';
 
 export async function POST(req: Request) {
   try {
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const shippingFee = subtotal >= 999 ? 0 : 49;
+    const shippingFee = calculateDeliveryCharge(customer?.state);
     const totalAmount = subtotal + shippingFee;
     const totalAmountPaise = totalAmount * 100;
 

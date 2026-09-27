@@ -267,9 +267,21 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
 
           {filteredProducts.length === 0 && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 1rem' }}>
-              <i className="fa-solid fa-shirt" style={{ fontSize: '3rem', color: '#4B5563', marginBottom: '1rem' }}></i>
-              <h3 style={{ color: '#FFF', fontSize: '1.3rem' }}>No jerseys found matching &quot;{searchQuery}&quot;</h3>
-              <p style={{ color: '#9CA3AF' }}>Try searching for a different country or player name (e.g. Messi, Ronaldo, Mbappé).</p>
+              {(activeFilter === 'customized' || activeFilter === 'oversized') && !searchQuery ? (
+                <>
+                  <i className="fa-solid fa-hourglass-half" style={{ fontSize: '3rem', color: '#FFC700', marginBottom: '1rem' }}></i>
+                  <h3 style={{ color: '#FFF', fontSize: '1.5rem', fontWeight: 800, textTransform: 'uppercase' }}>Coming Soon</h3>
+                  <p style={{ color: '#9CA3AF' }}>
+                    We are crafting the best {activeFilter === 'oversized' ? 'Oversized' : 'Customized'} T-Shirts for you. Stay tuned!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-shirt" style={{ fontSize: '3rem', color: '#4B5563', marginBottom: '1rem' }}></i>
+                  <h3 style={{ color: '#FFF', fontSize: '1.3rem' }}>No jerseys found matching &quot;{searchQuery}&quot;</h3>
+                  <p style={{ color: '#9CA3AF' }}>Try searching for a different country or player name (e.g. Messi, Ronaldo, Mbappé).</p>
+                </>
+              )}
             </div>
           )}
         </div>

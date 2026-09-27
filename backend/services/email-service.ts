@@ -140,8 +140,8 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
                     <td align="right" style="font-size: 14px; color: #FFFFFF; padding: 4px 0;">₹${orderData.subtotal}</td>
                   </tr>
                   <tr>
-                    <td style="font-size: 14px; color: #9CA3AF; padding: 4px 0;">Express Shipping:</td>
-                    <td align="right" style="font-size: 14px; color: #FFFFFF; padding: 4px 0;">${orderData.subtotal >= 999 ? 'FREE' : '₹49'}</td>
+                    <td style="font-size: 14px; color: #9CA3AF; padding: 4px 0;">Delivery:</td>
+                    <td align="right" style="font-size: 14px; color: #FFFFFF; padding: 4px 0;">₹${orderData.totalAmount - orderData.subtotal}</td>
                   </tr>
                   <tr style="border-top: 1px solid #262930;">
                     <td style="font-size: 16px; font-weight: bold; color: #FFFFFF; padding: 10px 0 0 0;">Total Amount:</td>
@@ -232,7 +232,7 @@ export async function sendAdminNewOrderEmail(orderData: OrderEmailPayload, razor
     )
     .join('');
 
-  const shippingFee = orderData.subtotal >= 999 ? 0 : 49;
+  const shippingFee = orderData.totalAmount - orderData.subtotal;
 
   const emailHtml = `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto;">
