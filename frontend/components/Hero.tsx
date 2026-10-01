@@ -10,7 +10,7 @@ interface HeroProps {
   ctaLink?: string;
 }
 
-const DEFAULT_HERO_VIDEO = '/ZYRO_Wear_Studio_Imgs/hero-showcase.mp4';
+const DEFAULT_HERO_VIDEO = '/ZYRO_Wear_Studio_Imgs/watermark-removed-1000061514.mp4';
 
 export default function Hero({
   videoSrc = DEFAULT_HERO_VIDEO,
