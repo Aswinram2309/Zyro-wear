@@ -1,0 +1,44 @@
+[
+  {
+    "id": "sc_normal_default",
+    "name": "Normal T-Shirt Size Chart",
+    "type": "NORMAL",
+    "chart_image_url": "/images/size-guide.jpg",
+    "how_to_measure_image_url": "/images/size-guide.jpg",
+    "measurements": [
+      { "size": "M", "length": "27", "chest": "40", "shoulder": "10", "sleeve": "—" },
+      { "size": "L", "length": "29", "chest": "42", "shoulder": "10", "sleeve": "—" },
+      { "size": "XL", "length": "28", "chest": "44", "shoulder": "10", "sleeve": "—" },
+      { "size": "XXL", "length": "30", "chest": "46", "shoulder": "10.5", "sleeve": "—" }
+    ],
+    "unit": "ALL MEASUREMENTS ARE IN INCHES",
+    "tips": [
+      "Select the same size you choose in regular fit for oversized look. XXL customer should choose XL for oversize Fit.",
+      "All sizes are approximate and may vary up to +/-0.5 inch."
+    ],
+    "is_active": true,
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "updated_at": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "sc_oversized_default",
+    "name": "Oversized T-Shirt Size Chart",
+    "type": "OVERSIZED",
+    "chart_image_url": "/images/oversized-size-guide.jpg",
+    "how_to_measure_image_url": "/images/oversized-size-guide.jpg",
+    "measurements": [
+      { "size": "M", "shoulder": "20", "chest": "40", "length": "27.5", "sleeve": "10" },
+      { "size": "L", "shoulder": "21.5", "chest": "42", "length": "28", "sleeve": "10" },
+      { "size": "XL", "shoulder": "22.5", "chest": "44", "length": "30", "sleeve": "10.5" },
+      { "size": "XXL", "shoulder": "23.5", "chest": "46", "length": "31", "sleeve": "11" }
+    ],
+    "unit": "ALL MEASUREMENTS ARE IN INCHES",
+    "tips": [
+      "Relaxed drop-shoulder cut designed for maximum comfort and streetwear styling.",
+      "All sizes are approximate and may vary up to +/-0.5 inch."
+    ],
+    "is_active": true,
+    "created_at": "2026-01-01T00:00:00.000Z",
+    "updated_at": "2026-01-01T00:00:00.000Z"
+  }
+]

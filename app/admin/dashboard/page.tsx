@@ -113,6 +113,9 @@ export default function AdminDashboardPage() {
             <Link href="/admin/stock" className="admin-nav-link">
               <i className="fa-solid fa-boxes-stacked"></i> Stock Management
             </Link>
+            <Link href="/admin/size-charts" className="admin-nav-link">
+              <i className="fa-solid fa-ruler-combined"></i> Size Chart Management
+            </Link>
           </div>
 
           <div className="admin-actions">

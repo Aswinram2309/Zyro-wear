@@ -257,14 +257,18 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
       if (newProduct.stock_by_size) {
         dbPayload.stock_by_size = newProduct.stock_by_size;
       }
+      if (newProduct.size_chart) {
+        dbPayload.size_chart = newProduct.size_chart;
+      }
 
       const { error } = await supabase.from('products').insert(dbPayload).select().single();
 
       if (error) {
-        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('schema cache'))) {
+        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('size_chart') || error.message.includes('schema cache'))) {
           console.warn('Supabase schema cache lacks optional columns, retrying baseline insert:', error.message);
           delete dbPayload.sale_price;
           delete dbPayload.stock_by_size;
+          delete dbPayload.size_chart;
           const { error: retryErr } = await supabase.from('products').insert(dbPayload).select().single();
           if (retryErr) {
             console.error('Supabase retry insert error:', retryErr);
@@ -363,6 +367,10 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
     dbPayload.is_active = Boolean(updates.is_active);
   }
 
+  if (updates.size_chart !== undefined) {
+    dbPayload.size_chart = updates.size_chart;
+  }
+
   if (stockBySize) {
     dbPayload.stock_by_size = stockBySize;
     dbPayload.stock = calculateProductTotalStock(stockBySize);
@@ -383,10 +391,11 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
       const { error } = await supabase.from('products').update(dbPayload).eq('id', id);
       if (error) {
         console.error('Supabase update product error:', error);
-        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('schema cache'))) {
+        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('size_chart') || error.message.includes('schema cache'))) {
           const retryPayload = { ...dbPayload };
           delete retryPayload.sale_price;
           delete retryPayload.stock_by_size;
+          delete retryPayload.size_chart;
           await supabase.from('products').update(retryPayload).eq('id', id);
         }
       }

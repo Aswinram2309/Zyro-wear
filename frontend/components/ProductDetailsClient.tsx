@@ -10,17 +10,11 @@ import CartDrawer from '@/frontend/components/CartDrawer';
 import CheckoutModal from '@/frontend/components/CheckoutModal';
 import SizeChart from '@/frontend/components/SizeChart';
 import { formatImageUrl } from '@/shared/constants/stock-config';
+import { getProductMeasurement, getSizeChartType } from '@/shared/constants/size-chart-config';
 
 interface ProductDetailsClientProps {
   initialProduct: Product;
 }
-
-const DEFAULT_MEASUREMENTS: Record<string, { length: string; chest: string; shoulder: string }> = {
-  M: { length: '27', chest: '40', shoulder: '10' },
-  L: { length: '29', chest: '42', shoulder: '10' },
-  XL: { length: '28', chest: '44', shoulder: '10' },
-  XXL: { length: '30', chest: '46', shoulder: '10.5' },
-};
 
 export default function ProductDetailsClient({ initialProduct }: ProductDetailsClientProps) {
   const router = useRouter();
@@ -130,10 +124,21 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
 
   const [quantity, setQuantity] = useState<number>(1);
 
-  const getMeasurement = (size: string, field: 'length' | 'chest' | 'shoulder') => {
-    const dbVal = product.size_chart?.[size]?.[field];
-    if (dbVal && dbVal.trim() !== '') return dbVal;
-    return DEFAULT_MEASUREMENTS[size]?.[field] || '—';
+  const isOversized = getSizeChartType(product.category, product.name) === 'OVERSIZED';
+  const [activeChartRecord, setActiveChartRecord] = useState<import('@/shared/types').SizeChartRecord | null>(null);
+
+  useEffect(() => {
+    const chartType = getSizeChartType(product.category, product.name);
+    fetch(`/api/size-charts?type=${chartType}&t=${Date.now()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.chart) setActiveChartRecord(d.chart);
+      })
+      .catch(() => {});
+  }, [product.category, product.name]);
+
+  const getMeasurement = (size: string, field: 'length' | 'chest' | 'shoulder' | 'sleeve') => {
+    return getProductMeasurement(product.size_chart, product.category, product.name, size, field, activeChartRecord);
   };
 
   const parseDescription = (descText: string) => {
@@ -584,21 +589,46 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
             {/* Selected Size Measurement Box */}
             {activeSize && (
               <div className="selected-size-measurement-box">
-                <div className="box-header">{activeSize}</div>
+                <div className="box-header">
+                  {activeSize} {isOversized ? '• OVERSIZED FIT' : ''}
+                </div>
                 <table className="selected-size-measurement-table">
                   <tbody>
-                    <tr>
-                      <td className="label-col">Garment Chest</td>
-                      <td className="val-col">{getMeasurement(activeSize, 'chest')}</td>
-                    </tr>
-                    <tr>
-                      <td className="label-col">Length T-Shirt</td>
-                      <td className="val-col">{getMeasurement(activeSize, 'length')}</td>
-                    </tr>
-                    <tr>
-                      <td className="label-col">Shoulder</td>
-                      <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
-                    </tr>
+                    {isOversized ? (
+                      <>
+                        <tr>
+                          <td className="label-col">Shoulder</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
+                        </tr>
+                        <tr>
+                          <td className="label-col">Garment Chest</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'chest')}</td>
+                        </tr>
+                        <tr>
+                          <td className="label-col">Length T-Shirt</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'length')}</td>
+                        </tr>
+                        <tr>
+                          <td className="label-col">Sleeve</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'sleeve')}</td>
+                        </tr>
+                      </>
+                    ) : (
+                      <>
+                        <tr>
+                          <td className="label-col">Garment Chest</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'chest')}</td>
+                        </tr>
+                        <tr>
+                          <td className="label-col">Length T-Shirt</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'length')}</td>
+                        </tr>
+                        <tr>
+                          <td className="label-col">Shoulder</td>
+                          <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -657,38 +687,66 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           </div>
         </div>
 
-        {/* Dynamic Size Chart Section */}
-        <section className="product-sizechart-section">
-          <SizeChart sizeChart={product.size_chart} selectedSize={activeSize} onSizeSelect={setActiveSize} />
-        </section>
-
-        {/* Product Description Section */}
+        {/* 1. Product Description Section */}
         <section className="product-description-section">
           <h2>Product Description</h2>
           <div className="description-box">
-            <div className="description-block">
-              <h3 className="description-block-title">Premium Dotnet Jersey</h3>
-              <p className="description-block-text">
-                Upgrade your jersey collection with our premium Dotnet fabric jersey, designed for a comfortable fit, sporty look, and everyday wear.
-              </p>
-            </div>
-            <div className="description-block">
-              <h3 className="description-block-title">Key Features</h3>
-              <p className="description-block-text">• Premium Dotnet fabric</p>
-              <p className="description-block-text">• Lightweight and comfortable</p>
-              <p className="description-block-text">• Breathable feel for better comfort</p>
-              <p className="description-block-text">• Smooth and durable finish</p>
-              <p className="description-block-text">• Stylish football-inspired design</p>
-              <p className="description-block-text">• Suitable for sports, casual wear, and everyday use</p>
-              <p className="description-block-text">• Available in multiple sizes</p>
-            </div>
-            <div className="description-block">
-              <h3 className="description-block-title">Specifications</h3>
-              <p className="description-block-text"><strong>Fabric:</strong> Premium Dotnet</p>
-              <p className="description-block-text"><strong>Fit:</strong> Regular / Comfortable Fit</p>
-              <p className="description-block-text"><strong>Care:</strong> Hand wash or gentle machine wash. Do not bleach. Avoid high heat.</p>
-            </div>
+            {product.description ? (
+              <div className="description-block">
+                <p className="description-block-text" style={{ whiteSpace: 'pre-line' }}>
+                  {product.description}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="description-block">
+                  <h3 className="description-block-title">
+                    {isOversized ? 'Premium Oversized T-Shirt' : 'Premium Dotnet Jersey'}
+                  </h3>
+                  <p className="description-block-text">
+                    {isOversized
+                      ? 'Upgrade your everyday streetwear with our premium oversized fit tee, crafted for maximum breathability, relaxed drop-shoulder comfort, and unmatched style.'
+                      : 'Upgrade your jersey collection with our premium Dotnet fabric jersey, designed for a comfortable fit, sporty look, and everyday wear.'}
+                  </p>
+                </div>
+                <div className="description-block">
+                  <h3 className="description-block-title">Key Features</h3>
+                  <p className="description-block-text">• {isOversized ? '100% Premium Heavyweight Cotton / Breathable Blend' : 'Premium Dotnet fabric'}</p>
+                  <p className="description-block-text">• {isOversized ? 'Relaxed drop-shoulder oversized silhouette' : 'Lightweight and comfortable'}</p>
+                  <p className="description-block-text">• Breathable feel for all-day comfort</p>
+                  <p className="description-block-text">• Smooth and durable high-density finish</p>
+                  <p className="description-block-text">• {isOversized ? 'Trendy streetwear aesthetic with clean ZYRO branding' : 'Stylish sports-inspired design'}</p>
+                  <p className="description-block-text">• Suitable for casual wear, gym, and everyday styling</p>
+                  <p className="description-block-text">• Available in multiple sizes</p>
+                </div>
+                <div className="description-block">
+                  <h3 className="description-block-title">Specifications</h3>
+                  <p className="description-block-text">
+                    <strong>Fabric:</strong> {isOversized ? 'Premium Heavy Cotton Blend' : 'Premium Dotnet'}
+                  </p>
+                  <p className="description-block-text">
+                    <strong>Fit:</strong> {isOversized ? 'Oversized / Relaxed Fit' : 'Regular / Athletic Fit'}
+                  </p>
+                  <p className="description-block-text">
+                    <strong>Care:</strong> Hand wash or gentle machine wash inside out. Do not bleach. Tumble dry low or hang dry.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
+        </section>
+
+        {/* 2. Dynamic Size Chart & How to Measure Section */}
+        <section className="product-sizechart-section">
+          <SizeChart
+            sizeChart={product.size_chart}
+            category={product.category}
+            productName={product.name}
+            availableSizes={sizesToMap}
+            selectedSize={activeSize}
+            onSizeSelect={setActiveSize}
+            activeChartRecord={activeChartRecord}
+          />
         </section>
 
         {/* Customer Reviews Section */}

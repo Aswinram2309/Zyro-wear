@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Product } from '@/shared/types';
 import { calculateStockStatus, DEFAULT_LOW_STOCK_THRESHOLD, formatImageUrl, normalizeCategory } from '@/shared/constants/stock-config';
+import { getSizeChartType, NORMAL_SIZE_CHART_DEFAULTS, OVERSIZED_SIZE_CHART_DEFAULTS } from '@/shared/constants/size-chart-config';
 
 const ALL_SIZES = ['M', 'L', 'XL', 'XXL'];
 
@@ -84,6 +85,9 @@ export default function StockManagementPage() {
   const [savingAnnouncement, setSavingAnnouncement] = useState<boolean>(false);
   const [announcementMsgStatus, setAnnouncementMsgStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Active Size Charts State
+  const [activeSizeCharts, setActiveSizeCharts] = useState<{ normal?: any; oversized?: any }>({});
+
   // Check Auth
   useEffect(() => {
     const isAuthenticated = sessionStorage.getItem('zyro_admin_auth');
@@ -92,8 +96,23 @@ export default function StockManagementPage() {
     } else {
       fetchProducts();
       fetchAnnouncementSettings();
+      fetchActiveSizeCharts();
     }
   }, [router]);
+
+  const fetchActiveSizeCharts = async () => {
+    try {
+      const res = await fetch(`/api/size-charts?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setActiveSizeCharts({ normal: data.normal, oversized: data.oversized });
+        }
+      }
+    } catch (e) {
+      console.error('Error loading size charts in stock management:', e);
+    }
+  };
 
   const fetchAnnouncementSettings = async () => {
     setLoadingAnnouncement(true);
@@ -572,6 +591,9 @@ export default function StockManagementPage() {
             </Link>
             <Link href="/admin/stock" className="admin-nav-link active">
               <i className="fa-solid fa-boxes-stacked"></i> Stock Management
+            </Link>
+            <Link href="/admin/size-charts" className="admin-nav-link">
+              <i className="fa-solid fa-ruler-combined"></i> Size Chart Management
             </Link>
           </div>
 
@@ -1070,96 +1092,220 @@ export default function StockManagementPage() {
               </div>
 
               {/* Step 10: Size Chart Measurements (inch) */}
-              <div className="form-group size-stock-inputs-box">
-                <label>10. SIZE CHART MEASUREMENTS (Inches)</label>
-                <p className="subtext">Set Length, Chest, Shoulder, and Sleeve dimensions for each size to populate the Size Chart.</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
-                  {ALL_SIZES.map((sz) => {
-                    const isSelected = formData.sizes.includes(sz);
-                    return (
-                      <div key={sz} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr 1fr', gap: '0.8rem', alignItems: 'center', opacity: isSelected ? 1 : 0.5 }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#FFC700' }}>{sz} Size:</span>
-                        <input
-                          type="text"
-                          placeholder="Length (in)"
-                          disabled={!isSelected}
-                          value={formData.size_chart?.[sz]?.length || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setFormData((prev) => ({
-                              ...prev,
-                              size_chart: {
-                                ...prev.size_chart,
-                                [sz]: {
-                                  ...(prev.size_chart?.[sz] || {}),
-                                  length: val,
-                                },
-                              },
-                            }));
+              {(() => {
+                const isFormOversized = getSizeChartType(formData.category, formData.name) === 'OVERSIZED';
+                const activeChart = isFormOversized ? activeSizeCharts.oversized : activeSizeCharts.normal;
+                return (
+                  <div className="form-group size-stock-inputs-box">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <label style={{ margin: 0 }}>
+                        10. SIZE CHART MEASUREMENTS (Inches)
+                      </label>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            background: isFormOversized ? 'rgba(255, 199, 0, 0.15)' : '#262930',
+                            color: isFormOversized ? '#FFC700' : '#9CA3AF',
+                            border: isFormOversized ? '1px solid rgba(255, 199, 0, 0.3)' : '1px solid #374151',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
                           }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Chest (in)"
-                          disabled={!isSelected}
-                          value={formData.size_chart?.[sz]?.chest || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setFormData((prev) => ({
-                              ...prev,
-                              size_chart: {
-                                ...prev.size_chart,
-                                [sz]: {
-                                  ...(prev.size_chart?.[sz] || {}),
-                                  chest: val,
-                                },
-                              },
-                            }));
-                          }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Shoulder (in)"
-                          disabled={!isSelected}
-                          value={formData.size_chart?.[sz]?.shoulder || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setFormData((prev) => ({
-                              ...prev,
-                              size_chart: {
-                                ...prev.size_chart,
-                                [sz]: {
-                                  ...(prev.size_chart?.[sz] || {}),
-                                  shoulder: val,
-                                },
-                              },
-                            }));
-                          }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Sleeve (in)"
-                          disabled={!isSelected}
-                          value={(formData.size_chart?.[sz] as any)?.sleeve || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setFormData((prev) => ({
-                              ...prev,
-                              size_chart: {
-                                ...prev.size_chart,
-                                [sz]: {
-                                  ...(prev.size_chart?.[sz] || {}),
-                                  sleeve: val,
-                                },
-                              },
-                            }));
-                          }}
-                        />
+                        >
+                          {isFormOversized ? '⚡ OVERSIZED CHART (Auto-selected)' : '👕 NORMAL CHART (Auto-selected)'}
+                        </span>
+                        <Link
+                          href="/admin/size-charts"
+                          target="_blank"
+                          style={{ fontSize: '0.72rem', color: '#FFC700', textDecoration: 'underline' }}
+                        >
+                          Manage Charts
+                        </Link>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                    </div>
+                    <p className="subtext">
+                      {isFormOversized
+                        ? `Using active Oversized chart "${activeChart?.name || 'Oversized T-Shirt Size Chart'}". Leave blank to use central active chart values, or enter product-specific overrides below.`
+                        : `Using active Normal chart "${activeChart?.name || 'Normal T-Shirt Size Chart'}". Leave blank to use central active chart values, or enter product-specific overrides below.`}
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
+                      {ALL_SIZES.map((sz) => {
+                        const isSelected = formData.sizes.includes(sz);
+                        const overDef = OVERSIZED_SIZE_CHART_DEFAULTS[sz];
+                        const normDef = NORMAL_SIZE_CHART_DEFAULTS[sz];
+
+                        return (
+                          <div key={sz} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr 1fr', gap: '0.8rem', alignItems: 'center', opacity: isSelected ? 1 : 0.5 }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#FFC700' }}>{sz} Size:</span>
+                            {isFormOversized ? (
+                              <>
+                                <input
+                                  type="text"
+                                  placeholder={`Shoulder: ${overDef?.shoulder || '20'}`}
+                                  disabled={!isSelected}
+                                  value={formData.size_chart?.[sz]?.shoulder || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          shoulder: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder={`Chest: ${overDef?.chest || '40'}`}
+                                  disabled={!isSelected}
+                                  value={formData.size_chart?.[sz]?.chest || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          chest: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder={`Length: ${overDef?.length || '27.5'}`}
+                                  disabled={!isSelected}
+                                  value={formData.size_chart?.[sz]?.length || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          length: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder={`Sleeve: ${overDef?.sleeve || '10'}`}
+                                  disabled={!isSelected}
+                                  value={(formData.size_chart?.[sz] as any)?.sleeve || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          sleeve: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <input
+                                  type="text"
+                                  placeholder={`Length: ${normDef?.length || '27'}`}
+                                  disabled={!isSelected}
+                                  value={formData.size_chart?.[sz]?.length || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          length: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder={`Chest: ${normDef?.chest || '40'}`}
+                                  disabled={!isSelected}
+                                  value={formData.size_chart?.[sz]?.chest || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          chest: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder={`Shoulder: ${normDef?.shoulder || '10'}`}
+                                  disabled={!isSelected}
+                                  value={formData.size_chart?.[sz]?.shoulder || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          shoulder: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Sleeve (opt)"
+                                  disabled={!isSelected}
+                                  value={(formData.size_chart?.[sz] as any)?.sleeve || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      size_chart: {
+                                        ...prev.size_chart,
+                                        [sz]: {
+                                          ...(prev.size_chart?.[sz] || {}),
+                                          sleeve: val,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Submit Controls */}
               <div className="modal-form-actions">

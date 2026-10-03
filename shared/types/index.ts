@@ -5,6 +5,28 @@ export interface SizeMeasurement {
   sleeve?: string;
 }
 
+export interface SizeChartMeasurementRow {
+  size: string;
+  shoulder?: string;
+  chest?: string;
+  length?: string;
+  sleeve?: string;
+}
+
+export interface SizeChartRecord {
+  id: string;
+  name: string;
+  type: 'NORMAL' | 'OVERSIZED';
+  chart_image_url?: string | null;
+  how_to_measure_image_url?: string | null;
+  measurements: SizeChartMeasurementRow[];
+  unit?: string;
+  tips?: string[];
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
