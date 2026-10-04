@@ -44,6 +44,8 @@ export interface Product {
   stock?: number;
   stock_by_size?: Record<string, number>;
   size_chart?: Record<string, SizeMeasurement>;
+  size_chart_img?: string | null;
+  how_to_measure_img?: string | null;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

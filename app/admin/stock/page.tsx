@@ -40,6 +40,8 @@ export default function StockManagementPage() {
     sizes: string[];
     stock_by_size: Record<string, number>;
     size_chart: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }>;
+    size_chart_img: string;
+    how_to_measure_img: string;
     front_img: string;
     back_img: string;
     is_active: boolean;
@@ -59,6 +61,8 @@ export default function StockManagementPage() {
       XL: { length: '', chest: '', shoulder: '', sleeve: '' },
       XXL: { length: '', chest: '', shoulder: '', sleeve: '' },
     },
+    size_chart_img: '',
+    how_to_measure_img: '',
     front_img: '',
     back_img: '',
     is_active: true,
@@ -69,6 +73,10 @@ export default function StockManagementPage() {
   const [backFile, setBackFile] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string>('');
   const [backPreview, setBackPreview] = useState<string>('');
+  const [sizeChartFile, setSizeChartFile] = useState<File | null>(null);
+  const [howToMeasureFile, setHowToMeasureFile] = useState<File | null>(null);
+  const [sizeChartPreview, setSizeChartPreview] = useState<string>('');
+  const [howToMeasurePreview, setHowToMeasurePreview] = useState<string>('');
   const [uploadingImages, setUploadingImages] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -236,14 +244,20 @@ export default function StockManagementPage() {
         XL: { length: '', chest: '', shoulder: '', sleeve: '' },
         XXL: { length: '', chest: '', shoulder: '', sleeve: '' },
       },
+      size_chart_img: '',
+      how_to_measure_img: '',
       front_img: '',
       back_img: '',
       is_active: true,
     });
     setFrontFile(null);
     setBackFile(null);
+    setSizeChartFile(null);
+    setHowToMeasureFile(null);
     setFrontPreview('');
     setBackPreview('');
+    setSizeChartPreview('');
+    setHowToMeasurePreview('');
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -279,14 +293,20 @@ export default function StockManagementPage() {
       sizes: availSizes,
       stock_by_size: stockMap,
       size_chart: sizeChartMap,
+      size_chart_img: product.size_chart_img || '',
+      how_to_measure_img: product.how_to_measure_img || '',
       front_img: product.front_img,
       back_img: product.back_img,
       is_active: product.is_active !== false,
     });
     setFrontFile(null);
     setBackFile(null);
+    setSizeChartFile(null);
+    setHowToMeasureFile(null);
     setFrontPreview(formatImageUrl(product.front_img));
     setBackPreview(formatImageUrl(product.back_img));
+    setSizeChartPreview(product.size_chart_img ? formatImageUrl(product.size_chart_img) : '');
+    setHowToMeasurePreview(product.how_to_measure_img ? formatImageUrl(product.how_to_measure_img) : '');
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -329,8 +349,42 @@ export default function StockManagementPage() {
     }
   };
 
+  const handleSizeChartSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setFormError('Invalid file type for size chart image. Please choose an image file.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setFormError('Size chart image file size must be under 10MB.');
+        return;
+      }
+      setFormError(null);
+      setSizeChartFile(file);
+      setSizeChartPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleHowToMeasureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setFormError('Invalid file type for how to measure image. Please choose an image file.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setFormError('How to measure image file size must be under 10MB.');
+        return;
+      }
+      setFormError(null);
+      setHowToMeasureFile(file);
+      setHowToMeasurePreview(URL.createObjectURL(file));
+    }
+  };
+
   // Upload image file to API
-  const uploadImageFile = async (file: File, type: 'front' | 'back', tempId: string): Promise<string> => {
+  const uploadImageFile = async (file: File, type: 'front' | 'back' | 'size_chart' | 'how_to_measure', tempId: string): Promise<string> => {
     try {
       const uploadData = new FormData();
       uploadData.append('file', file);
@@ -395,15 +449,9 @@ export default function StockManagementPage() {
       setFormError('Category is required');
       return;
     }
-    const p = parseFloat(formData.price);
-    if (isNaN(p) || p <= 0) {
-      setFormError('Price must be a valid positive number');
-      return;
-    }
-
-    const mrpNum = formData.mrp ? parseFloat(formData.mrp) : p;
-    if (isNaN(mrpNum) || mrpNum < p) {
-      setFormError('Original Price (MRP) cannot be less than selling price');
+    const mrpNum = parseFloat(formData.mrp);
+    if (isNaN(mrpNum) || mrpNum <= 0) {
+      setFormError('Original Price (MRP) must be a valid positive number');
       return;
     }
 
@@ -414,7 +462,7 @@ export default function StockManagementPage() {
         setFormError('Special offer price must be a valid positive number');
         return;
       }
-      if (salePriceNum > p) {
+      if (salePriceNum > mrpNum) {
         setFormError('Special offer price cannot be greater than original price');
         return;
       }
@@ -449,12 +497,20 @@ export default function StockManagementPage() {
       const tempId = editingProduct ? editingProduct.id : `prod_${Date.now()}`;
       let finalFrontUrl = formData.front_img;
       let finalBackUrl = formData.back_img;
+      let finalSizeChartUrl = formData.size_chart_img;
+      let finalHowToMeasureUrl = formData.how_to_measure_img;
 
       if (frontFile) {
         finalFrontUrl = await uploadImageFile(frontFile, 'front', tempId);
       }
       if (backFile) {
         finalBackUrl = await uploadImageFile(backFile, 'back', tempId);
+      }
+      if (sizeChartFile) {
+        finalSizeChartUrl = await uploadImageFile(sizeChartFile, 'size_chart', tempId);
+      }
+      if (howToMeasureFile) {
+        finalHowToMeasureUrl = await uploadImageFile(howToMeasureFile, 'how_to_measure', tempId);
       }
 
       setUploadingImages(false);
@@ -464,12 +520,14 @@ export default function StockManagementPage() {
         description: formData.description.trim(),
         category: formData.category,
         nation: formData.nation.trim() || undefined,
-        price: salePriceNum !== null ? salePriceNum : p,
+        price: salePriceNum !== null ? salePriceNum : mrpNum,
         mrp: mrpNum,
         sale_price: salePriceNum,
         sizes: formData.sizes,
         stock_by_size: formData.stock_by_size,
         size_chart: formData.size_chart,
+        size_chart_img: finalSizeChartUrl,
+        how_to_measure_img: finalHowToMeasureUrl,
         front_img: finalFrontUrl,
         back_img: finalBackUrl,
         images: [finalFrontUrl, finalBackUrl],
@@ -591,9 +649,6 @@ export default function StockManagementPage() {
             </Link>
             <Link href="/admin/stock" className="admin-nav-link active">
               <i className="fa-solid fa-boxes-stacked"></i> Stock Management
-            </Link>
-            <Link href="/admin/size-charts" className="admin-nav-link">
-              <i className="fa-solid fa-ruler-combined"></i> Size Chart Management
             </Link>
           </div>
 
@@ -1303,6 +1358,83 @@ export default function StockManagementPage() {
                         );
                       })}
                     </div>
+                    {isFormOversized && (
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                        <div className="image-upload-box" style={{ flex: 1 }}>
+                          <label className="upload-label">SIZE CHART IMAGE</label>
+                          <div className="image-preview-area">
+                            {sizeChartPreview ? (
+                              <img src={sizeChartPreview} alt="Size Chart Preview" className="uploaded-preview-img" />
+                            ) : (
+                              <div className="empty-preview">
+                                <i className="fa-solid fa-image"></i>
+                                <span>Upload Size Chart</span>
+                              </div>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleSizeChartSelect}
+                            className="file-input-hidden"
+                            id="size-chart-img-input"
+                          />
+                          <label htmlFor="size-chart-img-input" className="btn-upload-file">
+                            <i className="fa-solid fa-cloud-arrow-up"></i> Choose File
+                          </label>
+                          <div className="image-url-input-wrap">
+                            <span className="url-input-label">Or URL:</span>
+                            <input
+                              type="text"
+                              value={formData.size_chart_img}
+                              onChange={(e) => {
+                                const url = e.target.value;
+                                setFormData((prev) => ({ ...prev, size_chart_img: url }));
+                                setSizeChartPreview(formatImageUrl(url));
+                              }}
+                              className="image-url-text-input"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="image-upload-box" style={{ flex: 1 }}>
+                          <label className="upload-label">HOW TO MEASURE IMAGE</label>
+                          <div className="image-preview-area">
+                            {howToMeasurePreview ? (
+                              <img src={howToMeasurePreview} alt="How to Measure Preview" className="uploaded-preview-img" />
+                            ) : (
+                              <div className="empty-preview">
+                                <i className="fa-solid fa-image"></i>
+                                <span>Upload How to Measure</span>
+                              </div>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHowToMeasureSelect}
+                            className="file-input-hidden"
+                            id="how-to-measure-img-input"
+                          />
+                          <label htmlFor="how-to-measure-img-input" className="btn-upload-file">
+                            <i className="fa-solid fa-cloud-arrow-up"></i> Choose File
+                          </label>
+                          <div className="image-url-input-wrap">
+                            <span className="url-input-label">Or URL:</span>
+                            <input
+                              type="text"
+                              value={formData.how_to_measure_img}
+                              onChange={(e) => {
+                                const url = e.target.value;
+                                setFormData((prev) => ({ ...prev, how_to_measure_img: url }));
+                                setHowToMeasurePreview(formatImageUrl(url));
+                              }}
+                              className="image-url-text-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}

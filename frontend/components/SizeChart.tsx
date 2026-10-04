@@ -19,6 +19,8 @@ interface SizeChartProps {
   selectedSize: string;
   onSizeSelect?: (size: string) => void;
   activeChartRecord?: SizeChartRecord | null;
+  productSizeChartImg?: string | null;
+  productHowToMeasureImg?: string | null;
 }
 
 export default function SizeChart({
@@ -29,6 +31,8 @@ export default function SizeChart({
   selectedSize,
   onSizeSelect,
   activeChartRecord: initialActiveRecord,
+  productSizeChartImg,
+  productHowToMeasureImg,
 }: SizeChartProps) {
   const [isSizeChartOpen, setIsSizeChartOpen] = useState<boolean>(false);
   const [isHowToMeasureOpen, setIsHowToMeasureOpen] = useState<boolean>(false);
@@ -99,9 +103,12 @@ export default function SizeChart({
   const chartTitle = activeRecord?.name || (isOversized ? 'OVERSIZED TEE SIZE CHART' : 'PRODUCT DIMENSIONS');
   const chartUnit = activeRecord?.unit || config.unit;
   const chartTips = activeRecord?.tips && activeRecord.tips.length > 0 ? activeRecord.tips : config.tips;
-  const howToMeasureImg = activeRecord?.how_to_measure_image_url
+  const howToMeasureImg = productHowToMeasureImg
+    ? formatImageUrl(productHowToMeasureImg)
+    : activeRecord?.how_to_measure_image_url
     ? formatImageUrl(activeRecord.how_to_measure_image_url)
     : config.howToMeasureImage;
+  const sizeChartImg = productSizeChartImg ? formatImageUrl(productSizeChartImg) : null;
 
   return (
     <div
@@ -207,6 +214,12 @@ export default function SizeChart({
                   {chartUnit}
                 </span>
               </div>
+              
+              {sizeChartImg && (
+                <div style={{ marginBottom: '1rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => setLightboxImage(sizeChartImg)}>
+                  <img src={sizeChartImg} alt="Product Size Chart" style={{ maxWidth: '100%', height: 'auto', borderRadius: '6px', border: '1px solid #262930' }} />
+                </div>
+              )}
 
               {/* Structured Measurement Table */}
               <div className="size-chart-table-container" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>

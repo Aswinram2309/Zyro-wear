@@ -134,8 +134,19 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
           const back_img = formatImageUrl(dbP.back_img);
           const rawImages = Array.isArray(dbP.images) && dbP.images.length > 0 ? dbP.images : [front_img, back_img];
           const cleanImages = rawImages
-            .filter((img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:'))
+            .filter((img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:') && !img.startsWith('__size_chart_img:') && !img.startsWith('__how_to_measure_img:'))
             .map((img: string) => formatImageUrl(img));
+
+          let size_chart_img = dbP.size_chart_img || null;
+          let how_to_measure_img = dbP.how_to_measure_img || null;
+          
+          if (Array.isArray(dbP.images)) {
+            const scImgStr = dbP.images.find((img: any) => typeof img === 'string' && img.startsWith('__size_chart_img:'));
+            if (scImgStr) size_chart_img = scImgStr.replace('__size_chart_img:', '');
+            
+            const htmImgStr = dbP.images.find((img: any) => typeof img === 'string' && img.startsWith('__how_to_measure_img:'));
+            if (htmImgStr) how_to_measure_img = htmImgStr.replace('__how_to_measure_img:', '');
+          }
 
           const slug = dbP.slug || createSlug(dbP.name, dbP.id);
 
@@ -156,6 +167,8 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
             stock: totalStock,
             stock_by_size: stockBySize,
             size_chart: dbP.size_chart || undefined,
+            size_chart_img: size_chart_img,
+            how_to_measure_img: how_to_measure_img,
             is_active: dbP.is_active !== undefined ? Boolean(dbP.is_active) : true,
             created_at: dbP.created_at || new Date().toISOString(),
             updated_at: dbP.updated_at || new Date().toISOString(),
@@ -223,6 +236,8 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
     stock: totalStock,
     stock_by_size: stockBySize,
     size_chart: productPayload.size_chart || undefined,
+    size_chart_img: productPayload.size_chart_img || null,
+    how_to_measure_img: productPayload.how_to_measure_img || null,
     is_active: productPayload.is_active !== undefined ? Boolean(productPayload.is_active) : true,
     created_at: now,
     updated_at: now,
@@ -243,13 +258,17 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
         nation: newProduct.nation,
         front_img: newProduct.front_img,
         back_img: newProduct.back_img,
-        images: [...(newProduct.images || []), metadata],
         sizes: newProduct.sizes,
         stock: newProduct.stock,
         is_active: newProduct.is_active,
         created_at: newProduct.created_at,
         updated_at: newProduct.updated_at,
       };
+
+      const imagesToSave = [...(newProduct.images || []), metadata];
+      if (newProduct.size_chart_img) imagesToSave.push(`__size_chart_img:${newProduct.size_chart_img}`);
+      if (newProduct.how_to_measure_img) imagesToSave.push(`__how_to_measure_img:${newProduct.how_to_measure_img}`);
+      dbPayload.images = imagesToSave;
 
       if (newProduct.sale_price !== null && newProduct.sale_price !== undefined) {
         dbPayload.sale_price = newProduct.sale_price;
@@ -371,16 +390,32 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
     dbPayload.size_chart = updates.size_chart;
   }
 
+  // Preserve existing metadata or update it
+  const existingProduct = await getProductByIdFromStore(id);
+  const existingImages = existingProduct?.images || [];
+  const cleanImages = existingImages.filter(
+    (img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:') && !img.startsWith('__size_chart_img:') && !img.startsWith('__how_to_measure_img:')
+  );
+  
+  const finalStockBySize = stockBySize || existingProduct?.stock_by_size || DEFAULT_SIZE_STOCK;
+  const metadata = `__stock_by_size:${JSON.stringify(finalStockBySize)}`;
+  cleanImages.push(metadata);
+
+  let finalSizeChartImg = updates.size_chart_img !== undefined ? updates.size_chart_img : existingProduct?.size_chart_img;
+  if (finalSizeChartImg) {
+    cleanImages.push(`__size_chart_img:${finalSizeChartImg}`);
+  }
+
+  let finalHowToMeasureImg = updates.how_to_measure_img !== undefined ? updates.how_to_measure_img : existingProduct?.how_to_measure_img;
+  if (finalHowToMeasureImg) {
+    cleanImages.push(`__how_to_measure_img:${finalHowToMeasureImg}`);
+  }
+  
+  dbPayload.images = cleanImages;
+
   if (stockBySize) {
     dbPayload.stock_by_size = stockBySize;
     dbPayload.stock = calculateProductTotalStock(stockBySize);
-    const metadata = `__stock_by_size:${JSON.stringify(stockBySize)}`;
-    const existingImages = Array.isArray(updates.images) ? updates.images : [];
-    const cleanImages = existingImages.filter(
-      (img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:')
-    );
-    cleanImages.push(metadata);
-    dbPayload.images = cleanImages;
   } else if (updates.stock !== undefined) {
     dbPayload.stock = Number(updates.stock);
   }

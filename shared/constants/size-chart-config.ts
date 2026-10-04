@@ -144,11 +144,11 @@ export const OVERSIZED_SIZE_CHART_CONFIG: SizeChartConfig = {
  */
 export function getSizeChartType(category?: string, productName: string = ''): SizeChartType {
   const normCat = normalizeCategory(category || '', productName);
-  if (normCat === 'Oversized T-Shirts') {
+  if (normCat === 'Oversized T-Shirts' || normCat === 'Customized T-Shirts') {
     return 'OVERSIZED';
   }
   const rawCat = (category || '').trim().toLowerCase();
-  if (rawCat.includes('oversize') || rawCat.includes('over sized')) {
+  if (rawCat.includes('oversize') || rawCat.includes('over sized') || rawCat.includes('custom')) {
     return 'OVERSIZED';
   }
   return 'NORMAL';

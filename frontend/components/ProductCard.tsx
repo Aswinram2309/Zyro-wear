@@ -53,7 +53,11 @@ export default function ProductCard({
       onClick={() => router.push(`/product/${product.slug}`)}
     >
       <div className="card-badge-container">
-        <span className="offer-badge">57% OFF</span>
+        {product.mrp && product.price && product.mrp > product.price && (
+          <span className="offer-badge">
+            {Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF
+          </span>
+        )}
       </div>
 
       <div className="card-image-wrapper">
@@ -87,7 +91,9 @@ export default function ProductCard({
         </h3>
         <div className="product-price-row">
           <span className="current-price">₹{product.price}</span>
-          <span className="mrp-price">₹{product.mrp}</span>
+          {product.mrp && product.mrp > product.price && (
+            <span className="mrp-price">₹{product.mrp}</span>
+          )}
           {totalStock === 0 ? (
             <span className="stock-status out-of-stock" style={{ marginLeft: 'auto' }}>OUT OF STOCK</span>
           ) : totalStock >= 1 && totalStock <= 3 ? (

@@ -746,6 +746,8 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
             selectedSize={activeSize}
             onSizeSelect={setActiveSize}
             activeChartRecord={activeChartRecord}
+            productSizeChartImg={product.size_chart_img}
+            productHowToMeasureImg={product.how_to_measure_img}
           />
         </section>
 

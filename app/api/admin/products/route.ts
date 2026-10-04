@@ -43,6 +43,8 @@ export async function POST(req: Request) {
       sizes,
       stock_by_size,
       size_chart,
+      size_chart_img,
+      how_to_measure_img,
       is_active,
     } = body;
 
@@ -113,6 +115,8 @@ export async function POST(req: Request) {
       sizes,
       stock_by_size,
       size_chart,
+      size_chart_img,
+      how_to_measure_img,
       is_active: is_active !== undefined ? Boolean(is_active) : true,
     });
 
