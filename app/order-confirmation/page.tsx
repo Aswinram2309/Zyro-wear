@@ -7,7 +7,8 @@ import Link from 'next/link';
 function OrderConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const orderNumber = searchParams.get('order') || 'ZY1001';
+  const rawOrderNumber = searchParams.get('order') || '#ZW1';
+  const orderNumber = rawOrderNumber.startsWith('#') ? rawOrderNumber : `#${rawOrderNumber}`;
   const customerName = searchParams.get('name') || 'Valued Customer';
   const totalAmount = searchParams.get('total') || '299';
 
@@ -37,11 +38,11 @@ function OrderConfirmationContent() {
         <div className="order-details-box">
           <div className="detail-row">
             <span>Order Reference:</span>
-            <strong className="order-num">#{orderNumber}</strong>
+            <strong className="order-num">{orderNumber}</strong>
           </div>
           <div className="detail-row">
             <span>Payment Status:</span>
-            <span className="status-badge paid"><i className="fa-solid fa-check"></i> PAID (Test Mode)</span>
+            <span className="status-badge paid"><i className="fa-solid fa-check"></i> PAYMENT SUCCESSFUL</span>
           </div>
           <div className="detail-row">
             <span>Total Paid:</span>
@@ -68,7 +69,7 @@ function OrderConfirmationContent() {
           </Link>
           <a
             href={`https://wa.me/917200515977?text=${encodeURIComponent(
-              `Hi ZYRO Wear, I just placed order #${orderNumber} for ₹${totalAmount}. Please update me on shipping!`
+              `Hi ZYRO Wear, I just placed order ${orderNumber} for ₹${totalAmount}. Please update me on shipping!`
             )}`}
             target="_blank"
             rel="noopener noreferrer"

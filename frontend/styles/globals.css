@@ -2712,6 +2712,74 @@ button {
     margin-top: 1rem;
 }
 
+/* Checkout Quantity Controls & Item Removal */
+.checkout-qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+}
+
+.checkout-qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid #374151;
+    background: #1F2937;
+    color: #F9FAFB;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.checkout-qty-btn:hover:not(:disabled) {
+    background: #FFC700;
+    color: #000;
+    border-color: #FFC700;
+}
+
+.checkout-qty-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.checkout-qty-val {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #FFF;
+    min-width: 16px;
+    text-align: center;
+}
+
+.checkout-remove-btn {
+    background: transparent;
+    border: none;
+    color: #EF4444;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 3px 6px;
+    margin-left: 0.3rem;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.checkout-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+}
+
+.checkout-empty-cart {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed #374151;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+}
+
 /* Payment Simulation UI */
 .payment-simulation-box {
     text-align: center;

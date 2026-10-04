@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyRazorpaySignature } from '@/lib/razorpay';
-import { saveOrderToStore, findOrderByPaymentId } from '@/database/stores/orders-store';
+import { saveOrderToStore, findOrderByPaymentId, generateNextOrderNumber } from '@/database/stores/orders-store';
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
 import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
 import { calculateDeliveryCharge } from '@/lib/delivery';
@@ -97,7 +97,7 @@ export async function POST(req: Request) {
     const shippingFee = calculateDeliveryCharge(customer?.state);
     const totalAmount = subtotal + shippingFee;
 
-    const orderNumber = `ZY${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNumber = await generateNextOrderNumber();
 
     // 5. Save order to persistent store (Supabase database & local backup)
     const savedOrder = await saveOrderToStore({

@@ -14,6 +14,68 @@ function ensureDataDirExists() {
   }
 }
 
+export async function generateNextOrderNumber(): Promise<string> {
+  const supabase = createAdminClient();
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('generate_next_order_number');
+      if (!error && data && typeof data === 'string') {
+        return data;
+      }
+      if (error) {
+        console.warn('RPC generate_next_order_number fallback:', error.message);
+      }
+    } catch (err) {
+      console.warn('Supabase RPC order number error:', err);
+    }
+
+    try {
+      const { data: dbOrders } = await supabase
+        .from('orders')
+        .select('order_number')
+        .like('order_number', '#ZW%');
+
+      if (dbOrders && dbOrders.length > 0) {
+        let maxNum = 0;
+        for (const o of dbOrders) {
+          const match = (o.order_number || '').match(/^#ZW(\d+)$/i);
+          if (match) {
+            const val = parseInt(match[1], 10);
+            if (!isNaN(val) && val > maxNum) {
+              maxNum = val;
+            }
+          }
+        }
+        return `#ZW${maxNum + 1}`;
+      }
+    } catch (err) {
+      console.warn('Supabase DB order lookup error:', err);
+    }
+  }
+
+  try {
+    ensureDataDirExists();
+    const raw = fs.readFileSync(ORDERS_FILE_PATH, 'utf-8');
+    const ordersList = JSON.parse(raw || '[]');
+    let maxNum = 0;
+    for (const o of ordersList) {
+      const match = (o.order_number || '').match(/^#ZW(\d+)$/i);
+      if (match) {
+        const val = parseInt(match[1], 10);
+        if (!isNaN(val) && val > maxNum) {
+          maxNum = val;
+        }
+      }
+    }
+    return `#ZW${maxNum + 1}`;
+  } catch (err) {
+    console.error('Local JSON order number error:', err);
+    return `#ZW1`;
+  }
+}
+
+
 export async function saveOrderToStore(orderPayload: {
   orderNumber: string;
   customer: {

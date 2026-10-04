@@ -357,6 +357,8 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
         onClose={() => setIsCheckoutOpen(false)}
         cart={cart}
         onClearCart={() => setCart([])}
+        onUpdateQty={handleUpdateQty}
+        onRemoveItem={handleRemoveItem}
       />
     </div>
   );

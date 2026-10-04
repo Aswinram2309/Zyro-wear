@@ -946,9 +946,10 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           setCart([]);
           localStorage.removeItem('zyro_cart');
           setIsCheckoutOpen(false);
-          alert('Order placed successfully! We will contact you on WhatsApp.');
           loadProductDetails();
         }}
+        onUpdateQty={handleUpdateQty}
+        onRemoveItem={handleRemoveItem}
       />
 
       {/* Review Photo Lightbox Modal */}

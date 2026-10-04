@@ -4,6 +4,11 @@ import { Resend } from 'resend';
 const sentOrderEmails = new Set<string>();
 const sentAdminOrderEmails = new Set<string>();
 
+function formatOrderNum(num: string) {
+  if (!num) return '#ZW1';
+  return num.startsWith('#') ? num : `#${num}`;
+}
+
 export interface OrderEmailPayload {
   orderNumber: string;
   customerName: string;
@@ -42,6 +47,8 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
   const resend = new Resend(apiKey);
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'ZYRO Wear <onboarding@resend.dev>';
 
+  const formattedOrderNum = formatOrderNum(orderData.orderNumber);
+
   // HTML Template with ZYRO Wear Black / White / Gold styling
   const itemsHtml = orderData.items
     .map(
@@ -68,7 +75,7 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZYRO Wear Order #${orderData.orderNumber} Confirmed</title>
+    <title>ZYRO Wear Order ${formattedOrderNum} Confirmed</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #0A0B0C; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #FFFFFF;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0A0B0C; padding: 40px 20px;">
@@ -93,7 +100,7 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
 
                 <h2 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 800; color: #FFFFFF;">THANK YOU, ${orderData.customerName.toUpperCase()}!</h2>
                 <p style="margin: 0 0 25px 0; font-size: 14px; color: #9CA3AF; line-height: 1.6;">
-                  Your order <strong>#${orderData.orderNumber}</strong> has been successfully placed and is now in our dispatch processing queue.
+                  Your order <strong>${formattedOrderNum}</strong> has been successfully placed and is now in our dispatch processing queue.
                 </p>
 
                 <!-- Order Reference Card -->
@@ -103,7 +110,7 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                         <tr>
                           <td style="font-size: 13px; color: #9CA3AF; padding: 4px 0;">Order Reference:</td>
-                          <td align="right" style="font-size: 14px; font-weight: bold; color: #FFC700; padding: 4px 0;">#${orderData.orderNumber}</td>
+                          <td align="right" style="font-size: 14px; font-weight: bold; color: #FFC700; padding: 4px 0;">${formattedOrderNum}</td>
                         </tr>
                         <tr>
                           <td style="font-size: 13px; color: #9CA3AF; padding: 4px 0;">Payment Status:</td>
@@ -232,11 +239,12 @@ export async function sendAdminNewOrderEmail(orderData: OrderEmailPayload, razor
     )
     .join('');
 
+  const formattedOrderNum = formatOrderNum(orderData.orderNumber);
   const shippingFee = orderData.totalAmount - orderData.subtotal;
 
   const emailHtml = `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto;">
-    <h2 style="color: #000; border-bottom: 2px solid #ffc700; padding-bottom: 10px;">🛍️ New Order Received: #${orderData.orderNumber}</h2>
+    <h2 style="color: #000; border-bottom: 2px solid #ffc700; padding-bottom: 10px;">🛍️ New Order Received: ${formattedOrderNum}</h2>
     
     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
       <h3 style="margin-top: 0;">Customer Details</h3>
@@ -296,7 +304,7 @@ export async function sendAdminNewOrderEmail(orderData: OrderEmailPayload, razor
     const data = await resend.emails.send({
       from: fromEmail,
       to: [adminEmail],
-      subject: `🛍️ New Order Received - #${orderData.orderNumber}`,
+      subject: `🛍️ New Order Received - ${formattedOrderNum}`,
       html: emailHtml,
     });
 

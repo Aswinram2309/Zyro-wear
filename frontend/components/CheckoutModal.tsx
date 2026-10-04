@@ -9,6 +9,8 @@ interface CheckoutModalProps {
   onClose: () => void;
   cart: CartItem[];
   onClearCart: () => void;
+  onUpdateQty?: (productId: string, size: string, delta: number) => void;
+  onRemoveItem?: (productId: string, size: string) => void;
 }
 
 export default function CheckoutModal({
@@ -16,6 +18,8 @@ export default function CheckoutModal({
   onClose,
   cart,
   onClearCart,
+  onUpdateQty,
+  onRemoveItem,
 }: CheckoutModalProps) {
   const router = useRouter();
 
@@ -61,7 +65,10 @@ export default function CheckoutModal({
 
   if (!isOpen) return null;
 
-  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const subtotal = cart.reduce(
+    (sum, item) => sum + (item.product.sale_price || item.product.price) * item.quantity,
+    0
+  );
   const shippingFee = customer.state ? calculateDeliveryCharge(customer.state) : null;
   const totalAmount = subtotal + (shippingFee || 0);
 
@@ -495,18 +502,79 @@ export default function CheckoutModal({
             <div className="summary-column">
               <h4 className="form-section-title">Order Summary</h4>
               <div className="checkout-items-preview">
-                {cart.map((item, idx) => (
-                  <div key={idx} className="checkout-item-row">
-                    <img src={item.product.front_img} alt={item.product.name} />
-                    <div className="checkout-item-info">
-                      <strong className="item-title">{item.product.name}</strong>
-                      <span className="item-meta">
-                        Size: {item.size} | Qty: {item.quantity}
-                      </span>
-                    </div>
-                    <span className="item-price">₹{item.product.price * item.quantity}</span>
+                {cart.length === 0 ? (
+                  <div className="checkout-empty-cart">
+                    <i className="fa-solid fa-cart-shopping" style={{ fontSize: '2rem', color: '#9CA3AF', marginBottom: '0.5rem' }}></i>
+                    <p style={{ color: '#9CA3AF', fontSize: '0.85rem', margin: 0 }}>
+                      Your checkout cart is empty. Please add items from store.
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  cart.map((item, idx) => {
+                    const availableStock = item.product.stock_by_size?.[item.size] ?? item.product.stock ?? 0;
+                    const itemPrice = item.product.sale_price || item.product.price;
+                    return (
+                      <div key={`${item.product.id}_${item.size}_${idx}`} className="checkout-item-row">
+                        <img src={item.product.front_img} alt={item.product.name} />
+                        <div className="checkout-item-info">
+                          <strong className="item-title">{item.product.name}</strong>
+                          <span className="item-meta">Size: {item.size}</span>
+                          
+                          <div className="checkout-qty-controls">
+                            <button
+                              type="button"
+                              className="checkout-qty-btn"
+                              onClick={() => {
+                                if (item.quantity === 1) {
+                                  if (window.confirm(`Remove "${item.product.name}" (${item.size}) from your order?`)) {
+                                    onRemoveItem?.(item.product.id, item.size);
+                                  }
+                                } else {
+                                  onUpdateQty?.(item.product.id, item.size, -1);
+                                }
+                              }}
+                              title="Decrease quantity"
+                            >
+                              <i className="fa-solid fa-minus"></i>
+                            </button>
+
+                            <span className="checkout-qty-val">{item.quantity}</span>
+
+                            <button
+                              type="button"
+                              className="checkout-qty-btn"
+                              onClick={() => {
+                                if (item.quantity >= availableStock) {
+                                  alert(`Only ${availableStock} unit(s) available for ${item.product.name} (Size: ${item.size}).`);
+                                  return;
+                                }
+                                onUpdateQty?.(item.product.id, item.size, 1);
+                              }}
+                              disabled={item.quantity >= availableStock}
+                              title="Increase quantity"
+                            >
+                              <i className="fa-solid fa-plus"></i>
+                            </button>
+
+                            <button
+                              type="button"
+                              className="checkout-remove-btn"
+                              onClick={() => {
+                                if (window.confirm(`Remove "${item.product.name}" (${item.size}) from your order?`)) {
+                                  onRemoveItem?.(item.product.id, item.size);
+                                }
+                              }}
+                              title="Remove item"
+                            >
+                              <i className="fa-solid fa-trash-can"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <span className="item-price">₹{itemPrice * item.quantity}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               <div className="checkout-price-breakdown">
@@ -524,10 +592,14 @@ export default function CheckoutModal({
                 </div>
               </div>
 
-              <button type="submit" className="btn-pay-submit" disabled={loading}>
+              <button type="submit" className="btn-pay-submit" disabled={loading || cart.length === 0}>
                 {loading ? (
                   <>
                     <i className="fa-solid fa-spinner fa-spin"></i> PREPARING PAYMENT...
+                  </>
+                ) : cart.length === 0 ? (
+                  <>
+                    <i className="fa-solid fa-ban"></i> CART IS EMPTY
                   </>
                 ) : (
                   <>

@@ -219,3 +219,22 @@ ON CONFLICT (id) DO UPDATE SET
     mrp = EXCLUDED.mrp,
     front_img = EXCLUDED.front_img,
     back_img = EXCLUDED.back_img;
+
+-- SEQUENTIAL ORDER NUMBER GENERATOR (#ZW1, #ZW2, #ZW3...)
+CREATE SEQUENCE IF NOT EXISTS order_number_seq START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE FUNCTION generate_next_order_number()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_seq BIGINT;
+  v_next_num TEXT;
+BEGIN
+  v_seq := nextval('order_number_seq');
+  v_next_num := '#ZW' || v_seq;
+  RETURN v_next_num;
+END;
+$$;
+

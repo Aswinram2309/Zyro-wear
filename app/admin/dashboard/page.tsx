@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
               <div key={order.id} className="admin-order-card">
                 <div className="order-card-header">
                   <div className="order-header-left">
-                    <span className="admin-order-num">ORDER #{order.order_number}</span>
+                    <span className="admin-order-num">ORDER {order.order_number?.startsWith('#') ? order.order_number : `#${order.order_number}`}</span>
                     <span className="order-date">
                       {new Date(order.created_at).toLocaleString('en-IN', {
                         dateStyle: 'medium',
