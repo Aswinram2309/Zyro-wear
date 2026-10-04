@@ -95,6 +95,34 @@ export default function StockManagementPage() {
 
   // Active Size Charts State
   const [activeSizeCharts, setActiveSizeCharts] = useState<{ normal?: any; oversized?: any }>({});
+  const [exportingType, setExportingType] = useState<string | null>(null);
+
+  const handleExport = async (type: 'products' | 'reviews' | 'orders' | 'customers') => {
+    setExportingType(type);
+    try {
+      const res = await fetch(`/api/admin/export?type=${type}&t=${Date.now()}`);
+      if (!res.ok) {
+        throw new Error(`Export failed with status ${res.status}`);
+      }
+      const blob = await res.blob();
+      const currentDate = new Date().toISOString().split('T')[0];
+      const fileName = `ZYRO_${type.charAt(0).toUpperCase() + type.slice(1)}_${currentDate}.xlsx`;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Export error:', err);
+      alert('Failed to download Excel export: ' + (err.message || 'Error generating file'));
+    } finally {
+      setExportingType(null);
+    }
+  };
 
   // Check Auth
   useEffect(() => {
@@ -678,6 +706,32 @@ export default function StockManagementPage() {
           </div>
 
           <div className="stock-top-controls">
+            <button
+              className="btn-export-excel"
+              onClick={() => handleExport('products')}
+              disabled={exportingType === 'products'}
+              title="Download Stock & Price catalog as Excel (.xlsx)"
+            >
+              {exportingType === 'products' ? (
+                <><i className="fa-solid fa-spinner fa-spin"></i> Exporting Stock...</>
+              ) : (
+                <><i className="fa-solid fa-file-excel" style={{ color: '#10B981' }}></i> Export Stock (.xlsx)</>
+              )}
+            </button>
+
+            <button
+              className="btn-export-excel"
+              onClick={() => handleExport('reviews')}
+              disabled={exportingType === 'reviews'}
+              title="Download Product Reviews & Ratings as Excel (.xlsx)"
+            >
+              {exportingType === 'reviews' ? (
+                <><i className="fa-solid fa-spinner fa-spin"></i> Exporting Reviews...</>
+              ) : (
+                <><i className="fa-solid fa-file-excel" style={{ color: '#10B981' }}></i> Export Reviews (.xlsx)</>
+              )}
+            </button>
+
             <div className="threshold-setting-box">
               <label htmlFor="low-stock-threshold-input">Low Stock Threshold:</label>
               <input

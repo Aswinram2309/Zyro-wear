@@ -2780,6 +2780,37 @@ button {
     margin-bottom: 1.25rem;
 }
 
+/* Excel Export Buttons in Admin */
+.btn-export-excel {
+    background: #064E3B;
+    border: 1px solid #10B981;
+    color: #ECFDF5;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+}
+
+.btn-export-excel:hover:not(:disabled) {
+    background: #047857;
+    border-color: #34D399;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-export-excel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Payment Simulation UI */
 .payment-simulation-box {
     text-align: center;

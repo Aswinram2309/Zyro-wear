@@ -35,6 +35,34 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [activeFilter, setActiveFilter] = useState<string>('ALL');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [exportingType, setExportingType] = useState<string | null>(null);
+
+  const handleExport = async (type: 'orders' | 'customers' | 'products' | 'reviews') => {
+    setExportingType(type);
+    try {
+      const res = await fetch(`/api/admin/export?type=${type}&t=${Date.now()}`);
+      if (!res.ok) {
+        throw new Error(`Export failed with status ${res.status}`);
+      }
+      const blob = await res.blob();
+      const currentDate = new Date().toISOString().split('T')[0];
+      const fileName = `ZYRO_${type.charAt(0).toUpperCase() + type.slice(1)}_${currentDate}.xlsx`;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Export error:', err);
+      alert('Failed to download Excel export: ' + (err.message || 'Error generating file'));
+    } finally {
+      setExportingType(null);
+    }
+  };
 
   // Check auth
   useEffect(() => {
@@ -134,9 +162,37 @@ export default function AdminDashboardPage() {
             <p>View, manage and update customer order fulfillment statuses.</p>
           </div>
 
-          <button className="btn-refresh" onClick={fetchOrders}>
-            <i className="fa-solid fa-arrows-rotate"></i> Refresh Orders
-          </button>
+          <div className="admin-header-actions" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              className="btn-export-excel"
+              onClick={() => handleExport('orders')}
+              disabled={exportingType === 'orders'}
+              title="Download full Orders dataset as Excel (.xlsx)"
+            >
+              {exportingType === 'orders' ? (
+                <><i className="fa-solid fa-spinner fa-spin"></i> Exporting Orders...</>
+              ) : (
+                <><i className="fa-solid fa-file-excel" style={{ color: '#10B981' }}></i> Export Orders (.xlsx)</>
+              )}
+            </button>
+
+            <button
+              className="btn-export-excel"
+              onClick={() => handleExport('customers')}
+              disabled={exportingType === 'customers'}
+              title="Download Customer list & spend history as Excel (.xlsx)"
+            >
+              {exportingType === 'customers' ? (
+                <><i className="fa-solid fa-spinner fa-spin"></i> Exporting Customers...</>
+              ) : (
+                <><i className="fa-solid fa-file-excel" style={{ color: '#10B981' }}></i> Export Customers (.xlsx)</>
+              )}
+            </button>
+
+            <button className="btn-refresh" onClick={fetchOrders}>
+              <i className="fa-solid fa-arrows-rotate"></i> Refresh Orders
+            </button>
+          </div>
         </div>
 
         {/* Status Filter Tabs */}
