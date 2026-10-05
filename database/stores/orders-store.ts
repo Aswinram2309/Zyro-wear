@@ -234,26 +234,41 @@ export async function getAllOrdersFromStore() {
 
   if (supabase) {
     try {
+      // 1. Try relational query with joined order_items
       const { data: dbOrders, error: ordersErr } = await supabase
         .from('orders')
-        .select('*')
+        .select('*, items:order_items(*)')
         .order('created_at', { ascending: false });
 
-      if (ordersErr) {
-        console.error('Supabase fetch orders error details:', ordersErr);
+      if (!ordersErr && dbOrders && Array.isArray(dbOrders)) {
+        return dbOrders.map((order: any) => ({
+          ...order,
+          items: Array.isArray(order.items) ? order.items : [],
+        }));
       }
 
-      if (!ordersErr && dbOrders && dbOrders.length > 0) {
-        const { data: allItems } = await supabase.from('order_items').select('*');
+      if (ordersErr) {
+        // Fallback to bounded batch query for items
+        const { data: basicOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(200);
 
-        const ordersWithItems = dbOrders.map((order) => ({
-          ...order,
-          items: allItems
-            ? allItems.filter((i) => i.order_id === order.id)
-            : [],
-        }));
+        if (basicOrders && basicOrders.length > 0) {
+          const orderIds = basicOrders.map((o) => o.id);
+          const { data: orderItems } = await supabase
+            .from('order_items')
+            .select('*')
+            .in('order_id', orderIds);
 
-        return ordersWithItems;
+          return basicOrders.map((order) => ({
+            ...order,
+            items: orderItems
+              ? orderItems.filter((i) => i.order_id === order.id)
+              : [],
+          }));
+        }
       }
     } catch (e) {
       console.error('Supabase fetch error, falling back to local file:', e);

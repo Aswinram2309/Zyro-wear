@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getAllProductsFromStore, saveNewProductToStore } from '@/database/stores/products-store';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminRequest } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const products = await getAllProductsFromStore(true);
     return new Response(JSON.stringify({ success: true, products }), {
       status: 200,
@@ -17,19 +23,24 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error('Error fetching admin products:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Failed to fetch products' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, max-age=0, must-revalidate',
-      },
-    });
+    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
     const {
       name,
       slug,
@@ -128,6 +139,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, product: createdProduct }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }

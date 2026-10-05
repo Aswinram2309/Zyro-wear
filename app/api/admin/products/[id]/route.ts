@@ -1,15 +1,26 @@
 import { NextResponse } from 'next/server';
 import { updateProductInStore, toggleProductActiveInStore } from '@/database/stores/products-store';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminRequest } from '@/lib/admin-auth';
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const { id } = params;
     if (!id) {
       return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
     }
 
-    const body = await req.json();
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
 
     if (body.price !== undefined) {
       const p = Number(body.price);
@@ -52,12 +63,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ success: true, product: updated });
   } catch (error: any) {
     console.error('Error updating product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to update product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const { id } = params;
     if (!id) {
       return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
@@ -73,6 +89,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ success: ok, message: 'Product deactivated successfully' });
   } catch (error: any) {
     console.error('Error deactivating product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to deactivate product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to deactivate product' }, { status: 500 });
   }
 }

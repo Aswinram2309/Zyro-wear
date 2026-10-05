@@ -4,6 +4,7 @@ import {
   updateSizeChartInStore,
   deleteSizeChartFromStore,
 } from '@/database/stores/size-charts-store';
+import { verifyAdminRequest } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const resolvedParams = await Promise.resolve(params);
     const { id } = resolvedParams;
 
@@ -23,7 +29,7 @@ export async function GET(
     return NextResponse.json({ success: true, chart });
   } catch (error: any) {
     console.error('Error fetching size chart by id:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -32,9 +38,20 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const resolvedParams = await Promise.resolve(params);
     const { id } = resolvedParams;
-    const body = await req.json();
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
 
     const chart = await getSizeChartByIdFromStore(id);
     if (!chart) {
@@ -57,7 +74,7 @@ export async function PATCH(
     });
   } catch (error: any) {
     console.error('Error updating size chart:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -66,6 +83,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const resolvedParams = await Promise.resolve(params);
     const { id } = resolvedParams;
 
@@ -77,6 +99,6 @@ export async function DELETE(
     return NextResponse.json({ success: true, message: 'Size chart deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting size chart:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

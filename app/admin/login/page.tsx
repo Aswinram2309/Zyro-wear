@@ -1,20 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  React.useEffect(() => {
-    router.prefetch('/admin/dashboard');
-    router.prefetch('/');
-  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,25 +15,25 @@ export default function AdminLoginPage() {
     setErrorMsg('');
 
     try {
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@zyrowear.com';
-      const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin@123';
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
-      const isEmailValid =
-        email.trim().toLowerCase() === adminEmail.toLowerCase() ||
-        email.trim().toLowerCase() === 'admin@zyrowear.com';
+      const data = await res.json();
 
-      const isPasswordValid =
-        password === adminPassword || password === 'admin@123';
-
-      if (isEmailValid && isPasswordValid) {
-        sessionStorage.setItem('zyro_admin_auth', 'true');
-        router.push('/admin/dashboard');
-      } else {
-        setErrorMsg('Invalid email or password. Please check your credentials.');
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Invalid email or password. Please check your credentials.');
+        setLoading(false);
+        return;
       }
+
+      // Set client session flag & full navigate to refresh middleware session cookies
+      sessionStorage.setItem('zyro_admin_auth', 'true');
+      window.location.href = '/admin/dashboard';
     } catch (err: any) {
-      setErrorMsg(err.message || 'Login failed.');
-    } finally {
+      setErrorMsg(err.message || 'Login failed. Please check your connection.');
       setLoading(false);
     }
   };
@@ -65,6 +58,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoFocus
             />
           </div>
 

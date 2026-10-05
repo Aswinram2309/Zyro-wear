@@ -11,16 +11,15 @@ export async function GET() {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, max-age=0, must-revalidate',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     });
   } catch (error: any) {
     console.error('Error fetching public products:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Failed to fetch products' }), {
+    return new Response(JSON.stringify({ error: 'Failed to fetch products' }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, max-age=0, must-revalidate',
       },
     });
   }

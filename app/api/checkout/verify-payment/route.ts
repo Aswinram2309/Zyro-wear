@@ -4,29 +4,48 @@ import { saveOrderToStore, findOrderByPaymentId, generateNextOrderNumber } from 
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
 import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
 import { calculateDeliveryCharge } from '@/lib/delivery';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`verify_pay:${clientIp}`, 30, 60);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429 }
+      );
+    }
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request payload' }, { status: 400 });
+    }
+
     const customer = body.customer;
     const items = body.items;
-    const razorpayOrderId = body.razorpayOrderId || body.razorpay_order_id || body.order_id;
-    const razorpayPaymentId = body.razorpayPaymentId || body.razorpay_payment_id || body.payment_id;
-    const razorpaySignature = body.razorpaySignature || body.razorpay_signature || body.signature;
+    const razorpayOrderId = (body.razorpayOrderId || body.razorpay_order_id || body.order_id || '').trim();
+    const razorpayPaymentId = (body.razorpayPaymentId || body.razorpay_payment_id || body.payment_id || '').trim();
+    const razorpaySignature = (body.razorpaySignature || body.razorpay_signature || body.signature || '').trim();
 
     if (!customer || !customer.fullName || !customer.phone || !customer.address) {
-      return NextResponse.json({ error: 'Missing customer details' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required customer delivery details' }, { status: 400 });
     }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'Missing order items' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing checkout order items' }, { status: 400 });
     }
 
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-      return NextResponse.json({ error: 'Missing Razorpay payment parameters.' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing Razorpay payment verification parameters' }, { status: 400 });
     }
 
-    // 1. IDEMPOTENCY CHECK: Prevent duplicate order processing if payment ID or order ID was already processed
+    // 1. IDEMPOTENCY CHECK: Prevent duplicate order processing if payment was already verified
     const existingOrder = await findOrderByPaymentId(razorpayPaymentId, razorpayOrderId);
     if (existingOrder) {
       return NextResponse.json({
@@ -43,28 +62,32 @@ export async function POST(req: Request) {
     try {
       isValid = verifyRazorpaySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
     } catch (configError: any) {
-      console.error('Razorpay secret config error:', configError);
+      console.error('Razorpay secret config error:', configError.message);
       return NextResponse.json({ error: 'Payment gateway configuration error.' }, { status: 500 });
     }
 
     if (!isValid) {
-      console.error('Razorpay signature mismatch!');
+      console.error(`Razorpay signature mismatch for order: ${razorpayOrderId}, payment: ${razorpayPaymentId}`);
       return NextResponse.json({ error: 'Invalid payment signature. Verification failed.' }, { status: 400 });
     }
 
-    // 3. Calculate trusted server-side total and validate size stock
+    // 3. Calculate trusted server-side total and validate products
     let subtotal = 0;
     const validatedItems = [];
 
     for (const item of items) {
-      const product = await getProductByIdFromStore(item.productId);
+      if (!item.productId) {
+        return NextResponse.json({ error: 'Missing product ID in order items' }, { status: 400 });
+      }
+
+      const product = await getProductByIdFromStore(item.productId.trim());
       if (!product) {
         return NextResponse.json({ error: `Invalid product ID: ${item.productId}` }, { status: 400 });
       }
 
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-      const requestedSize = item.size || 'M';
-      const price = product.sale_price || product.price;
+      const requestedSize = (item.size || 'M').trim();
+      const price = product.sale_price !== null && product.sale_price !== undefined ? Number(product.sale_price) : Number(product.price);
 
       subtotal += price * qty;
 
@@ -88,21 +111,30 @@ export async function POST(req: Request) {
           await restoreSizeStock(deducted.product_id, deducted.size, deducted.quantity);
         }
         return NextResponse.json({
-          error: result.message || `Sorry, ${item.product_name} (Size: ${item.size}) is no longer available in the requested quantity.`
+          error: result.message || `Sorry, ${item.product_name} (Size: ${item.size}) is no longer available in requested quantity.`
         }, { status: 400 });
       }
       successfullyDeductedItems.push(item);
     }
 
-    const shippingFee = calculateDeliveryCharge(customer?.state);
+    const shippingFee = calculateDeliveryCharge(customer.state);
     const totalAmount = subtotal + shippingFee;
 
     const orderNumber = await generateNextOrderNumber();
 
-    // 5. Save order to persistent store (Supabase database & local backup)
+    // 5. Save order to persistent store (Supabase DB + local backup)
     const savedOrder = await saveOrderToStore({
       orderNumber,
-      customer,
+      customer: {
+        fullName: customer.fullName.trim(),
+        phone: customer.phone.trim(),
+        altPhone: (customer.altPhone || '').trim(),
+        email: (customer.email || '').trim(),
+        address: customer.address.trim(),
+        city: (customer.city || '').trim(),
+        state: (customer.state || '').trim(),
+        pincode: (customer.pincode || '').trim(),
+      },
       items: validatedItems,
       subtotal,
       totalAmount,
@@ -110,17 +142,17 @@ export async function POST(req: Request) {
       razorpayPaymentId,
     });
 
-    // 6. Send Order Confirmation Email via Resend (Server-Side Only)
+    // 6. Asynchronously Send Order Confirmation Email via Resend
     try {
       const orderPayload = {
         orderNumber: savedOrder.order_number,
-        customerName: customer.fullName,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-        city: customer.city || '',
-        state: customer.state || '',
-        pincode: customer.pincode || '',
+        customerName: customer.fullName.trim(),
+        email: (customer.email || '').trim(),
+        phone: customer.phone.trim(),
+        address: customer.address.trim(),
+        city: (customer.city || '').trim(),
+        state: (customer.state || '').trim(),
+        pincode: (customer.pincode || '').trim(),
         items: validatedItems,
         subtotal,
         totalAmount,
@@ -128,13 +160,15 @@ export async function POST(req: Request) {
         createdAt: savedOrder.created_at || new Date().toISOString(),
       };
       
-      // Send to Customer
-      await sendOrderConfirmationEmail(orderPayload);
+      // Customer confirmation
+      if (orderPayload.email) {
+        sendOrderConfirmationEmail(orderPayload).catch((e) => console.error('Customer email dispatch error:', e));
+      }
       
-      // Send to Admin
-      await sendAdminNewOrderEmail(orderPayload, razorpayPaymentId);
+      // Admin notification
+      sendAdminNewOrderEmail(orderPayload, razorpayPaymentId).catch((e) => console.error('Admin email dispatch error:', e));
     } catch (emailErr) {
-      console.error('Non-critical email dispatch error:', emailErr);
+      console.error('Non-critical email trigger error:', emailErr);
     }
 
     return NextResponse.json({
@@ -147,6 +181,6 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error('Error verifying payment:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to verify payment transaction' }, { status: 500 });
   }
 }

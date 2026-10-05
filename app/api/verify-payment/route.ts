@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server';
 import { verifyRazorpaySignature } from '@/lib/razorpay';
-import { saveOrderToStore, findOrderByPaymentId } from '@/database/stores/orders-store';
+import { saveOrderToStore, findOrderByPaymentId, generateNextOrderNumber } from '@/database/stores/orders-store';
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
 import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
 import { calculateDeliveryCharge } from '@/lib/delivery';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`verify_pay:${clientIp}`, 30, 60);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429 }
+      );
+    }
+
     let body: any = {};
     try {
       body = await req.json();
@@ -14,12 +27,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
     }
 
-    // Accept both standard snake_case and camelCase parameters
-    const orderId = body.razorpay_order_id || body.order_id || body.razorpayOrderId;
-    const paymentId = body.razorpay_payment_id || body.payment_id || body.razorpayPaymentId;
-    const signature = body.razorpay_signature || body.signature || body.razorpaySignature;
+    const orderId = (body.razorpay_order_id || body.order_id || body.razorpayOrderId || '').trim();
+    const paymentId = (body.razorpay_payment_id || body.payment_id || body.razorpayPaymentId || '').trim();
+    const signature = (body.razorpay_signature || body.signature || body.razorpaySignature || '').trim();
 
-    // Validate missing fields
     if (!orderId || !paymentId || !signature) {
       return NextResponse.json(
         {
@@ -35,7 +46,7 @@ export async function POST(req: Request) {
     try {
       isValid = verifyRazorpaySignature(orderId, paymentId, signature);
     } catch (configError: any) {
-      console.error('Razorpay secret config error:', configError);
+      console.error('Razorpay secret config error:', configError.message);
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
@@ -72,14 +83,18 @@ export async function POST(req: Request) {
       const validatedItems = [];
 
       for (const item of items) {
-        const product = await getProductByIdFromStore(item.productId);
+        if (!item.productId) {
+          return NextResponse.json({ error: 'Missing product ID in items' }, { status: 400 });
+        }
+
+        const product = await getProductByIdFromStore(item.productId.trim());
         if (!product) {
           return NextResponse.json({ error: `Invalid product ID: ${item.productId}` }, { status: 400 });
         }
 
         const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-        const requestedSize = item.size || 'M';
-        const price = product.sale_price || product.price;
+        const requestedSize = (item.size || 'M').trim();
+        const price = product.sale_price !== null && product.sale_price !== undefined ? Number(product.sale_price) : Number(product.price);
 
         subtotal += price * qty;
 
@@ -92,7 +107,7 @@ export async function POST(req: Request) {
         });
       }
 
-      // Deduct size stock atomically
+      // Deduct size stock atomically with rollback
       const successfullyDeductedItems: Array<{ product_id: string; size: string; quantity: number }> = [];
       for (const item of validatedItems) {
         const result = await deductSizeStock(item.product_id, item.size, item.quantity);
@@ -109,12 +124,21 @@ export async function POST(req: Request) {
 
       const shippingFee = calculateDeliveryCharge(customer?.state);
       const totalAmount = subtotal + shippingFee;
-      const orderNumber = `ZY${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderNumber = await generateNextOrderNumber();
 
       // Save order
       const savedOrder = await saveOrderToStore({
         orderNumber,
-        customer,
+        customer: {
+          fullName: customer.fullName.trim(),
+          phone: customer.phone.trim(),
+          altPhone: (customer.altPhone || '').trim(),
+          email: (customer.email || '').trim(),
+          address: customer.address.trim(),
+          city: (customer.city || '').trim(),
+          state: (customer.state || '').trim(),
+          pincode: (customer.pincode || '').trim(),
+        },
         items: validatedItems,
         subtotal,
         totalAmount,
@@ -126,13 +150,13 @@ export async function POST(req: Request) {
       try {
         const orderPayload = {
           orderNumber: savedOrder.order_number,
-          customerName: customer.fullName,
-          email: customer.email,
-          phone: customer.phone,
-          address: customer.address,
-          city: customer.city || '',
-          state: customer.state || '',
-          pincode: customer.pincode || '',
+          customerName: customer.fullName.trim(),
+          email: (customer.email || '').trim(),
+          phone: customer.phone.trim(),
+          address: customer.address.trim(),
+          city: (customer.city || '').trim(),
+          state: (customer.state || '').trim(),
+          pincode: (customer.pincode || '').trim(),
           items: validatedItems,
           subtotal,
           totalAmount,
@@ -140,8 +164,10 @@ export async function POST(req: Request) {
           createdAt: savedOrder.created_at || new Date().toISOString(),
         };
 
-        await sendOrderConfirmationEmail(orderPayload);
-        await sendAdminNewOrderEmail(orderPayload, paymentId);
+        if (orderPayload.email) {
+          sendOrderConfirmationEmail(orderPayload).catch(() => {});
+        }
+        sendAdminNewOrderEmail(orderPayload, paymentId).catch(() => {});
       } catch (emailErr) {
         console.error('Non-critical email notification error:', emailErr);
       }
@@ -157,7 +183,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Default standalone verification response
+    // Standalone verification response
     return NextResponse.json({
       success: true,
       message: 'Payment verified successfully',
@@ -167,7 +193,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Error verifying payment signature:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error', success: false },
+      { error: 'Payment verification failed', success: false },
       { status: 500 }
     );
   }

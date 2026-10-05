@@ -114,7 +114,10 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth', { method: 'DELETE' });
+    } catch {}
     sessionStorage.removeItem('zyro_admin_auth');
     router.push('/admin/login');
   };

@@ -1,21 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/database/client/admin';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`review_upload:${clientIp}`, 10, 600); // 10 uploads per 10 min
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Upload limit reached. Please wait a few minutes before uploading another photo.' },
+        { status: 429 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const productId = (formData.get('productId') as string) || 'general';
+    const rawProductId = (formData.get('productId') as string) || 'general';
+    const productId = rawProductId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
 
     if (!file) {
-      return NextResponse.json({ error: 'No photo uploaded' }, { status: 400 });
+      return NextResponse.json({ error: 'No photo file provided' }, { status: 400 });
     }
 
     const fileNameLower = file.name.toLowerCase();
     const fileExt = (fileNameLower.split('.').pop() || '').toLowerCase();
-    const allowedExts = ['jpeg', 'jpg', 'png', 'heic'];
+    const allowedExts = ['jpeg', 'jpg', 'png', 'webp', 'heic'];
 
     const isAllowedExt = allowedExts.includes(fileExt);
     const isAllowedType = file.type
@@ -24,7 +36,7 @@ export async function POST(req: Request) {
 
     if (!isAllowedExt || !isAllowedType) {
       return NextResponse.json(
-        { error: 'Invalid file format. Allowed formats: .jpeg, .jpg, .png, .heic' },
+        { error: 'Invalid file format. Allowed formats: .jpg, .jpeg, .png, .webp, .heic' },
         { status: 400 }
       );
     }
@@ -43,31 +55,19 @@ export async function POST(req: Request) {
     const supabase = createAdminClient();
     if (!supabase) {
       return NextResponse.json(
-        { error: 'Database and storage service unavailable' },
+        { error: 'Database and storage service currently unavailable' },
         { status: 500 }
       );
     }
 
-    // Ensure 'review-images' bucket exists
     const BUCKET_NAME = 'review-images';
-    const { data: bucket, error: bucketCheckErr } = await supabase.storage.getBucket(BUCKET_NAME);
-    if (bucketCheckErr || !bucket) {
-      console.log(`Bucket '${BUCKET_NAME}' not found or error, attempting auto-creation...`, bucketCheckErr);
-      await supabase.storage.createBucket(BUCKET_NAME, {
-        public: true,
-        fileSizeLimit: MAX_SIZE,
-        allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/heic'],
-      }).catch((cbErr) => {
-        console.warn('Auto-create bucket notice:', cbErr?.message || cbErr);
-      });
-    }
-
     const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const cleanFileName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, '_') : `photo.${fileExt || 'jpg'}`;
-    const storagePath = `reviews/${uniqueId}_${cleanFileName}`;
+    const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(fileExt) ? fileExt : 'jpg';
+    const storagePath = `reviews/${productId}/${uniqueId}.${safeExt}`;
 
     let contentType = file.type || 'image/jpeg';
     if (fileExt === 'png') contentType = 'image/png';
+    else if (fileExt === 'webp') contentType = 'image/webp';
     else if (fileExt === 'heic') contentType = 'image/heic';
     else if (fileExt === 'jpg' || fileExt === 'jpeg') contentType = 'image/jpeg';
 
@@ -79,9 +79,9 @@ export async function POST(req: Request) {
       });
 
     if (uploadErr || !uploadData) {
-      console.error('Supabase storage upload error:', uploadErr);
+      console.error('Supabase review storage upload error:', uploadErr);
       return NextResponse.json(
-        { error: `Storage upload failed: ${uploadErr?.message || 'Unknown error'}` },
+        { error: 'Failed to upload photo to storage bucket' },
         { status: 500 }
       );
     }
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error('Error uploading review photo:', err);
     return NextResponse.json(
-      { error: err.message || 'Failed to upload review photo' },
+      { error: 'Failed to upload review photo' },
       { status: 500 }
     );
   }

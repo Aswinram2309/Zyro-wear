@@ -3,12 +3,18 @@ import * as XLSX from 'xlsx';
 import { createAdminClient } from '@/database/client/admin';
 import { getAllOrdersFromStore } from '@/database/stores/orders-store';
 import { getAllProductsFromStore } from '@/database/stores/products-store';
+import { verifyAdminRequest } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(req: Request) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const exportType = (searchParams.get('type') || 'orders').toLowerCase();
     const currentDate = new Date().toISOString().split('T')[0];
@@ -162,14 +168,11 @@ export async function GET(req: Request) {
     }
 
     if (rows.length === 0) {
-      // Return empty worksheet with standard headers
       rows = [{ 'Notice': `No records found for ${sheetName}` }];
     }
 
-    // Generate Excel worksheet using SheetJS
     const worksheet = XLSX.utils.json_to_sheet(rows);
 
-    // Auto-fit column widths
     const columnKeys = Object.keys(rows[0] || {});
     const columnWidths = columnKeys.map((key) => {
       const maxLen = Math.max(
@@ -196,6 +199,6 @@ export async function GET(req: Request) {
 
   } catch (error: any) {
     console.error('Export Excel API Error:', error);
-    return NextResponse.json({ error: error.message || 'Error generating Excel export' }, { status: 500 });
+    return NextResponse.json({ error: 'Error generating Excel export' }, { status: 500 });
   }
 }

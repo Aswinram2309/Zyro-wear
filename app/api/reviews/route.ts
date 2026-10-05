@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/database/client/admin';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -14,98 +15,117 @@ export async function GET(req: Request) {
 
     const supabase = createAdminClient();
     if (!supabase) {
-      return NextResponse.json({ error: 'Database connection offline' }, { status: 500 });
+      return NextResponse.json({ success: true, reviews: [] });
     }
 
     let query = supabase.from('reviews').select('*');
     if (productId !== 'all') {
-      query = query.eq('product_id', productId);
+      query = query.eq('product_id', productId.trim());
     }
-    const { data: reviews, error } = await query.order('created_at', { ascending: false });
+    const { data: reviews, error } = await query.order('created_at', { ascending: false }).limit(100);
 
     if (error) {
-      // If table is missing, return empty reviews list rather than failing
       if (error.message && error.message.includes('does not exist')) {
         return NextResponse.json({ success: true, reviews: [] });
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, reviews });
+    return NextResponse.json({ success: true, reviews: reviews || [] });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Error fetching reviews:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`review_post:${clientIp}`, 15, 600); // 15 reviews per 10 min
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many reviews submitted. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
     const { productId, rating, customerName, comment, photoUrl, imageUrl, storagePath } = body;
     const finalPhoto = photoUrl || imageUrl || null;
 
-    if (!productId || !rating || !customerName || !comment) {
-      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+    if (!productId || typeof productId !== 'string' || !productId.trim()) {
+      return NextResponse.json({ error: 'Valid Product ID is required' }, { status: 400 });
     }
 
     const numRating = Number(rating);
     if (isNaN(numRating) || numRating < 1 || numRating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
+      return NextResponse.json({ error: 'Rating must be an integer between 1 and 5' }, { status: 400 });
     }
 
-    if (!customerName.trim()) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    if (!customerName || typeof customerName !== 'string' || !customerName.trim()) {
+      return NextResponse.json({ error: 'Your name is required' }, { status: 400 });
     }
 
-    if (!comment.trim()) {
+    if (!comment || typeof comment !== 'string' || !comment.trim()) {
       return NextResponse.json({ error: 'Review comment is required' }, { status: 400 });
     }
 
+    const sanitizedName = customerName.trim().slice(0, 60);
+    const sanitizedComment = comment.trim().slice(0, 1000);
+
     const supabase = createAdminClient();
     if (!supabase) {
-      return NextResponse.json({ error: 'Database connection offline' }, { status: 500 });
+      return NextResponse.json({ error: 'Database service unavailable' }, { status: 500 });
     }
 
-    // Check if product exists in database
+    // Verify product exists in database
     const { data: product, error: prodError } = await supabase
       .from('products')
       .select('id')
-      .eq('id', productId)
-      .single();
+      .eq('id', productId.trim())
+      .maybeSingle();
 
     if (prodError || !product) {
-      // Clean up orphaned image if uploaded
       if (storagePath) {
         await supabase.storage.from('review-images').remove([storagePath]).catch(() => {});
       }
-      return NextResponse.json({ error: 'Product does not exist' }, { status: 400 });
+      return NextResponse.json({ error: 'Referenced product does not exist' }, { status: 400 });
     }
 
     const payload: any = {
-      product_id: productId,
-      rating: numRating,
-      customer_name: customerName.trim(),
-      comment: comment.trim(),
+      product_id: productId.trim(),
+      rating: Math.round(numRating),
+      customer_name: sanitizedName,
+      comment: sanitizedComment,
     };
-    if (finalPhoto) {
-      payload.image_url = finalPhoto;
+    if (finalPhoto && typeof finalPhoto === 'string') {
+      payload.image_url = finalPhoto.trim();
     }
 
-    let { data: review, error: insertError } = await supabase
+    const { data: review, error: insertError } = await supabase
       .from('reviews')
       .insert(payload)
       .select()
       .single();
 
     if (insertError) {
-      // Clean up orphaned image if uploaded
       if (storagePath) {
         await supabase.storage.from('review-images').remove([storagePath]).catch(() => {});
       }
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      console.error('Error inserting review:', insertError);
+      return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, review });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Reviews POST error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

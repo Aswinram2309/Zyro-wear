@@ -1,12 +1,24 @@
 import { NextResponse } from 'next/server';
 import { updateSiteSettingsInStore } from '@/database/stores/settings-store';
+import { verifyAdminRequest } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const auth = verifyAdminRequest(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: 'Unauthorized. Admin session required.' }, { status: 401 });
+    }
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    }
+
     const { announcementMessage, announcementEnabled } = body;
 
     if (announcementEnabled && typeof announcementMessage === 'string' && !announcementMessage.trim()) {
@@ -25,6 +37,6 @@ export async function POST(req: Request) {
     });
   } catch (err: any) {
     console.error('Error updating settings:', err);
-    return NextResponse.json({ error: err.message || 'Failed to update settings' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

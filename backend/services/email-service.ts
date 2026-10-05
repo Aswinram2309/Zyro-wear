@@ -198,10 +198,10 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
 
     // Mark order as sent in memory deduplication cache
     sentOrderEmails.add(orderData.orderNumber);
-    console.log(`[Resend Email Service] Successfully sent confirmation email for Order #${orderData.orderNumber} to ${orderData.email}`, data);
+    console.log(`[Resend Email Service] Successfully sent confirmation email for Order #${orderData.orderNumber}`);
     return { success: true, data };
   } catch (error: any) {
-    console.error(`[Resend Email Service Error] Failed to send email for Order #${orderData.orderNumber}:`, error);
+    console.error(`[Resend Email Service Error] Failed to send email for Order #${orderData.orderNumber}:`, error?.message || 'Unknown error');
     // Return error without throwing so checkout process is never broken
     return { success: false, error: error.message || error };
   }

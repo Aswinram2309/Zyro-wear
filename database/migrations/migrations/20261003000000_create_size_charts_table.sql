@@ -24,6 +24,9 @@ CREATE INDEX IF NOT EXISTS idx_size_charts_active ON public.size_charts(is_activ
 -- ROW LEVEL SECURITY (RLS)
 ALTER TABLE public.size_charts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public Read Size Charts" ON public.size_charts;
+DROP POLICY IF EXISTS "Admin Full Access Size Charts" ON public.size_charts;
+
 CREATE POLICY "Public Read Size Charts" ON public.size_charts FOR SELECT USING (true);
 CREATE POLICY "Admin Full Access Size Charts" ON public.size_charts FOR ALL USING (true);
 

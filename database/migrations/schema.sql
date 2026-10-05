@@ -82,17 +82,12 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
--- Orders: Public insert for guest checkout & server/service-role read/update
+-- Public storefront access
 CREATE POLICY "Public Read Categories" ON public.categories FOR SELECT USING (true);
-CREATE POLICY "Public Read Products" ON public.products FOR SELECT USING (is_active = true);
-CREATE POLICY "Admin Full Access Products" ON public.products FOR ALL USING (true);
-CREATE POLICY "Public Insert Orders" ON public.orders FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Read Orders" ON public.orders FOR SELECT USING (true);
-CREATE POLICY "Public Update Orders" ON public.orders FOR UPDATE USING (true);
-CREATE POLICY "Public Insert Order Items" ON public.order_items FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Read Order Items" ON public.order_items FOR SELECT USING (true);
-CREATE POLICY "Admin Full Access Orders" ON public.orders FOR ALL USING (true);
-CREATE POLICY "Admin Full Access Order Items" ON public.order_items FOR ALL USING (true);
+CREATE POLICY "Public Read Products" ON public.products FOR SELECT USING (true);
+
+-- Orders and Order Items are strictly managed server-side via Supabase service_role key
+-- Unauthenticated browser clients cannot read or modify customer orders
 
 -- SEED DATA: CATEGORIES
 INSERT INTO public.categories (name, slug) VALUES

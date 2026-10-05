@@ -245,7 +245,7 @@ export default function CheckoutModal({
         return;
       }
 
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TZaCJ2Et6ERjcc';
+      const razorpayKey = data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
       const orderId = data.razorpayOrderId || data.order_id || data.id;
 
       if (!orderId) {
@@ -254,12 +254,18 @@ export default function CheckoutModal({
         return;
       }
 
+      if (!razorpayKey) {
+        alert('Payment gateway key is not configured. Please try again later.');
+        setLoading(false);
+        return;
+      }
+
       const options = {
         key: razorpayKey,
-        amount: data.amount ? (data.amount <= 10000 && !Number.isInteger(data.amount) ? Math.round(data.amount * 100) : (data.amount < 1000 ? data.amount * 100 : data.amount)) : totalAmount * 100,
+        amount: data.amount || Math.round(totalAmount * 100),
         currency: data.currency || 'INR',
         name: 'ZYRO Wear',
-        description: 'Order Payment',
+        description: 'Official Kit Purchase',
         order_id: orderId,
         prefill: {
           name: customer.fullName,
