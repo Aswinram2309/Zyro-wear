@@ -9,7 +9,7 @@ import Footer from '@/frontend/components/Footer';
 import CartDrawer from '@/frontend/components/CartDrawer';
 import CheckoutModal from '@/frontend/components/CheckoutModal';
 import SizeChart from '@/frontend/components/SizeChart';
-import { formatImageUrl } from '@/shared/constants/stock-config';
+import { formatImageUrl, normalizeCategory } from '@/shared/constants/stock-config';
 import { getProductMeasurement, getSizeChartType } from '@/shared/constants/size-chart-config';
 
 interface ProductDetailsClientProps {
@@ -124,18 +124,43 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
 
   const [quantity, setQuantity] = useState<number>(1);
 
-  const isOversized = getSizeChartType(product.category, product.name) === 'OVERSIZED';
+  const normCategory = normalizeCategory(product.category || '', product.name || '');
+  const isBrandCategory = normCategory === 'Oversized T-Shirts' || normCategory === 'Customized T-Shirts';
+  const isOversized = isBrandCategory || getSizeChartType(product.category, product.name) === 'OVERSIZED';
   const [activeChartRecord, setActiveChartRecord] = useState<import('@/shared/types').SizeChartRecord | null>(null);
 
   useEffect(() => {
-    const chartType = getSizeChartType(product.category, product.name);
-    fetch(`/api/size-charts?type=${chartType}&t=${Date.now()}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.chart) setActiveChartRecord(d.chart);
-      })
-      .catch(() => {});
-  }, [product.category, product.name]);
+    const currentNorm = normalizeCategory(product.category || '', product.name || '');
+    const isBrand = currentNorm === 'Oversized T-Shirts' || currentNorm === 'Customized T-Shirts';
+
+    if (isBrand) {
+      if (product.size_chart_id) {
+        fetch(`/api/size-charts?id=${encodeURIComponent(product.size_chart_id)}&t=${Date.now()}`)
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.chart) {
+              setActiveChartRecord(d.chart);
+            } else {
+              setActiveChartRecord(null);
+            }
+          })
+          .catch(() => {
+            setActiveChartRecord(null);
+          });
+      } else {
+        // Strict Rule: No default chart for Oversized / Customized if not selected
+        setActiveChartRecord(null);
+      }
+    } else {
+      // Football Jerseys and IPL Jerseys: load standard normal size chart
+      fetch(`/api/size-charts?type=NORMAL&t=${Date.now()}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.chart) setActiveChartRecord(d.chart);
+        })
+        .catch(() => {});
+    }
+  }, [product.category, product.name, product.size_chart_id]);
 
   const getMeasurement = (size: string, field: 'length' | 'chest' | 'shoulder' | 'sleeve') => {
     return getProductMeasurement(product.size_chart, product.category, product.name, size, field, activeChartRecord);
@@ -589,17 +614,55 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
             {/* Selected Size Measurement Box */}
             {activeSize && (
               <div className="selected-size-measurement-box">
-                <div className="box-header">
-                  {activeSize} {isOversized ? '• OVERSIZED FIT' : ''}
-                </div>
-                <table className="selected-size-measurement-table">
-                  <tbody>
-                    {isOversized ? (
-                      <>
-                        <tr>
-                          <td className="label-col">Shoulder</td>
-                          <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
-                        </tr>
+                {isBrandCategory ? (
+                  activeChartRecord ? (
+                    <>
+                      <div className="box-header">
+                        {activeSize} {isOversized ? '• OVERSIZED FIT' : ''}
+                      </div>
+                      <table className="selected-size-measurement-table">
+                        <tbody>
+                          {(() => {
+                            const cols = (activeChartRecord.columns && activeChartRecord.columns.length > 0)
+                              ? activeChartRecord.columns
+                              : ['Length', 'Chest', 'Shoulder', 'Sleeve'];
+                            const row = activeChartRecord.measurements?.find(
+                              (m) => m.size?.toUpperCase() === activeSize.toUpperCase()
+                            );
+                            return cols.map((col) => {
+                              const directVal = row ? (row as any)[col] : undefined;
+                              let val = directVal;
+                              if ((val === undefined || val === null || String(val).trim() === '') && row) {
+                                const matchedKey = Object.keys(row).find((k) => k.toLowerCase() === col.toLowerCase());
+                                if (matchedKey) val = (row as any)[matchedKey];
+                              }
+                              const displayVal = val !== undefined && val !== null && String(val).trim() !== '' ? String(val).trim() : '-';
+                              return (
+                                <tr key={col}>
+                                  <td className="label-col">{col}</td>
+                                  <td className="val-col">{displayVal}</td>
+                                </tr>
+                              );
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <>
+                      <div className="box-header">{activeSize}</div>
+                      <div style={{ color: '#9CA3AF', fontSize: '0.82rem', padding: '0.5rem 0', textAlign: 'center' }}>
+                        Size chart not available
+                      </div>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <div className="box-header">
+                      {activeSize} {isOversized ? '• OVERSIZED FIT' : ''}
+                    </div>
+                    <table className="selected-size-measurement-table">
+                      <tbody>
                         <tr>
                           <td className="label-col">Garment Chest</td>
                           <td className="val-col">{getMeasurement(activeSize, 'chest')}</td>
@@ -609,28 +672,13 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
                           <td className="val-col">{getMeasurement(activeSize, 'length')}</td>
                         </tr>
                         <tr>
-                          <td className="label-col">Sleeve</td>
-                          <td className="val-col">{getMeasurement(activeSize, 'sleeve')}</td>
-                        </tr>
-                      </>
-                    ) : (
-                      <>
-                        <tr>
-                          <td className="label-col">Garment Chest</td>
-                          <td className="val-col">{getMeasurement(activeSize, 'chest')}</td>
-                        </tr>
-                        <tr>
-                          <td className="label-col">Length T-Shirt</td>
-                          <td className="val-col">{getMeasurement(activeSize, 'length')}</td>
-                        </tr>
-                        <tr>
                           <td className="label-col">Shoulder</td>
                           <td className="val-col">{getMeasurement(activeSize, 'shoulder')}</td>
                         </tr>
-                      </>
-                    )}
-                  </tbody>
-                </table>
+                      </tbody>
+                    </table>
+                  </>
+                )}
               </div>
             )}
             {/* Quantity Selector */}
@@ -740,6 +788,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
         <section className="product-sizechart-section">
           <SizeChart
             sizeChart={product.size_chart}
+            sizeChartId={product.size_chart_id}
             category={product.category}
             productName={product.name}
             availableSizes={sizesToMap}

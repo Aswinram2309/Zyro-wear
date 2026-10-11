@@ -28,14 +28,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect away from login page if already logged in
-  if (pathname === '/admin/login') {
-    const sessionCookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    if (sessionCookie && sessionCookie.split('.').length === 2) {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-    }
-  }
-
   return NextResponse.next();
 }
 

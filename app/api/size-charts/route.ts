@@ -9,7 +9,24 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
     const type = searchParams.get('type');
+
+    if (id) {
+      const { getSizeChartByIdFromStore } = await import('@/database/stores/size-charts-store');
+      const chart = await getSizeChartByIdFromStore(id);
+      return NextResponse.json(
+        {
+          success: true,
+          chart: chart || null,
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+          },
+        }
+      );
+    }
 
     if (type === 'NORMAL' || type === 'OVERSIZED') {
       const activeChart = await getActiveSizeChartByType(type);

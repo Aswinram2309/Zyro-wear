@@ -1,15 +1,132 @@
 [
   {
+    "id": "sc_1791740402402_3y8f",
+    "name": "Brand aa",
+    "brand_name": "Brand aa",
+    "type": "BRAND",
+    "image_url": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/size-charts/sc_1791740400543/brand_chart_1791740400710.jpeg",
+    "chart_image_url": "https://ujhlykmuoovsjoevatev.supabase.co/storage/v1/object/public/products/size-charts/sc_1791740400543/brand_chart_1791740400710.jpeg",
+    "how_to_measure_image_url": null,
+    "columns": [
+      "Length",
+      "Chest",
+      "Shoulder",
+      "Sleeve"
+    ],
+    "measurements": [
+      {
+        "size": "S",
+        "Length": "33",
+        "Chest": "55",
+        "Shoulder": "787",
+        "Sleeve": ""
+      },
+      {
+        "size": "L",
+        "Length": "33",
+        "Chest": "78",
+        "Shoulder": "",
+        "Sleeve": ""
+      },
+      {
+        "size": "XXL",
+        "Length": "55",
+        "Chest": "87",
+        "Shoulder": "",
+        "Sleeve": ""
+      },
+      {
+        "size": "3XL",
+        "Length": "787",
+        "Chest": "",
+        "Shoulder": "",
+        "Sleeve": ""
+      }
+    ],
+    "unit": "ALL MEASUREMENTS ARE IN INCHES",
+    "tips": [],
+    "is_active": true,
+    "created_at": "2026-10-11T17:40:02.402Z",
+    "updated_at": "2026-10-11T17:40:02.402Z"
+  },
+  {
+    "id": "sc_1791736915407_xrls",
+    "name": "Test Brand A",
+    "brand_name": "Test Brand A",
+    "type": "BRAND",
+    "image_url": "https://example.com/brand-a-chart-v2.jpg",
+    "chart_image_url": "https://example.com/brand-a-chart-v2.jpg",
+    "how_to_measure_image_url": null,
+    "columns": [
+      "Length",
+      "Chest",
+      "Shoulder",
+      "Sleeve"
+    ],
+    "measurements": [
+      {
+        "size": "S",
+        "length": "26.5",
+        "chest": "39",
+        "shoulder": "18.5",
+        "sleeve": "8.5"
+      },
+      {
+        "size": "M",
+        "length": "28.5",
+        "chest": "41",
+        "shoulder": "19.5",
+        "sleeve": "9"
+      },
+      {
+        "size": "L",
+        "length": "30.5",
+        "chest": "43",
+        "shoulder": "20.5",
+        "sleeve": "9.5"
+      }
+    ],
+    "unit": "ALL MEASUREMENTS ARE IN INCHES",
+    "tips": [],
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.407Z",
+    "updated_at": "2026-10-11T16:41:55.414Z"
+  },
+  {
     "id": "sc_normal_default",
     "name": "Normal T-Shirt Size Chart",
     "type": "NORMAL",
     "chart_image_url": "/images/size-guide.jpg",
     "how_to_measure_image_url": "/images/size-guide.jpg",
     "measurements": [
-      { "size": "M", "length": "27", "chest": "40", "shoulder": "10", "sleeve": "—" },
-      { "size": "L", "length": "29", "chest": "42", "shoulder": "10", "sleeve": "—" },
-      { "size": "XL", "length": "28", "chest": "44", "shoulder": "10", "sleeve": "—" },
-      { "size": "XXL", "length": "30", "chest": "46", "shoulder": "10.5", "sleeve": "—" }
+      {
+        "size": "M",
+        "length": "27",
+        "chest": "40",
+        "shoulder": "10",
+        "sleeve": "—"
+      },
+      {
+        "size": "L",
+        "length": "29",
+        "chest": "42",
+        "shoulder": "10",
+        "sleeve": "—"
+      },
+      {
+        "size": "XL",
+        "length": "28",
+        "chest": "44",
+        "shoulder": "10",
+        "sleeve": "—"
+      },
+      {
+        "size": "XXL",
+        "length": "30",
+        "chest": "46",
+        "shoulder": "10.5",
+        "sleeve": "—"
+      }
     ],
     "unit": "ALL MEASUREMENTS ARE IN INCHES",
     "tips": [
@@ -27,10 +144,34 @@
     "chart_image_url": "/images/oversized-size-guide.jpg",
     "how_to_measure_image_url": "/images/oversized-size-guide.jpg",
     "measurements": [
-      { "size": "M", "shoulder": "20", "chest": "40", "length": "27.5", "sleeve": "10" },
-      { "size": "L", "shoulder": "21.5", "chest": "42", "length": "28", "sleeve": "10" },
-      { "size": "XL", "shoulder": "22.5", "chest": "44", "length": "30", "sleeve": "10.5" },
-      { "size": "XXL", "shoulder": "23.5", "chest": "46", "length": "31", "sleeve": "11" }
+      {
+        "size": "M",
+        "shoulder": "20",
+        "chest": "40",
+        "length": "27.5",
+        "sleeve": "10"
+      },
+      {
+        "size": "L",
+        "shoulder": "21.5",
+        "chest": "42",
+        "length": "28",
+        "sleeve": "10"
+      },
+      {
+        "size": "XL",
+        "shoulder": "22.5",
+        "chest": "44",
+        "length": "30",
+        "sleeve": "10.5"
+      },
+      {
+        "size": "XXL",
+        "shoulder": "23.5",
+        "chest": "46",
+        "length": "31",
+        "sleeve": "11"
+      }
     ],
     "unit": "ALL MEASUREMENTS ARE IN INCHES",
     "tips": [

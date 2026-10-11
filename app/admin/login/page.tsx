@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
             <label>Admin Email Address</label>
             <input
               type="email"
-              placeholder="admin@zyrowear.com"
+              placeholder="zyrowear718@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

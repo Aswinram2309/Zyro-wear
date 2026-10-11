@@ -3,7 +3,7 @@ import path from 'path';
 import { createAdminClient } from '@/database/client/admin';
 import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
 import { Product } from '@/shared/types';
-import { formatImageUrl } from '@/shared/constants/stock-config';
+import { formatImageUrl, normalizeCategory } from '@/shared/constants/stock-config';
 
 const PRODUCTS_FILE_PATH = path.join(process.cwd(), 'data', 'products.json');
 
@@ -134,11 +134,12 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
           const back_img = formatImageUrl(dbP.back_img);
           const rawImages = Array.isArray(dbP.images) && dbP.images.length > 0 ? dbP.images : [front_img, back_img];
           const cleanImages = rawImages
-            .filter((img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:') && !img.startsWith('__size_chart_img:') && !img.startsWith('__how_to_measure_img:'))
+            .filter((img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:') && !img.startsWith('__size_chart_img:') && !img.startsWith('__how_to_measure_img:') && !img.startsWith('__size_chart_id:'))
             .map((img: string) => formatImageUrl(img));
 
           let size_chart_img = dbP.size_chart_img || null;
           let how_to_measure_img = dbP.how_to_measure_img || null;
+          let size_chart_id = dbP.size_chart_id || null;
           
           if (Array.isArray(dbP.images)) {
             const scImgStr = dbP.images.find((img: any) => typeof img === 'string' && img.startsWith('__size_chart_img:'));
@@ -146,6 +147,15 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
             
             const htmImgStr = dbP.images.find((img: any) => typeof img === 'string' && img.startsWith('__how_to_measure_img:'));
             if (htmImgStr) how_to_measure_img = htmImgStr.replace('__how_to_measure_img:', '');
+
+            const scIdStr = dbP.images.find((img: any) => typeof img === 'string' && img.startsWith('__size_chart_id:'));
+            if (scIdStr) size_chart_id = scIdStr.replace('__size_chart_id:', '');
+          }
+
+          // Strict category rule: Football Jerseys and IPL Jerseys never use brand size charts
+          const normCat = normalizeCategory(dbP.category || 'Football Jerseys', dbP.name || '');
+          if (normCat === 'Football Jerseys' || normCat === 'IPL Jerseys') {
+            size_chart_id = null;
           }
 
           const slug = dbP.slug || createSlug(dbP.name, dbP.id);
@@ -166,6 +176,7 @@ export async function getAllProductsFromStore(includeInactive: boolean = false):
             sizes: sanitizedSizes,
             stock: totalStock,
             stock_by_size: stockBySize,
+            size_chart_id: size_chart_id,
             size_chart: dbP.size_chart || undefined,
             size_chart_img: size_chart_img,
             how_to_measure_img: how_to_measure_img,
@@ -219,6 +230,14 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
   const availableSizes = rawSizes.filter(s => s !== 'S');
   const slug = createSlug(productPayload.slug || productPayload.name || 'product', id);
 
+  const normCat = normalizeCategory(productPayload.category || 'Football Jerseys', productPayload.name || '');
+  let finalSizeChartId: string | null = null;
+  if (normCat === 'Football Jerseys' || normCat === 'IPL Jerseys') {
+    finalSizeChartId = null;
+  } else {
+    finalSizeChartId = productPayload.size_chart_id || null;
+  }
+
   const newProduct: Product = {
     id,
     name: productPayload.name || 'Untitled Product',
@@ -235,6 +254,7 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
     sizes: availableSizes.length > 0 ? availableSizes : ['M', 'L', 'XL', 'XXL'],
     stock: totalStock,
     stock_by_size: stockBySize,
+    size_chart_id: finalSizeChartId,
     size_chart: productPayload.size_chart || undefined,
     size_chart_img: productPayload.size_chart_img || null,
     how_to_measure_img: productPayload.how_to_measure_img || null,
@@ -268,8 +288,12 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
       const imagesToSave = [...(newProduct.images || []), metadata];
       if (newProduct.size_chart_img) imagesToSave.push(`__size_chart_img:${newProduct.size_chart_img}`);
       if (newProduct.how_to_measure_img) imagesToSave.push(`__how_to_measure_img:${newProduct.how_to_measure_img}`);
+      if (finalSizeChartId) imagesToSave.push(`__size_chart_id:${finalSizeChartId}`);
       dbPayload.images = imagesToSave;
 
+      if (finalSizeChartId !== undefined) {
+        dbPayload.size_chart_id = finalSizeChartId;
+      }
       if (newProduct.sale_price !== null && newProduct.sale_price !== undefined) {
         dbPayload.sale_price = newProduct.sale_price;
       }
@@ -283,11 +307,12 @@ export async function saveNewProductToStore(productPayload: Partial<Product>): P
       const { error } = await supabase.from('products').insert(dbPayload).select().single();
 
       if (error) {
-        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('size_chart') || error.message.includes('schema cache'))) {
+        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('size_chart') || error.message.includes('size_chart_id') || error.message.includes('schema cache'))) {
           console.warn('Supabase schema cache lacks optional columns, retrying baseline insert:', error.message);
           delete dbPayload.sale_price;
           delete dbPayload.stock_by_size;
           delete dbPayload.size_chart;
+          delete dbPayload.size_chart_id;
           const { error: retryErr } = await supabase.from('products').insert(dbPayload).select().single();
           if (retryErr) {
             console.error('Supabase retry insert error:', retryErr);
@@ -392,14 +417,33 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
 
   // Preserve existing metadata or update it
   const existingProduct = await getProductByIdFromStore(id);
+  const targetCategory = updates.category !== undefined ? updates.category : existingProduct?.category;
+  const targetName = updates.name !== undefined ? updates.name : existingProduct?.name;
+  const normCat = normalizeCategory(targetCategory || '', targetName || '');
+
+  let finalSizeChartId: string | null = null;
+  if (normCat === 'Football Jerseys' || normCat === 'IPL Jerseys') {
+    finalSizeChartId = null;
+  } else if (updates.size_chart_id !== undefined) {
+    finalSizeChartId = updates.size_chart_id || null;
+  } else {
+    finalSizeChartId = existingProduct?.size_chart_id || null;
+  }
+
+  dbPayload.size_chart_id = finalSizeChartId;
+
   const existingImages = existingProduct?.images || [];
   const cleanImages = existingImages.filter(
-    (img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:') && !img.startsWith('__size_chart_img:') && !img.startsWith('__how_to_measure_img:')
+    (img: any) => typeof img === 'string' && !img.startsWith('__stock_by_size:') && !img.startsWith('__size_chart_img:') && !img.startsWith('__how_to_measure_img:') && !img.startsWith('__size_chart_id:')
   );
   
   const finalStockBySize = stockBySize || existingProduct?.stock_by_size || DEFAULT_SIZE_STOCK;
   const metadata = `__stock_by_size:${JSON.stringify(finalStockBySize)}`;
   cleanImages.push(metadata);
+
+  if (finalSizeChartId) {
+    cleanImages.push(`__size_chart_id:${finalSizeChartId}`);
+  }
 
   let finalSizeChartImg = updates.size_chart_img !== undefined ? updates.size_chart_img : existingProduct?.size_chart_img;
   if (finalSizeChartImg) {
@@ -426,11 +470,12 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
       const { error } = await supabase.from('products').update(dbPayload).eq('id', id);
       if (error) {
         console.error('Supabase update product error:', error);
-        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('size_chart') || error.message.includes('schema cache'))) {
+        if (error.message && (error.message.includes('sale_price') || error.message.includes('stock_by_size') || error.message.includes('size_chart') || error.message.includes('size_chart_id') || error.message.includes('schema cache'))) {
           const retryPayload = { ...dbPayload };
           delete retryPayload.sale_price;
           delete retryPayload.stock_by_size;
           delete retryPayload.size_chart;
+          delete retryPayload.size_chart_id;
           await supabase.from('products').update(retryPayload).eq('id', id);
         }
       }
@@ -447,6 +492,7 @@ export async function updateProductInStore(id: string, updates: Partial<Product>
       list[index] = {
         ...list[index],
         ...dbPayload,
+        size_chart_id: finalSizeChartId,
         stock_by_size: stockBySize || list[index].stock_by_size || DEFAULT_SIZE_STOCK,
         stock: dbPayload.stock !== undefined ? dbPayload.stock : calculateProductTotalStock(list[index].stock_by_size),
       };
@@ -585,3 +631,39 @@ export async function getProductBySlugFromStore(slug: string): Promise<Product |
 
   return found || null;
 }
+
+export async function unlinkDeletedSizeChartFromProducts(deletedChartId: string): Promise<void> {
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      await supabase.from('products').update({ size_chart_id: null }).eq('size_chart_id', deletedChartId);
+    } catch (e) {
+      console.warn('Supabase unlink size_chart_id error:', e);
+    }
+  }
+
+  try {
+    const list = ensureProductsFileExists();
+    let changed = false;
+    const updated = list.map((p) => {
+      if (p.size_chart_id === deletedChartId) {
+        changed = true;
+        const cleanImgs = (p.images || []).filter(
+          (img: any) => typeof img === 'string' && !img.startsWith(`__size_chart_id:${deletedChartId}`)
+        );
+        return {
+          ...p,
+          size_chart_id: null,
+          images: cleanImgs,
+        };
+      }
+      return p;
+    });
+    if (changed) {
+      fs.writeFileSync(PRODUCTS_FILE_PATH, JSON.stringify(updated, null, 2), 'utf-8');
+    }
+  } catch (e) {
+    console.error('Local unlink size_chart_id error:', e);
+  }
+}
+

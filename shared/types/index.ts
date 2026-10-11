@@ -3,6 +3,7 @@ export interface SizeMeasurement {
   chest?: string;
   shoulder?: string;
   sleeve?: string;
+  [key: string]: string | undefined;
 }
 
 export interface SizeChartMeasurementRow {
@@ -11,14 +12,18 @@ export interface SizeChartMeasurementRow {
   chest?: string;
   length?: string;
   sleeve?: string;
+  [measurementKey: string]: string | undefined;
 }
 
 export interface SizeChartRecord {
   id: string;
-  name: string;
-  type: 'NORMAL' | 'OVERSIZED';
+  name?: string;
+  brand_name?: string;
+  type?: 'NORMAL' | 'OVERSIZED' | 'BRAND';
   chart_image_url?: string | null;
+  image_url?: string | null;
   how_to_measure_image_url?: string | null;
+  columns?: string[];
   measurements: SizeChartMeasurementRow[];
   unit?: string;
   tips?: string[];
@@ -43,6 +48,7 @@ export interface Product {
   sizes?: string[];
   stock?: number;
   stock_by_size?: Record<string, number>;
+  size_chart_id?: string | null;
   size_chart?: Record<string, SizeMeasurement>;
   size_chart_img?: string | null;
   how_to_measure_img?: string | null;

@@ -58,12 +58,34 @@ export async function PATCH(
       return NextResponse.json({ error: 'Size chart not found' }, { status: 404 });
     }
 
-    if (body.type && body.type !== 'NORMAL' && body.type !== 'OVERSIZED') {
-      return NextResponse.json({ error: 'Type must be NORMAL or OVERSIZED' }, { status: 400 });
+    if (body.brand_name || body.name) {
+      const newBrandName = (body.brand_name || body.name || '').trim();
+      if (!newBrandName) {
+        return NextResponse.json({ error: 'Brand name cannot be empty' }, { status: 400 });
+      }
+      const { getAllSizeChartsFromStore } = await import('@/database/stores/size-charts-store');
+      const existingCharts = await getAllSizeChartsFromStore();
+      const isDuplicate = existingCharts.some(
+        (c) => c.id !== id && (c.brand_name || c.name || '').trim().toLowerCase() === newBrandName.toLowerCase()
+      );
+      if (isDuplicate) {
+        return NextResponse.json(
+          { error: `Another size chart already exists with brand name "${newBrandName}". Please use a unique brand name.` },
+          { status: 400 }
+        );
+      }
+      body.brand_name = newBrandName;
+      body.name = newBrandName;
+    }
+
+    if (body.image_url || body.chart_image_url) {
+      const img = body.image_url || body.chart_image_url;
+      body.image_url = img;
+      body.chart_image_url = img;
     }
 
     if (body.measurements && (!Array.isArray(body.measurements) || body.measurements.length === 0)) {
-      return NextResponse.json({ error: 'Measurements must contain at least one size' }, { status: 400 });
+      return NextResponse.json({ error: 'Measurements must contain at least one size row' }, { status: 400 });
     }
 
     const updated = await updateSizeChartInStore(id, body);

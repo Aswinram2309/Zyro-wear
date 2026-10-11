@@ -39,6 +39,7 @@ export default function StockManagementPage() {
     sale_price: string;
     sizes: string[];
     stock_by_size: Record<string, number>;
+    size_chart_id: string;
     size_chart: Record<string, { length: string; chest: string; shoulder: string; sleeve: string }>;
     size_chart_img: string;
     how_to_measure_img: string;
@@ -55,6 +56,7 @@ export default function StockManagementPage() {
     sale_price: '',
     sizes: ['M', 'L', 'XL', 'XXL'],
     stock_by_size: { M: 15, L: 15, XL: 10, XXL: 5 },
+    size_chart_id: '',
     size_chart: {
       M: { length: '', chest: '', shoulder: '', sleeve: '' },
       L: { length: '', chest: '', shoulder: '', sleeve: '' },
@@ -93,8 +95,9 @@ export default function StockManagementPage() {
   const [savingAnnouncement, setSavingAnnouncement] = useState<boolean>(false);
   const [announcementMsgStatus, setAnnouncementMsgStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Active Size Charts State
+  // Active Size Charts & Brand Size Charts State
   const [activeSizeCharts, setActiveSizeCharts] = useState<{ normal?: any; oversized?: any }>({});
+  const [brandSizeCharts, setBrandSizeCharts] = useState<import('@/shared/types').SizeChartRecord[]>([]);
   const [exportingType, setExportingType] = useState<string | null>(null);
 
   const handleExport = async (type: 'products' | 'reviews' | 'orders' | 'customers') => {
@@ -126,14 +129,28 @@ export default function StockManagementPage() {
 
   // Check Auth
   useEffect(() => {
-    const isAuthenticated = sessionStorage.getItem('zyro_admin_auth');
-    if (!isAuthenticated) {
-      router.push('/admin/login');
-    } else {
-      fetchProducts();
-      fetchAnnouncementSettings();
-      fetchActiveSizeCharts();
-    }
+    const checkAuthAndLoad = async () => {
+      let isAuthed = sessionStorage.getItem('zyro_admin_auth') === 'true';
+      if (!isAuthed) {
+        try {
+          const res = await fetch('/api/admin/auth');
+          const data = await res.json();
+          if (data.authenticated) {
+            sessionStorage.setItem('zyro_admin_auth', 'true');
+            isAuthed = true;
+          }
+        } catch (e) {}
+      }
+
+      if (!isAuthed) {
+        window.location.href = '/admin/login';
+      } else {
+        fetchProducts();
+        fetchAnnouncementSettings();
+        fetchActiveSizeCharts();
+      }
+    };
+    checkAuthAndLoad();
   }, [router]);
 
   const fetchActiveSizeCharts = async () => {
@@ -141,6 +158,9 @@ export default function StockManagementPage() {
       const res = await fetch(`/api/size-charts?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
+        if (data.charts && Array.isArray(data.charts)) {
+          setBrandSizeCharts(data.charts);
+        }
         if (data.success) {
           setActiveSizeCharts({ normal: data.normal, oversized: data.oversized });
         }
@@ -269,6 +289,7 @@ export default function StockManagementPage() {
       sale_price: '',
       sizes: ['M', 'L', 'XL', 'XXL'],
       stock_by_size: { M: 15, L: 15, XL: 10, XXL: 5 },
+      size_chart_id: '',
       size_chart: {
         M: { length: '', chest: '', shoulder: '', sleeve: '' },
         L: { length: '', chest: '', shoulder: '', sleeve: '' },
@@ -323,6 +344,7 @@ export default function StockManagementPage() {
       sale_price: product.sale_price !== null && product.sale_price !== undefined ? String(product.sale_price) : '',
       sizes: availSizes,
       stock_by_size: stockMap,
+      size_chart_id: product.size_chart_id || '',
       size_chart: sizeChartMap,
       size_chart_img: product.size_chart_img || '',
       how_to_measure_img: product.how_to_measure_img || '',
@@ -546,6 +568,10 @@ export default function StockManagementPage() {
 
       setUploadingImages(false);
 
+      const normCat = normalizeCategory(formData.category, formData.name);
+      const isBrandCategory = normCat === 'Oversized T-Shirts' || normCat === 'Customized T-Shirts';
+      const finalSizeChartId = isBrandCategory ? (formData.size_chart_id ? formData.size_chart_id : null) : null;
+
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -556,7 +582,8 @@ export default function StockManagementPage() {
         sale_price: salePriceNum,
         sizes: formData.sizes,
         stock_by_size: formData.stock_by_size,
-        size_chart: formData.size_chart,
+        size_chart_id: finalSizeChartId,
+        size_chart: isBrandCategory ? undefined : formData.size_chart,
         size_chart_img: finalSizeChartUrl,
         how_to_measure_img: finalHowToMeasureUrl,
         front_img: finalFrontUrl,
@@ -680,6 +707,9 @@ export default function StockManagementPage() {
             </Link>
             <Link href="/admin/stock" className="admin-nav-link active">
               <i className="fa-solid fa-boxes-stacked"></i> Stock Management
+            </Link>
+            <Link href="/admin/size-charts" className="admin-nav-link">
+              <i className="fa-solid fa-ruler-combined"></i> Size Chart Management
             </Link>
           </div>
 
@@ -1113,7 +1143,15 @@ export default function StockManagementPage() {
                   <label>5. CATEGORY *</label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) => {
+                      const newCat = e.target.value;
+                      const norm = normalizeCategory(newCat, formData.name);
+                      setFormData((prev) => ({
+                        ...prev,
+                        category: newCat,
+                        size_chart_id: (norm === 'Football Jerseys' || norm === 'IPL Jerseys') ? '' : prev.size_chart_id,
+                      }));
+                    }}
                   >
                     {CATEGORY_OPTIONS.map((c) => (
                       <option key={c.value} value={c.value}>
@@ -1203,295 +1241,187 @@ export default function StockManagementPage() {
                 </div>
               </div>
 
-              {/* Step 10: Size Chart Measurements (inch) */}
+              {/* Step 10: Category-Based Size Chart Assignment */}
               {(() => {
-                const isFormOversized = getSizeChartType(formData.category, formData.name) === 'OVERSIZED';
-                const activeChart = isFormOversized ? activeSizeCharts.oversized : activeSizeCharts.normal;
+                const normCat = normalizeCategory(formData.category, formData.name);
+                const isBrandCategory = normCat === 'Oversized T-Shirts' || normCat === 'Customized T-Shirts';
+
+                if (isBrandCategory) {
+                  const selectedChart = brandSizeCharts.find((c) => c.id === formData.size_chart_id);
+
+                  return (
+                    <div className="form-group size-stock-inputs-box">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <label style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: '#FFF' }}>
+                          10. SELECT BRAND SIZE CHART
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              background: 'rgba(255, 199, 0, 0.15)',
+                              color: '#FFC700',
+                              border: '1px solid rgba(255, 199, 0, 0.3)',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                            }}
+                          >
+                            ⚡ {normCat}
+                          </span>
+                          <Link
+                            href="/admin/size-charts"
+                            target="_blank"
+                            style={{ fontSize: '0.75rem', color: '#FFC700', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                          >
+                            <i className="fa-solid fa-arrow-up-right-from-square"></i> Manage Brands
+                          </Link>
+                        </div>
+                      </div>
+
+                      <p className="subtext" style={{ marginBottom: '0.85rem' }}>
+                        Choose the brand size chart to assign to this product. If no brand chart is selected, customers will see <em>&quot;Size chart not available&quot;</em>.
+                      </p>
+
+                      <div style={{ marginBottom: '1rem' }}>
+                        <select
+                          id="select-brand-size-chart"
+                          value={formData.size_chart_id || ''}
+                          onChange={(e) => setFormData({ ...formData, size_chart_id: e.target.value })}
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem 1rem',
+                            background: '#0F1115',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                            color: '#FFF',
+                            fontSize: '0.92rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="">-- None (No Brand Size Chart Assigned) --</option>
+                          {brandSizeCharts.map((chart) => {
+                            const bName = chart.brand_name || chart.name || 'Untitled Brand';
+                            return (
+                              <option key={chart.id} value={chart.id}>
+                                {bName} {chart.id ? `(${chart.id})` : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+
+                      {/* Display Currently Assigned Chart Preview */}
+                      {selectedChart ? (
+                        <div
+                          style={{
+                            background: '#0F1115',
+                            border: '1px solid #262930',
+                            borderRadius: '8px',
+                            padding: '1rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>Assigned Brand:</span>
+                              <strong style={{ color: '#FFC700', fontSize: '0.95rem' }}>
+                                {selectedChart.brand_name || selectedChart.name}
+                              </strong>
+                            </div>
+
+                            {(selectedChart.image_url || selectedChart.chart_image_url) && (
+                              <span style={{ fontSize: '0.75rem', color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <i className="fa-solid fa-circle-check"></i> Brand Chart Image Linked
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Mini Table Preview of Brand Measurements */}
+                          <div style={{ overflowX: 'auto', maxHeight: '180px', borderRadius: '6px', border: '1px solid #1E222A' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+                              <thead>
+                                <tr style={{ background: '#16191F', borderBottom: '1px solid #262930', color: '#9CA3AF' }}>
+                                  <th style={{ padding: '6px 8px', textAlign: 'left', width: '60px' }}>SIZE</th>
+                                  {(selectedChart.columns || ['Length', 'Chest', 'Shoulder', 'Sleeve']).map((col) => (
+                                    <th key={col} style={{ padding: '6px 8px', textAlign: 'left' }}>
+                                      {col.toUpperCase()}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(selectedChart.measurements || []).length === 0 ? (
+                                  <tr>
+                                    <td colSpan={(selectedChart.columns || []).length + 1} style={{ padding: '12px', textAlign: 'center', color: '#6B7280' }}>
+                                      No measurements entered for this brand
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  (selectedChart.measurements || []).map((row, rIdx) => (
+                                    <tr key={rIdx} style={{ borderBottom: '1px solid #1E222A', color: '#E5E7EB' }}>
+                                      <td style={{ padding: '6px 8px', fontWeight: 700, color: '#FFC700' }}>{row.size}</td>
+                                      {(selectedChart.columns || ['Length', 'Chest', 'Shoulder', 'Sleeve']).map((col) => {
+                                        const cell = row[col] ?? row[col.toLowerCase()] ?? '-';
+                                        return (
+                                          <td key={col} style={{ padding: '6px 8px', color: cell && cell !== '-' ? '#FFF' : '#6B7280' }}>
+                                            {cell && String(cell).trim() ? cell : '-'}
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            background: '#0F1115',
+                            border: '1px dashed #374151',
+                            borderRadius: '8px',
+                            padding: '1rem',
+                            textAlign: 'center',
+                            color: '#9CA3AF',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          <i className="fa-solid fa-circle-exclamation" style={{ color: '#F59E0B', marginRight: '6px' }}></i>
+                          No brand size chart selected. Customer will see <strong>&quot;Size chart not available&quot;</strong> on this product.
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // For Football Jerseys and IPL Jerseys:
                 return (
                   <div className="form-group size-stock-inputs-box">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <label style={{ margin: 0 }}>
-                        10. SIZE CHART MEASUREMENTS (Inches)
+                      <label style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: '#FFF' }}>
+                        10. JERSEY SIZE SPECIFICATIONS
                       </label>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            background: isFormOversized ? 'rgba(255, 199, 0, 0.15)' : '#262930',
-                            color: isFormOversized ? '#FFC700' : '#9CA3AF',
-                            border: isFormOversized ? '1px solid rgba(255, 199, 0, 0.3)' : '1px solid #374151',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                          }}
-                        >
-                          {isFormOversized ? '⚡ OVERSIZED CHART (Auto-selected)' : '👕 NORMAL CHART (Auto-selected)'}
-                        </span>
-                        <Link
-                          href="/admin/size-charts"
-                          target="_blank"
-                          style={{ fontSize: '0.72rem', color: '#FFC700', textDecoration: 'underline' }}
-                        >
-                          Manage Charts
-                        </Link>
-                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          background: '#262930',
+                          color: '#9CA3AF',
+                          border: '1px solid #374151',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        ⚽ Standard Jersey Fit
+                      </span>
                     </div>
-                    <p className="subtext">
-                      {isFormOversized
-                        ? `Using active Oversized chart "${activeChart?.name || 'Oversized T-Shirt Size Chart'}". Leave blank to use central active chart values, or enter product-specific overrides below.`
-                        : `Using active Normal chart "${activeChart?.name || 'Normal T-Shirt Size Chart'}". Leave blank to use central active chart values, or enter product-specific overrides below.`}
+                    <p className="subtext" style={{ margin: '4px 0 0 0' }}>
+                      Standard Football &amp; IPL Jersey dimensions apply automatically. Brand size chart selector is not used for Jerseys.
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
-                      {ALL_SIZES.map((sz) => {
-                        const isSelected = formData.sizes.includes(sz);
-                        const overDef = OVERSIZED_SIZE_CHART_DEFAULTS[sz];
-                        const normDef = NORMAL_SIZE_CHART_DEFAULTS[sz];
-
-                        return (
-                          <div key={sz} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr 1fr', gap: '0.8rem', alignItems: 'center', opacity: isSelected ? 1 : 0.5 }}>
-                            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#FFC700' }}>{sz} Size:</span>
-                            {isFormOversized ? (
-                              <>
-                                <input
-                                  type="text"
-                                  placeholder={`Shoulder: ${overDef?.shoulder || '20'}`}
-                                  disabled={!isSelected}
-                                  value={formData.size_chart?.[sz]?.shoulder || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          shoulder: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder={`Chest: ${overDef?.chest || '40'}`}
-                                  disabled={!isSelected}
-                                  value={formData.size_chart?.[sz]?.chest || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          chest: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder={`Length: ${overDef?.length || '27.5'}`}
-                                  disabled={!isSelected}
-                                  value={formData.size_chart?.[sz]?.length || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          length: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder={`Sleeve: ${overDef?.sleeve || '10'}`}
-                                  disabled={!isSelected}
-                                  value={(formData.size_chart?.[sz] as any)?.sleeve || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          sleeve: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                              </>
-                            ) : (
-                              <>
-                                <input
-                                  type="text"
-                                  placeholder={`Length: ${normDef?.length || '27'}`}
-                                  disabled={!isSelected}
-                                  value={formData.size_chart?.[sz]?.length || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          length: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder={`Chest: ${normDef?.chest || '40'}`}
-                                  disabled={!isSelected}
-                                  value={formData.size_chart?.[sz]?.chest || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          chest: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder={`Shoulder: ${normDef?.shoulder || '10'}`}
-                                  disabled={!isSelected}
-                                  value={formData.size_chart?.[sz]?.shoulder || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          shoulder: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Sleeve (opt)"
-                                  disabled={!isSelected}
-                                  value={(formData.size_chart?.[sz] as any)?.sleeve || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      size_chart: {
-                                        ...prev.size_chart,
-                                        [sz]: {
-                                          ...(prev.size_chart?.[sz] || {}),
-                                          sleeve: val,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                              </>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {isFormOversized && (
-                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                        <div className="image-upload-box" style={{ flex: 1 }}>
-                          <label className="upload-label">SIZE CHART IMAGE</label>
-                          <div className="image-preview-area">
-                            {sizeChartPreview ? (
-                              <img src={sizeChartPreview} alt="Size Chart Preview" className="uploaded-preview-img" />
-                            ) : (
-                              <div className="empty-preview">
-                                <i className="fa-solid fa-image"></i>
-                                <span>Upload Size Chart</span>
-                              </div>
-                            )}
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleSizeChartSelect}
-                            className="file-input-hidden"
-                            id="size-chart-img-input"
-                          />
-                          <label htmlFor="size-chart-img-input" className="btn-upload-file">
-                            <i className="fa-solid fa-cloud-arrow-up"></i> Choose File
-                          </label>
-                          <div className="image-url-input-wrap">
-                            <span className="url-input-label">Or URL:</span>
-                            <input
-                              type="text"
-                              value={formData.size_chart_img}
-                              onChange={(e) => {
-                                const url = e.target.value;
-                                setFormData((prev) => ({ ...prev, size_chart_img: url }));
-                                setSizeChartPreview(formatImageUrl(url));
-                              }}
-                              className="image-url-text-input"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="image-upload-box" style={{ flex: 1 }}>
-                          <label className="upload-label">HOW TO MEASURE IMAGE</label>
-                          <div className="image-preview-area">
-                            {howToMeasurePreview ? (
-                              <img src={howToMeasurePreview} alt="How to Measure Preview" className="uploaded-preview-img" />
-                            ) : (
-                              <div className="empty-preview">
-                                <i className="fa-solid fa-image"></i>
-                                <span>Upload How to Measure</span>
-                              </div>
-                            )}
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleHowToMeasureSelect}
-                            className="file-input-hidden"
-                            id="how-to-measure-img-input"
-                          />
-                          <label htmlFor="how-to-measure-img-input" className="btn-upload-file">
-                            <i className="fa-solid fa-cloud-arrow-up"></i> Choose File
-                          </label>
-                          <div className="image-url-input-wrap">
-                            <span className="url-input-label">Or URL:</span>
-                            <input
-                              type="text"
-                              value={formData.how_to_measure_img}
-                              onChange={(e) => {
-                                const url = e.target.value;
-                                setFormData((prev) => ({ ...prev, how_to_measure_img: url }));
-                                setHowToMeasurePreview(formatImageUrl(url));
-                              }}
-                              className="image-url-text-input"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })()}

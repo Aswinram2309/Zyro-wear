@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { createAdminClient } from '@/database/client/admin';
 import { SizeChartRecord, SizeChartMeasurementRow } from '@/shared/types';
+import { unlinkDeletedSizeChartFromProducts } from './products-store';
 
 const SIZE_CHARTS_FILE_PATH = path.join(process.cwd(), 'data', 'size-charts.json');
 
@@ -9,9 +10,12 @@ export const INITIAL_SIZE_CHARTS: SizeChartRecord[] = [
   {
     id: 'sc_normal_default',
     name: 'Normal T-Shirt Size Chart',
+    brand_name: 'Normal T-Shirt Size Chart',
     type: 'NORMAL',
     chart_image_url: '/images/size-guide.jpg',
+    image_url: '/images/size-guide.jpg',
     how_to_measure_image_url: '/images/size-guide.jpg',
+    columns: ['Length', 'Chest', 'Shoulder', 'Sleeve'],
     measurements: [
       { size: 'M', length: '27', chest: '40', shoulder: '10', sleeve: '—' },
       { size: 'L', length: '29', chest: '42', shoulder: '10', sleeve: '—' },
@@ -30,9 +34,12 @@ export const INITIAL_SIZE_CHARTS: SizeChartRecord[] = [
   {
     id: 'sc_oversized_default',
     name: 'Oversized T-Shirt Size Chart',
+    brand_name: 'Oversized T-Shirt Size Chart',
     type: 'OVERSIZED',
     chart_image_url: '/images/oversized-size-guide.jpg',
+    image_url: '/images/oversized-size-guide.jpg',
     how_to_measure_image_url: '/images/oversized-size-guide.jpg',
+    columns: ['Shoulder', 'Chest', 'Length', 'Sleeve'],
     measurements: [
       { size: 'M', shoulder: '20', chest: '40', length: '27.5', sleeve: '10' },
       { size: 'L', shoulder: '21.5', chest: '42', length: '28', sleeve: '10' },
@@ -49,6 +56,25 @@ export const INITIAL_SIZE_CHARTS: SizeChartRecord[] = [
     updated_at: '2026-01-01T00:00:00.000Z',
   },
 ];
+
+export function extractChartColumns(measurements?: SizeChartMeasurementRow[], customCols?: string[]): string[] {
+  if (Array.isArray(customCols) && customCols.length > 0) {
+    return customCols.filter(Boolean);
+  }
+  if (!Array.isArray(measurements) || measurements.length === 0) {
+    return ['Length', 'Chest', 'Shoulder', 'Sleeve'];
+  }
+  const set = new Set<string>();
+  measurements.forEach((row) => {
+    if (row && typeof row === 'object') {
+      Object.keys(row).forEach((k) => {
+        if (k !== 'size') set.add(k);
+      });
+    }
+  });
+  const res = Array.from(set);
+  return res.length > 0 ? res : ['Length', 'Chest', 'Shoulder', 'Sleeve'];
+}
 
 function ensureSizeChartsFileExists(): SizeChartRecord[] {
   const dir = path.join(process.cwd(), 'data');
@@ -98,26 +124,36 @@ export async function getAllSizeChartsFromStore(): Promise<SizeChartRecord[]> {
         .order('created_at', { ascending: false });
 
       if (!error && Array.isArray(data) && data.length > 0) {
-        return data.map((d) => ({
-          id: String(d.id),
-          name: String(d.name || ''),
-          type: d.type === 'OVERSIZED' ? 'OVERSIZED' : 'NORMAL',
-          chart_image_url: d.chart_image_url || null,
-          how_to_measure_image_url: d.how_to_measure_image_url || null,
-          measurements: Array.isArray(d.measurements)
+        return data.map((d) => {
+          const rawMeasurements: SizeChartMeasurementRow[] = Array.isArray(d.measurements)
             ? d.measurements
             : typeof d.measurements === 'object' && d.measurements !== null
             ? Object.entries(d.measurements).map(([size, vals]: [string, any]) => ({
                 size,
                 ...vals,
               }))
-            : [],
-          unit: d.unit || 'ALL MEASUREMENTS ARE IN INCHES',
-          tips: Array.isArray(d.tips) ? d.tips : [],
-          is_active: Boolean(d.is_active),
-          created_at: d.created_at || new Date().toISOString(),
-          updated_at: d.updated_at || new Date().toISOString(),
-        }));
+            : [];
+
+          const brandName = String(d.brand_name || d.name || 'Untitled Brand').trim();
+          const imgUrl = d.image_url || d.chart_image_url || null;
+
+          return {
+            id: String(d.id),
+            name: brandName,
+            brand_name: brandName,
+            type: d.type || 'BRAND',
+            image_url: imgUrl,
+            chart_image_url: imgUrl,
+            how_to_measure_image_url: d.how_to_measure_image_url || null,
+            columns: extractChartColumns(rawMeasurements, d.columns),
+            measurements: rawMeasurements,
+            unit: d.unit || 'ALL MEASUREMENTS ARE IN INCHES',
+            tips: Array.isArray(d.tips) ? d.tips : [],
+            is_active: d.is_active !== undefined ? Boolean(d.is_active) : true,
+            created_at: d.created_at || new Date().toISOString(),
+            updated_at: d.updated_at || new Date().toISOString(),
+          };
+        });
       }
     } catch (err) {
       console.warn('Supabase fetch size_charts error, using local fallback:', err);
@@ -150,18 +186,25 @@ export async function saveNewSizeChartToStore(
 ): Promise<SizeChartRecord> {
   const id = payload.id || `sc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const now = new Date().toISOString();
-  const type: 'NORMAL' | 'OVERSIZED' = payload.type === 'OVERSIZED' ? 'OVERSIZED' : 'NORMAL';
+  const brandName = (payload.brand_name || payload.name || 'New Brand').trim();
+  const type = payload.type || 'BRAND';
   const isActive = payload.is_active !== undefined ? Boolean(payload.is_active) : true;
+  const imageUrl = payload.image_url || payload.chart_image_url || null;
+  const rawMeasurements = payload.measurements && Array.isArray(payload.measurements) ? payload.measurements : [];
+  const columns = extractChartColumns(rawMeasurements, payload.columns);
 
   const newChart: SizeChartRecord = {
     id,
-    name: payload.name?.trim() || `${type === 'OVERSIZED' ? 'Oversized' : 'Normal'} T-Shirt Size Chart`,
+    name: brandName,
+    brand_name: brandName,
     type,
-    chart_image_url: payload.chart_image_url || null,
+    image_url: imageUrl,
+    chart_image_url: imageUrl,
     how_to_measure_image_url: payload.how_to_measure_image_url || null,
-    measurements: payload.measurements && Array.isArray(payload.measurements) ? payload.measurements : [],
+    columns,
+    measurements: rawMeasurements,
     unit: payload.unit || 'ALL MEASUREMENTS ARE IN INCHES',
-    tips: payload.tips || (type === 'OVERSIZED' ? INITIAL_SIZE_CHARTS[1].tips : INITIAL_SIZE_CHARTS[0].tips),
+    tips: payload.tips || [],
     is_active: isActive,
     created_at: now,
     updated_at: now,
@@ -171,43 +214,75 @@ export async function saveNewSizeChartToStore(
 
   if (supabase) {
     try {
-      // If this chart is active, deactivate other charts of same type first
-      if (isActive) {
-        await supabase
-          .from('size_charts')
-          .update({ is_active: false, updated_at: now })
-          .eq('type', type);
-      }
+      // In Supabase schema, type has CHECK (type IN ('NORMAL', 'OVERSIZED')).
+      // Brand charts correspond to Oversized/Customized fit.
+      const dbType = newChart.type === 'NORMAL' ? 'NORMAL' : 'OVERSIZED';
 
-      const { error } = await supabase.from('size_charts').insert({
+      const dbPayload: any = {
         id: newChart.id,
         name: newChart.name,
-        type: newChart.type,
+        brand_name: newChart.brand_name,
+        type: dbType,
+        image_url: newChart.image_url,
         chart_image_url: newChart.chart_image_url,
         how_to_measure_image_url: newChart.how_to_measure_image_url,
+        columns: newChart.columns,
         measurements: newChart.measurements,
         unit: newChart.unit,
         tips: newChart.tips,
         is_active: newChart.is_active,
         created_at: newChart.created_at,
         updated_at: newChart.updated_at,
-      });
+      };
+
+      let { error } = await supabase.from('size_charts').insert(dbPayload);
 
       if (error) {
-        console.warn('Supabase insert size_charts error:', error);
+        // If type check constraint failed, enforce OVERSIZED
+        if (error.message && error.message.includes('size_charts_type_check')) {
+          dbPayload.type = 'OVERSIZED';
+          const retry = await supabase.from('size_charts').insert(dbPayload);
+          error = retry.error;
+        }
+
+        // If brand_name, image_url, or columns are missing from older Supabase schema cache, retry without them
+        if (error && error.message && (error.message.includes('brand_name') || error.message.includes('image_url') || error.message.includes('columns') || error.message.includes('schema cache'))) {
+          delete dbPayload.brand_name;
+          delete dbPayload.image_url;
+          delete dbPayload.columns;
+          const retry2 = await supabase.from('size_charts').insert(dbPayload);
+          error = retry2.error;
+        }
+
+        if (error) {
+          console.error('CRITICAL: Supabase insert size_charts error:', error);
+          throw new Error(`Failed to save size chart to Supabase: ${error.message}`);
+        }
       }
-    } catch (err) {
-      console.warn('Supabase insert size_charts exception:', err);
+
+      // Also persist to size_chart_measurements relational table if available
+      if (rawMeasurements.length > 0) {
+        try {
+          const scmRows = rawMeasurements.map((m, idx) => ({
+            id: `${newChart.id}_m_${idx}`,
+            size_chart_id: newChart.id,
+            size_label: m.size,
+            measurements: m,
+            created_at: now,
+            updated_at: now,
+          }));
+          await supabase.from('size_chart_measurements').insert(scmRows);
+        } catch {}
+      }
+    } catch (err: any) {
+      console.error('Supabase insert size_charts exception:', err);
+      throw err;
     }
   }
 
   // Sync to local JSON fallback
   const list = ensureSizeChartsFileExists();
-  let updatedList = list;
-  if (isActive) {
-    updatedList = updatedList.map((c) => (c.type === type ? { ...c, is_active: false } : c));
-  }
-  updatedList.unshift(newChart);
+  const updatedList = [newChart, ...list.filter((c) => c.id !== id)];
   writeLocalSizeCharts(updatedList);
 
   return newChart;
@@ -221,15 +296,21 @@ export async function updateSizeChartInStore(
   const current = await getSizeChartByIdFromStore(id);
   if (!current) return null;
 
-  const targetType = updates.type || current.type;
-  const isNowActive = updates.is_active !== undefined ? Boolean(updates.is_active) : current.is_active;
+  const brandName = (updates.brand_name || updates.name || current.brand_name || current.name || '').trim();
+  const imageUrl = updates.image_url !== undefined ? updates.image_url : (updates.chart_image_url !== undefined ? updates.chart_image_url : current.image_url);
+  const rawMeasurements = updates.measurements !== undefined ? updates.measurements : current.measurements;
+  const columns = extractChartColumns(rawMeasurements, updates.columns || current.columns);
 
   const updatedRecord: SizeChartRecord = {
     ...current,
     ...updates,
     id,
-    type: targetType,
-    is_active: isNowActive,
+    name: brandName,
+    brand_name: brandName,
+    image_url: imageUrl,
+    chart_image_url: imageUrl,
+    columns,
+    measurements: rawMeasurements,
     updated_at: now,
   };
 
@@ -237,31 +318,63 @@ export async function updateSizeChartInStore(
 
   if (supabase) {
     try {
-      if (isNowActive) {
-        // Deactivate all other charts of same type
-        await supabase
-          .from('size_charts')
-          .update({ is_active: false, updated_at: now })
-          .eq('type', targetType)
-          .neq('id', id);
-      }
-
       const dbPayload: any = {
         updated_at: now,
       };
-      if (updates.name !== undefined) dbPayload.name = updates.name.trim();
-      if (updates.type !== undefined) dbPayload.type = updates.type;
-      if (updates.chart_image_url !== undefined) dbPayload.chart_image_url = updates.chart_image_url;
-      if (updates.how_to_measure_image_url !== undefined)
+      if (brandName) {
+        dbPayload.name = brandName;
+        dbPayload.brand_name = brandName;
+      }
+      if (updates.type !== undefined) {
+        dbPayload.type = updates.type === 'NORMAL' ? 'NORMAL' : 'OVERSIZED';
+      }
+      dbPayload.image_url = imageUrl;
+      dbPayload.chart_image_url = imageUrl;
+      if (updates.how_to_measure_image_url !== undefined) {
         dbPayload.how_to_measure_image_url = updates.how_to_measure_image_url;
-      if (updates.measurements !== undefined) dbPayload.measurements = updates.measurements;
+      }
+      dbPayload.columns = columns;
+      dbPayload.measurements = rawMeasurements;
       if (updates.unit !== undefined) dbPayload.unit = updates.unit;
       if (updates.tips !== undefined) dbPayload.tips = updates.tips;
       if (updates.is_active !== undefined) dbPayload.is_active = updates.is_active;
 
-      const { error } = await supabase.from('size_charts').update(dbPayload).eq('id', id);
+      let { error } = await supabase.from('size_charts').update(dbPayload).eq('id', id);
       if (error) {
-        console.warn('Supabase update size_charts error:', error);
+        if (error.message && error.message.includes('size_charts_type_check')) {
+          dbPayload.type = 'OVERSIZED';
+          const retry = await supabase.from('size_charts').update(dbPayload).eq('id', id);
+          error = retry.error;
+        }
+
+        if (error && error.message && (error.message.includes('brand_name') || error.message.includes('image_url') || error.message.includes('columns') || error.message.includes('schema cache'))) {
+          delete dbPayload.brand_name;
+          delete dbPayload.image_url;
+          delete dbPayload.columns;
+          const retry2 = await supabase.from('size_charts').update(dbPayload).eq('id', id);
+          error = retry2.error;
+        }
+
+        if (error) {
+          console.error('CRITICAL: Supabase update size_charts error:', error);
+          throw new Error(`Failed to update size chart in Supabase: ${error.message}`);
+        }
+      }
+
+      // Also update size_chart_measurements relational table if available
+      if (rawMeasurements && rawMeasurements.length > 0) {
+        try {
+          await supabase.from('size_chart_measurements').delete().eq('size_chart_id', id);
+          const scmRows = rawMeasurements.map((m, idx) => ({
+            id: `${id}_m_${idx}`,
+            size_chart_id: id,
+            size_label: m.size,
+            measurements: m,
+            created_at: now,
+            updated_at: now,
+          }));
+          await supabase.from('size_chart_measurements').insert(scmRows);
+        } catch {}
       }
     } catch (err) {
       console.warn('Supabase update size_charts exception:', err);
@@ -272,12 +385,6 @@ export async function updateSizeChartInStore(
   const list = ensureSizeChartsFileExists();
   const index = list.findIndex((c) => c.id === id);
   let updatedList = [...list];
-
-  if (isNowActive) {
-    updatedList = updatedList.map((c) =>
-      c.type === targetType && c.id !== id ? { ...c, is_active: false } : c
-    );
-  }
 
   if (index !== -1) {
     updatedList[index] = updatedRecord;
@@ -297,23 +404,21 @@ export async function deleteSizeChartFromStore(id: string): Promise<boolean> {
 
   if (supabase) {
     try {
+      await supabase.from('size_chart_measurements').delete().eq('size_chart_id', id);
+    } catch {}
+
+    try {
       await supabase.from('size_charts').delete().eq('id', id);
     } catch (err) {
       console.warn('Supabase delete size_charts error:', err);
     }
   }
 
+  // Safely unlink any products referencing this chart so no orphaned/broken references remain
+  await unlinkDeletedSizeChartFromProducts(id);
+
   const list = ensureSizeChartsFileExists();
-  let updatedList = list.filter((c) => c.id !== id);
-
-  // If we just deleted the active chart for a type and other charts exist for that type, activate the newest remaining
-  if (current.is_active) {
-    const remainingSameType = updatedList.find((c) => c.type === current.type);
-    if (remainingSameType) {
-      remainingSameType.is_active = true;
-    }
-  }
-
+  const updatedList = list.filter((c) => c.id !== id);
   writeLocalSizeCharts(updatedList);
   return true;
 }

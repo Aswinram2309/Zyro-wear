@@ -163,26 +163,37 @@ export function getSizeChartConfig(category?: string, productName: string = ''):
 }
 
 /**
- * Returns a specific measurement value from a SizeChartRecord or falls back to defaults.
+ * Returns a specific measurement value from a SizeChartRecord or falls back to '-'.
  */
 export function getMeasurementFromRecord(
   record: import('../types').SizeChartRecord | undefined | null,
   size: string,
   field: string,
-  fallbackVal: string = '—'
+  fallbackVal: string = '-'
 ): string {
   if (!record || !record.measurements || !Array.isArray(record.measurements)) {
     return fallbackVal;
   }
-  const row = record.measurements.find((m) => m.size.toUpperCase() === size.toUpperCase());
-  if (row && (row as any)[field] !== undefined && (row as any)[field] !== null && String((row as any)[field]).trim() !== '') {
-    return String((row as any)[field]).trim();
+  const row = record.measurements.find((m) => m.size?.toUpperCase() === size?.toUpperCase());
+  if (!row) return fallbackVal;
+
+  const directVal = (row as any)[field];
+  if (directVal !== undefined && directVal !== null && String(directVal).trim() !== '') {
+    return String(directVal).trim();
   }
+
+  // Case-insensitive key match for custom column names (e.g. 'Length' vs 'length')
+  const matchedKey = Object.keys(row).find((k) => k.toLowerCase() === field.toLowerCase());
+  if (matchedKey && (row as any)[matchedKey] !== undefined && (row as any)[matchedKey] !== null && String((row as any)[matchedKey]).trim() !== '') {
+    return String((row as any)[matchedKey]).trim();
+  }
+
   return fallbackVal;
 }
 
 /**
  * Returns a specific measurement value with proper fallback to chart-type defaults.
+ * Strict rule: Oversized and Customized T-Shirts NEVER receive invented default measurements.
  */
 export function getProductMeasurement(
   sizeChart: Record<string, SizeMeasurement> | undefined,
@@ -200,14 +211,23 @@ export function getProductMeasurement(
 
   // 2. Check active admin-managed size chart record
   if (activeRecord) {
-    const recVal = getMeasurementFromRecord(activeRecord, size, field, '');
-    if (recVal && recVal !== '—') {
+    const recVal = getMeasurementFromRecord(activeRecord, size, String(field), '');
+    if (recVal && recVal !== '-' && recVal !== '—') {
       return recVal;
     }
   }
 
-  // 3. Fallback to default static configuration
+  // Strict Rule Check:
+  // If category is Oversized T-Shirts or Customized T-Shirts, and no record measurement exists,
+  // do NOT fall back to invented default measurements!
+  const normCat = normalizeCategory(category || '', productName);
+  if (normCat === 'Oversized T-Shirts' || normCat === 'Customized T-Shirts') {
+    return '-';
+  }
+
+  // 3. Fallback to default static configuration for Football Jerseys / IPL Jerseys
   const config = getSizeChartConfig(category, productName);
   const defVal = config.defaultMeasurements[size]?.[field];
   return defVal !== undefined && defVal !== null && String(defVal).trim() !== '' ? String(defVal).trim() : '—';
 }
+

@@ -1,5 +1,425 @@
 [
   {
+    "id": "prod_1791736950408_o4z5",
+    "name": "CSK 2025 Match Jersey",
+    "slug": "csk-2025-match-jersey",
+    "description": "",
+    "price": 1399,
+    "mrp": 1399,
+    "sale_price": null,
+    "category": "IPL Jerseys",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"L\":5,\"XL\":5,\"XXL\":5}"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "stock": 20,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5,
+      "XL": 5,
+      "XXL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.408Z",
+    "updated_at": "2026-10-11T16:42:30.430Z"
+  },
+  {
+    "id": "prod_1791736950407_i673",
+    "name": "Real Madrid 24/25 Home Jersey",
+    "slug": "real-madrid-24-25-home-jersey",
+    "description": "",
+    "price": 1499,
+    "mrp": 1499,
+    "sale_price": null,
+    "category": "Football Jerseys",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"L\":5,\"XL\":5}"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "stock": 15,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5,
+      "XL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.407Z",
+    "updated_at": "2026-10-11T16:42:30.429Z"
+  },
+  {
+    "id": "prod_1791736950405_e69o",
+    "name": "Custom Tee - Unassigned Chart",
+    "slug": "custom-tee-unassigned-chart",
+    "description": "",
+    "price": 999,
+    "mrp": 999,
+    "sale_price": null,
+    "category": "Customized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"L\":5}"
+    ],
+    "sizes": [
+      "L"
+    ],
+    "stock": 5,
+    "stock_by_size": {
+      "L": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.405Z",
+    "updated_at": "2026-10-11T16:42:30.427Z"
+  },
+  {
+    "id": "prod_1791736950404_977i",
+    "name": "Oversized Tee - Unassigned Chart",
+    "slug": "oversized-tee-unassigned-chart",
+    "description": "",
+    "price": 899,
+    "mrp": 899,
+    "sale_price": null,
+    "category": "Oversized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"L\":5}"
+    ],
+    "sizes": [
+      "M",
+      "L"
+    ],
+    "stock": 10,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.404Z",
+    "updated_at": "2026-10-11T16:42:30.425Z"
+  },
+  {
+    "id": "prod_1791736950401_ssrn",
+    "name": "Customized Tee 1 - Brand B",
+    "slug": "customized-tee-1-brand-b",
+    "description": "",
+    "price": 1299,
+    "mrp": 1299,
+    "sale_price": null,
+    "category": "Customized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"XL\":5}"
+    ],
+    "sizes": [
+      "M",
+      "XL"
+    ],
+    "stock": 10,
+    "stock_by_size": {
+      "M": 5,
+      "XL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.401Z",
+    "updated_at": "2026-10-11T16:42:30.424Z"
+  },
+  {
+    "id": "prod_1791736950400_yxh6",
+    "name": "Oversized Tee 2 - Brand B",
+    "slug": "oversized-tee-2-brand-b",
+    "description": "",
+    "price": 1199,
+    "mrp": 1199,
+    "sale_price": null,
+    "category": "Oversized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"XL\":5,\"XXL\":5}"
+    ],
+    "sizes": [
+      "M",
+      "XL",
+      "XXL"
+    ],
+    "stock": 15,
+    "stock_by_size": {
+      "M": 5,
+      "XL": 5,
+      "XXL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.400Z",
+    "updated_at": "2026-10-11T16:42:30.422Z"
+  },
+  {
+    "id": "prod_1791736950399_pzdh",
+    "name": "Oversized Tee 1 - Brand A",
+    "slug": "oversized-tee-1-brand-a",
+    "description": "",
+    "price": 999,
+    "mrp": 999,
+    "sale_price": null,
+    "category": "Football Jerseys",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"L\":5}"
+    ],
+    "sizes": [
+      "M",
+      "L"
+    ],
+    "stock": 10,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": false,
+    "created_at": "2026-10-11T16:42:30.399Z",
+    "updated_at": "2026-10-11T16:42:30.420Z"
+  },
+  {
+    "id": "prod_1791736915419_myp3",
+    "name": "CSK 2025 Match Jersey",
+    "slug": "csk-2025-match-jersey",
+    "description": "",
+    "price": 1399,
+    "mrp": 1399,
+    "sale_price": null,
+    "category": "IPL Jerseys",
+    "front_img": "",
+    "back_img": "",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "stock": 20,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5,
+      "XL": 5,
+      "XXL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.419Z",
+    "updated_at": "2026-10-11T16:41:55.419Z"
+  },
+  {
+    "id": "prod_1791736915418_5zqd",
+    "name": "Real Madrid 24/25 Home Jersey",
+    "slug": "real-madrid-24-25-home-jersey",
+    "description": "",
+    "price": 1499,
+    "mrp": 1499,
+    "sale_price": null,
+    "category": "Football Jerseys",
+    "front_img": "",
+    "back_img": "",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "stock": 15,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5,
+      "XL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.418Z",
+    "updated_at": "2026-10-11T16:41:55.418Z"
+  },
+  {
+    "id": "prod_1791736915417_92sd",
+    "name": "Custom Tee - Unassigned Chart",
+    "slug": "custom-tee-unassigned-chart",
+    "description": "",
+    "price": 999,
+    "mrp": 999,
+    "sale_price": null,
+    "category": "Customized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [],
+    "sizes": [
+      "L"
+    ],
+    "stock": 5,
+    "stock_by_size": {
+      "L": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.417Z",
+    "updated_at": "2026-10-11T16:41:55.417Z"
+  },
+  {
+    "id": "prod_1791736915415_ugv2",
+    "name": "Oversized Tee - Unassigned Chart",
+    "slug": "oversized-tee-unassigned-chart",
+    "description": "",
+    "price": 899,
+    "mrp": 899,
+    "sale_price": null,
+    "category": "Oversized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [],
+    "sizes": [
+      "M",
+      "L"
+    ],
+    "stock": 10,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.415Z",
+    "updated_at": "2026-10-11T16:41:55.415Z"
+  },
+  {
+    "id": "prod_1791736915412_xhqn",
+    "name": "Customized Tee 1 - Brand B",
+    "slug": "customized-tee-1-brand-b",
+    "description": "",
+    "price": 1299,
+    "mrp": 1299,
+    "sale_price": null,
+    "category": "Customized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [],
+    "sizes": [
+      "M",
+      "XL"
+    ],
+    "stock": 10,
+    "stock_by_size": {
+      "M": 5,
+      "XL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.412Z",
+    "updated_at": "2026-10-11T16:41:55.412Z"
+  },
+  {
+    "id": "prod_1791736915411_uds2",
+    "name": "Oversized Tee 2 - Brand B",
+    "slug": "oversized-tee-2-brand-b",
+    "description": "",
+    "price": 1199,
+    "mrp": 1199,
+    "sale_price": null,
+    "category": "Oversized T-Shirts",
+    "front_img": "",
+    "back_img": "",
+    "images": [],
+    "sizes": [
+      "M",
+      "XL",
+      "XXL"
+    ],
+    "stock": 15,
+    "stock_by_size": {
+      "M": 5,
+      "XL": 5,
+      "XXL": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.411Z",
+    "updated_at": "2026-10-11T16:41:55.411Z"
+  },
+  {
+    "id": "prod_1791736915410_9iuw",
+    "name": "Oversized Tee 1 - Brand A",
+    "slug": "oversized-tee-1-brand-a",
+    "description": "",
+    "price": 999,
+    "mrp": 999,
+    "sale_price": null,
+    "category": "Football Jerseys",
+    "front_img": "",
+    "back_img": "",
+    "images": [
+      "__stock_by_size:{\"M\":5,\"L\":5}"
+    ],
+    "sizes": [
+      "M",
+      "L"
+    ],
+    "stock": 10,
+    "stock_by_size": {
+      "M": 5,
+      "L": 5
+    },
+    "size_chart_id": null,
+    "size_chart_img": null,
+    "how_to_measure_img": null,
+    "is_active": true,
+    "created_at": "2026-10-11T16:41:55.410Z",
+    "updated_at": "2026-10-11T16:41:55.420Z"
+  },
+  {
     "id": "arg-home-10",
     "name": "Argentina Home Kit (Messi #10)",
     "slug": "argentina-home-kit-messi-10",

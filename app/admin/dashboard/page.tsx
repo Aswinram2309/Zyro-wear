@@ -67,21 +67,45 @@ export default function AdminDashboardPage() {
   // Check auth
   useEffect(() => {
     router.prefetch('/');
-    const isAuthenticated = sessionStorage.getItem('zyro_admin_auth');
-    if (!isAuthenticated) {
-      router.push('/admin/login');
-    } else {
-      fetchOrders();
-    }
+    const checkAuthAndLoad = async () => {
+      let isAuthed = sessionStorage.getItem('zyro_admin_auth') === 'true';
+      if (!isAuthed) {
+        try {
+          const res = await fetch('/api/admin/auth');
+          const data = await res.json();
+          if (data.authenticated) {
+            sessionStorage.setItem('zyro_admin_auth', 'true');
+            isAuthed = true;
+          }
+        } catch (e) {}
+      }
+
+      if (!isAuthed) {
+        window.location.href = '/admin/login';
+      } else {
+        await fetchOrders();
+      }
+    };
+
+    checkAuthAndLoad();
   }, [router]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/orders');
+      if (!res.ok) {
+        if (res.status === 401) {
+          sessionStorage.removeItem('zyro_admin_auth');
+          window.location.href = '/admin/login';
+          return;
+        }
+      }
       const data = await res.json();
       if (data.orders && Array.isArray(data.orders)) {
         setOrders(data.orders);
+      } else {
+        setOrders([]);
       }
     } catch (err) {
       console.error('Error fetching admin orders:', err);
@@ -143,6 +167,9 @@ export default function AdminDashboardPage() {
             </Link>
             <Link href="/admin/stock" className="admin-nav-link">
               <i className="fa-solid fa-boxes-stacked"></i> Stock Management
+            </Link>
+            <Link href="/admin/size-charts" className="admin-nav-link">
+              <i className="fa-solid fa-ruler-combined"></i> Size Chart Management
             </Link>
           </div>
 
