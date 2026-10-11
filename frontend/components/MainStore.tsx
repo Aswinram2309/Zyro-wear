@@ -9,6 +9,8 @@ import CartDrawer from './CartDrawer';
 import CheckoutModal from './CheckoutModal';
 import ReviewsSection from './ReviewsSection';
 import Footer from './Footer';
+import PromoOfferBanner from './PromoOfferBanner';
+import PromoOfferPopup from './PromoOfferPopup';
 import { INITIAL_PRODUCTS } from '@/database/seed/products-data';
 import { Product, CartItem } from '@/shared/types';
 import { normalizeCategory } from '@/shared/constants/stock-config';
@@ -202,6 +204,8 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
       {/* Product Catalog Section / Trending Now */}
       <section className="catalog-section" id="shop">
         <div className="section-container">
+          <PromoOfferBanner cart={cart} variant="store" onOpenCart={() => setIsCartOpen(true)} />
+
           <div className="section-header">
             <span className="sub-heading">SHOP OUR COLLECTION</span>
             <h2 className="main-heading">TRENDING NOW</h2>
@@ -337,6 +341,9 @@ export default function MainStore({ initialProducts }: MainStoreProps) {
       </section>
 
       <Footer />
+
+      {/* Floating Buy 3 for ₹999 Promotional Popup */}
+      <PromoOfferPopup cart={cart} onOpenCart={() => setIsCartOpen(true)} />
 
       {/* Cart Drawer */}
       <CartDrawer

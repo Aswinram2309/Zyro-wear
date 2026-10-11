@@ -16,6 +16,9 @@ interface AdminOrder {
   state: string;
   pincode: string;
   subtotal: number;
+  shipping_fee?: number;
+  discount_amount?: number;
+  offer_applied?: string;
   total_amount: number;
   payment_status: string;
   order_status: string;
@@ -306,9 +309,25 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
 
-                    <div className="order-total-bar">
-                      <span>Total Amount:</span>
-                      <strong className="grand-price">₹{order.total_amount}</strong>
+                    <div className="order-total-bar" style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'stretch', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#9CA3AF' }}>
+                        <span>Subtotal:</span>
+                        <span>₹{order.subtotal}</span>
+                      </div>
+                      {order.discount_amount && order.discount_amount > 0 ? (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10B981', fontWeight: 600 }}>
+                          <span>Offer Discount {order.offer_applied ? `(${order.offer_applied})` : '(Buy 3 for ₹999)'}:</span>
+                          <span>-₹{order.discount_amount}</span>
+                        </div>
+                      ) : null}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#9CA3AF' }}>
+                        <span>Shipping ({order.state || 'Standard'}):</span>
+                        <span>₹{order.shipping_fee !== undefined ? order.shipping_fee : (order.total_amount - (order.subtotal - (order.discount_amount || 0)))}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 800, marginTop: '4px', borderTop: '1px dashed rgba(255, 255, 255, 0.15)', paddingTop: '6px' }}>
+                        <span>Final Total:</span>
+                        <strong className="grand-price" style={{ color: '#FFC700' }}>₹{order.total_amount}</strong>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { saveOrderToStore, findOrderByPaymentId, generateNextOrderNumber } from 
 import { sendOrderConfirmationEmail, sendAdminNewOrderEmail } from '@/backend/services/email-service';
 import { getProductByIdFromStore, deductSizeStock, restoreSizeStock } from '@/database/stores/products-store';
 import { calculateDeliveryCharge } from '@/lib/delivery';
+import { calculateBuy3For999 } from '@/lib/pricing';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -122,8 +123,12 @@ export async function POST(req: Request) {
         successfullyDeductedItems.push(item);
       }
 
+      const promo = calculateBuy3For999(validatedItems);
+      const originalSubtotal = promo.originalSubtotal;
+      const discountAmount = promo.bundleDiscount;
+      const discountedSubtotal = promo.discountedProductTotal;
       const shippingFee = calculateDeliveryCharge(customer?.state);
-      const totalAmount = subtotal + shippingFee;
+      const totalAmount = discountedSubtotal + shippingFee;
       const orderNumber = await generateNextOrderNumber();
 
       // Save order
@@ -140,7 +145,10 @@ export async function POST(req: Request) {
           pincode: (customer.pincode || '').trim(),
         },
         items: validatedItems,
-        subtotal,
+        subtotal: originalSubtotal,
+        shippingFee,
+        discountAmount,
+        offerApplied: promo.isOfferApplied ? promo.offerDescription : undefined,
         totalAmount,
         razorpayOrderId: orderId,
         razorpayPaymentId: paymentId,
@@ -158,7 +166,10 @@ export async function POST(req: Request) {
           state: (customer.state || '').trim(),
           pincode: (customer.pincode || '').trim(),
           items: validatedItems,
-          subtotal,
+          subtotal: originalSubtotal,
+          discountAmount,
+          shippingFee,
+          offerApplied: promo.offerDescription,
           totalAmount,
           paymentStatus: 'PAID',
           createdAt: savedOrder.created_at || new Date().toISOString(),

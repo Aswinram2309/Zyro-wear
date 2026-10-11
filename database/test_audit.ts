@@ -1,4 +1,5 @@
 import { calculateDeliveryCharge } from '../lib/delivery';
+import { calculateBuy3For999 } from '../lib/pricing';
 import { verifyRazorpaySignature } from '../lib/razorpay';
 import {
   createAdminSessionToken,
@@ -75,6 +76,62 @@ async function runTests() {
   assert(r2.success === true && r2.remaining === 1, 'Rate limit attempt 2 allowed (remaining: 1)');
   assert(r3.success === true && r3.remaining === 0, 'Rate limit attempt 3 allowed (remaining: 0)');
   assert(r4.success === false && r4.remaining === 0, 'Rate limit attempt 4 blocked');
+
+  console.log('\n--- 5. Testing BUY 3 FOR ₹999 Promotional Pricing ---');
+  // 1 product at ₹399 -> ₹399
+  const p1 = calculateBuy3For999([{ price: 399, quantity: 1 }]);
+  assert(p1.discountedProductTotal === 399, '1 product at ₹399 -> ₹399');
+  assert(p1.itemsNeededForNextCombo === 2, '1 product needs 2 more for combo');
+
+  // 2 products at ₹399 each -> ₹798
+  const p2 = calculateBuy3For999([{ price: 399, quantity: 2 }]);
+  assert(p2.discountedProductTotal === 798, '2 products at ₹399 each -> ₹798');
+  assert(p2.itemsNeededForNextCombo === 1, '2 products needs 1 more for combo');
+
+  // 2 Oversized T-shirts at ₹399 each + 1 Jersey at ₹299 -> ₹999
+  const p3 = calculateBuy3For999([
+    { price: 399, quantity: 2 },
+    { price: 299, quantity: 1 },
+  ]);
+  assert(p3.discountedProductTotal === 999, '2 Oversized (₹399) + 1 Jersey (₹299) -> ₹999');
+  assert(p3.bundleDiscount === 98, 'Bundle discount is ₹98');
+
+  // 3 Oversized T-shirts at ₹399 each -> ₹999
+  const p4 = calculateBuy3For999([{ price: 399, quantity: 3 }]);
+  assert(p4.discountedProductTotal === 999, '3 Oversized at ₹399 -> ₹999');
+  assert(p4.bundleDiscount === 198, 'Discount for 3x399 is ₹198');
+
+  // 3 Oversized T-shirts + 1 Jersey at ₹299 -> ₹1,298
+  const p5 = calculateBuy3For999([
+    { price: 399, quantity: 3 },
+    { price: 299, quantity: 1 },
+  ]);
+  assert(p5.discountedProductTotal === 1298, '3 Oversized (₹399) + 1 Jersey (₹299) -> ₹1,298');
+  assert(p5.remainingUnits === 1, '1 product remains at regular price');
+
+  // 4 Oversized T-shirts at ₹399 each -> ₹1,398
+  const p6 = calculateBuy3For999([{ price: 399, quantity: 4 }]);
+  assert(p6.discountedProductTotal === 1398, '4 Oversized at ₹399 each -> ₹1,398');
+
+  // 6 Oversized T-shirts at ₹399 each -> ₹1,998
+  const p7 = calculateBuy3For999([{ price: 399, quantity: 6 }]);
+  assert(p7.discountedProductTotal === 1998, '6 Oversized at ₹399 each -> ₹1,998');
+  assert(p7.qualifyingGroups === 2, '2 qualifying bundles applied');
+
+  // Multiples from 1 to 9
+  for (let q = 1; q <= 9; q++) {
+    const res = calculateBuy3For999([{ price: 399, quantity: q }]);
+    const expected = Math.floor(q / 3) * 999 + (q % 3) * 399;
+    assert(res.discountedProductTotal === expected, `Quantity ${q} Oversized pricing correctly equals ₹${expected}`);
+  }
+
+  // Combined product + shipping
+  assert(p1.discountedProductTotal + calculateDeliveryCharge('Tamil Nadu') === 449, '1 Oversized + ₹50 TN shipping = ₹449');
+  assert(p4.discountedProductTotal + calculateDeliveryCharge('Tamil Nadu') === 1049, '3 eligible products + ₹50 TN shipping = ₹1,049');
+  assert(p6.discountedProductTotal + calculateDeliveryCharge('Tamil Nadu') === 1448, '4 Oversized + ₹50 TN shipping = ₹1,448');
+  assert(p7.discountedProductTotal + calculateDeliveryCharge('Tamil Nadu') === 2048, '6 Oversized + ₹50 TN shipping = ₹2,048');
+  assert(p4.discountedProductTotal + calculateDeliveryCharge('Kerala') === 1069, '3 eligible products + ₹70 Kerala shipping = ₹1,069');
+  assert(p4.discountedProductTotal + calculateDeliveryCharge('Maharashtra') === 1179, '3 eligible products + ₹180 Maharashtra shipping = ₹1,179');
 
   console.log(`\n========================================`);
   console.log(`Test Results: ${passed} PASSED, ${failed} FAILED`);

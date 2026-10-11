@@ -96,6 +96,9 @@ export async function saveOrderToStore(orderPayload: {
     price: number;
   }>;
   subtotal: number;
+  shippingFee?: number;
+  discountAmount?: number;
+  offerApplied?: string;
   totalAmount: number;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -114,6 +117,9 @@ export async function saveOrderToStore(orderPayload: {
     state: orderPayload.customer.state || '',
     pincode: orderPayload.customer.pincode || '',
     subtotal: orderPayload.subtotal,
+    shipping_fee: orderPayload.shippingFee ?? 0,
+    discount_amount: orderPayload.discountAmount ?? 0,
+    offer_applied: orderPayload.offerApplied || '',
     total_amount: orderPayload.totalAmount,
     payment_status: 'PAID',
     order_status: 'NEW',
@@ -138,6 +144,9 @@ export async function saveOrderToStore(orderPayload: {
         state: orderRecord.state,
         pincode: orderRecord.pincode,
         subtotal: orderRecord.subtotal,
+        shipping_fee: orderRecord.shipping_fee,
+        discount_amount: orderRecord.discount_amount,
+        offer_applied: orderRecord.offer_applied || null,
         total_amount: orderRecord.total_amount,
         payment_status: orderRecord.payment_status,
         order_status: orderRecord.order_status,
@@ -151,8 +160,11 @@ export async function saveOrderToStore(orderPayload: {
         .select('id')
         .single();
 
-      if (orderErr && orderErr.message && (orderErr.message.includes('alt_phone') || orderErr.message.includes('column'))) {
+      if (orderErr && orderErr.message && (orderErr.message.includes('alt_phone') || orderErr.message.includes('shipping_fee') || orderErr.message.includes('discount_amount') || orderErr.message.includes('offer_applied') || orderErr.message.includes('column'))) {
         delete insertData.alt_phone;
+        delete insertData.shipping_fee;
+        delete insertData.discount_amount;
+        delete insertData.offer_applied;
         const retry = await supabase
           .from('orders')
           .insert(insertData)

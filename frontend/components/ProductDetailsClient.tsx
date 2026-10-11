@@ -9,6 +9,8 @@ import Footer from '@/frontend/components/Footer';
 import CartDrawer from '@/frontend/components/CartDrawer';
 import CheckoutModal from '@/frontend/components/CheckoutModal';
 import SizeChart from '@/frontend/components/SizeChart';
+import PromoOfferBanner from '@/frontend/components/PromoOfferBanner';
+import PromoOfferPopup from '@/frontend/components/PromoOfferPopup';
 import { formatImageUrl, normalizeCategory } from '@/shared/constants/stock-config';
 import { getProductMeasurement, getSizeChartType } from '@/shared/constants/size-chart-config';
 
@@ -577,6 +579,9 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
               )}
             </div>
 
+            {/* BUY 3 PRODUCTS FOR ₹999 Banner */}
+            <PromoOfferBanner cart={cart} variant="product" onOpenCart={() => setIsCartOpen(true)} />
+
             {product.nation && (
               <div className="details-meta-item">
                 <span className="meta-label">Team / Nation:</span>
@@ -972,6 +977,9 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
       </main>
 
       <Footer />
+
+      {/* Floating Buy 3 for ₹999 Promotional Popup */}
+      <PromoOfferPopup cart={cart} onOpenCart={() => setIsCartOpen(true)} />
 
       {/* Cart Drawer */}
       <CartDrawer

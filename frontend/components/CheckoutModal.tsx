@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CartItem, CustomerDetails } from '@/shared/types';
 import { calculateDeliveryCharge } from '@/lib/delivery';
+import { calculateBuy3For999 } from '@/lib/pricing';
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -65,12 +66,15 @@ export default function CheckoutModal({
 
   if (!isOpen) return null;
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + (item.product.sale_price || item.product.price) * item.quantity,
-    0
+  const promo = calculateBuy3For999(
+    cart.map((item) => ({
+      price: item.product.sale_price !== null && item.product.sale_price !== undefined ? Number(item.product.sale_price) : Number(item.product.price),
+      quantity: item.quantity,
+    }))
   );
+  const subtotal = promo.originalSubtotal;
   const shippingFee = customer.state ? calculateDeliveryCharge(customer.state) : null;
-  const totalAmount = subtotal + (shippingFee || 0);
+  const totalAmount = promo.discountedProductTotal + (shippingFee || 0);
 
   const fetchLocationByPincode = async (pin: string) => {
     setPincodeLoading(true);
@@ -585,13 +589,41 @@ export default function CheckoutModal({
 
               <div className="checkout-price-breakdown">
                 <div className="breakdown-row">
-                  <span>Subtotal</span>
-                  <span>₹{subtotal}</span>
+                  <span>Original Total</span>
+                  <span style={{ textDecoration: promo.isOfferApplied ? 'line-through' : 'none', color: promo.isOfferApplied ? '#9CA3AF' : 'inherit' }}>
+                    ₹{promo.originalSubtotal}
+                  </span>
                 </div>
+
+                {promo.isOfferApplied && (
+                  <div className="breakdown-row" style={{ color: '#10B981' }}>
+                    <span>
+                      <i className="fa-solid fa-tag" style={{ marginRight: '6px' }}></i>
+                      BUY 3 FOR ₹999 ({promo.qualifyingGroups} combo{promo.qualifyingGroups > 1 ? 's' : ''})
+                    </span>
+                    <strong>-₹{promo.bundleDiscount}</strong>
+                  </div>
+                )}
+
+                {promo.qualifyingGroups > 0 && promo.remainingUnits > 0 && (
+                  <div className="breakdown-row" style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>
+                    <span>{promo.remainingUnits} item{promo.remainingUnits > 1 ? 's' : ''} at regular price</span>
+                    <span>₹{promo.remainingSubtotal}</span>
+                  </div>
+                )}
+
                 <div className="breakdown-row">
-                  <span>Delivery</span>
-                  <span>{shippingFee !== null ? `₹${shippingFee}` : '--'}</span>
+                  <span>Product Total</span>
+                  <span style={{ color: '#FFC700', fontWeight: 700 }}>₹{promo.discountedProductTotal}</span>
                 </div>
+
+                <div className="breakdown-row">
+                  <span>
+                    Delivery Charge {customer.state ? `(${customer.state})` : ''}
+                  </span>
+                  <span>{shippingFee !== null ? `₹${shippingFee}` : 'Enter PIN / State'}</span>
+                </div>
+
                 <div className="breakdown-row total-row">
                   <span>Grand Total</span>
                   <span>₹{totalAmount}</span>

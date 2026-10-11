@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRazorpayClient } from '@/lib/razorpay';
 import { getAllProductsFromStore } from '@/database/stores/products-store';
 import { calculateDeliveryCharge } from '@/lib/delivery';
+import { calculateBuy3For999 } from '@/lib/pricing';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -77,8 +78,10 @@ export async function POST(req: Request) {
         });
       }
 
+      const promo = calculateBuy3For999(validatedItems);
+      subtotal = promo.originalSubtotal;
       shippingFee = calculateDeliveryCharge(customer?.state);
-      const totalAmountRupees = subtotal + shippingFee;
+      const totalAmountRupees = promo.discountedProductTotal + shippingFee;
       totalAmountPaise = Math.round(totalAmountRupees * 100);
     } 
     // Direct amount fallback

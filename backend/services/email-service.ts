@@ -25,6 +25,9 @@ export interface OrderEmailPayload {
     price: number;
   }>;
   subtotal: number;
+  discountAmount?: number;
+  shippingFee?: number;
+  offerApplied?: string;
   totalAmount: number;
   paymentStatus: string;
   createdAt: string;
@@ -143,12 +146,30 @@ export async function sendOrderConfirmationEmail(orderData: OrderEmailPayload) {
                 <!-- Totals -->
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 25px;">
                   <tr>
-                    <td style="font-size: 14px; color: #9CA3AF; padding: 4px 0;">Subtotal:</td>
+                    <td style="font-size: 14px; color: #9CA3AF; padding: 4px 0;">Product Subtotal:</td>
                     <td align="right" style="font-size: 14px; color: #FFFFFF; padding: 4px 0;">₹${orderData.subtotal}</td>
                   </tr>
+                  ${
+                    orderData.discountAmount && orderData.discountAmount > 0
+                      ? `
                   <tr>
-                    <td style="font-size: 14px; color: #9CA3AF; padding: 4px 0;">Delivery:</td>
-                    <td align="right" style="font-size: 14px; color: #FFFFFF; padding: 4px 0;">₹${orderData.totalAmount - orderData.subtotal}</td>
+                    <td style="font-size: 14px; color: #10B981; padding: 4px 0;">
+                      ${orderData.offerApplied ? `Combo Discount (${orderData.offerApplied}):` : 'Combo Discount (Buy 3 for ₹999):'}
+                    </td>
+                    <td align="right" style="font-size: 14px; color: #10B981; font-weight: bold; padding: 4px 0;">
+                      -₹${orderData.discountAmount}
+                    </td>
+                  </tr>
+                  `
+                      : ''
+                  }
+                  <tr>
+                    <td style="font-size: 14px; color: #9CA3AF; padding: 4px 0;">Delivery Charge:</td>
+                    <td align="right" style="font-size: 14px; color: #FFFFFF; padding: 4px 0;">₹${
+                      orderData.shippingFee !== undefined
+                        ? orderData.shippingFee
+                        : orderData.totalAmount - (orderData.subtotal - (orderData.discountAmount || 0))
+                    }</td>
                   </tr>
                   <tr style="border-top: 1px solid #262930;">
                     <td style="font-size: 16px; font-weight: bold; color: #FFFFFF; padding: 10px 0 0 0;">Total Amount:</td>
@@ -240,7 +261,10 @@ export async function sendAdminNewOrderEmail(orderData: OrderEmailPayload, razor
     .join('');
 
   const formattedOrderNum = formatOrderNum(orderData.orderNumber);
-  const shippingFee = orderData.totalAmount - orderData.subtotal;
+  const actualShippingFee =
+    orderData.shippingFee !== undefined
+      ? orderData.shippingFee
+      : orderData.totalAmount - (orderData.subtotal - (orderData.discountAmount || 0));
 
   const emailHtml = `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto;">
@@ -279,9 +303,21 @@ export async function sendAdminNewOrderEmail(orderData: OrderEmailPayload, razor
         <td style="text-align: right; padding: 5px 0;">Subtotal:</td>
         <td style="text-align: right; font-weight: bold; width: 100px;">₹${orderData.subtotal}</td>
       </tr>
+      ${
+        orderData.discountAmount && orderData.discountAmount > 0
+          ? `
       <tr>
-        <td style="text-align: right; padding: 5px 0;">Shipping:</td>
-        <td style="text-align: right; font-weight: bold;">₹${shippingFee}</td>
+        <td style="text-align: right; padding: 5px 0; color: #10b981;">
+          ${orderData.offerApplied ? `Discount (${orderData.offerApplied}):` : 'Discount (Buy 3 for ₹999):'}
+        </td>
+        <td style="text-align: right; font-weight: bold; color: #10b981;">-₹${orderData.discountAmount}</td>
+      </tr>
+      `
+          : ''
+      }
+      <tr>
+        <td style="text-align: right; padding: 5px 0;">Shipping Charge:</td>
+        <td style="text-align: right; font-weight: bold;">₹${actualShippingFee}</td>
       </tr>
       <tr>
         <td style="text-align: right; padding: 10px 0; font-size: 18px; border-top: 2px solid #000;"><strong>Total:</strong></td>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRazorpayClient } from '@/lib/razorpay';
 import { getAllProductsFromStore } from '@/database/stores/products-store';
 import { calculateDeliveryCharge } from '@/lib/delivery';
+import { calculateBuy3For999 } from '@/lib/pricing';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -86,16 +87,22 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Compute Server-Side Shipping & Total Amount
+    // 3. Compute Server-Side BUY 3 FOR ₹999 Promotional Discount
+    const promo = calculateBuy3For999(validatedItems);
+    const originalSubtotal = promo.originalSubtotal;
+    const discountAmount = promo.bundleDiscount;
+    const discountedSubtotal = promo.discountedProductTotal;
+
+    // 4. Compute Server-Side Shipping & Total Amount
     const shippingFee = calculateDeliveryCharge(customer.state);
-    const totalAmountRupees = subtotal + shippingFee;
+    const totalAmountRupees = discountedSubtotal + shippingFee;
     const totalAmountPaise = Math.round(totalAmountRupees * 100);
 
     if (totalAmountPaise < 100) {
       return NextResponse.json({ error: 'Order amount must be at least ₹1.00' }, { status: 400 });
     }
 
-    // 4. Initialize Razorpay Client
+    // 5. Initialize Razorpay Client
     let razorpay;
     try {
       razorpay = getRazorpayClient();
@@ -106,7 +113,7 @@ export async function POST(req: Request) {
 
     const receipt = `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // 5. Create Razorpay Server Order
+    // 6. Create Razorpay Server Order
     const razorpayOrder = await razorpay.orders.create({
       amount: totalAmountPaise,
       currency: 'INR',
@@ -115,6 +122,9 @@ export async function POST(req: Request) {
         customerName: (customer.fullName || '').slice(0, 40),
         customerPhone: (customer.phone || '').slice(0, 15),
         state: (customer.state || '').slice(0, 30),
+        discountAmount: String(discountAmount),
+        shippingFee: String(shippingFee),
+        offerApplied: promo.offerDescription || '',
       },
     });
 
@@ -126,8 +136,12 @@ export async function POST(req: Request) {
       razorpayOrderId: razorpayOrder.id,
       amount: totalAmountPaise,
       amountInRupees: totalAmountRupees,
-      subtotal,
+      subtotal: originalSubtotal,
+      discountAmount,
+      discountedSubtotal,
       shippingFee,
+      totalAmount: totalAmountRupees,
+      promo,
       currency: razorpayOrder.currency || 'INR',
       keyId,
       validatedItems,
