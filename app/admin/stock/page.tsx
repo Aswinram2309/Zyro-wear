@@ -153,15 +153,27 @@ export default function StockManagementPage() {
     checkAuthAndLoad();
   }, [router]);
 
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchActiveSizeCharts();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const fetchActiveSizeCharts = async () => {
     try {
-      const res = await fetch(`/api/size-charts?t=${Date.now()}`, { cache: 'no-store' });
+      let res = await fetch(`/api/admin/size-charts?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) {
+        res = await fetch(`/api/size-charts?t=${Date.now()}`, { cache: 'no-store' });
+      }
       if (res.ok) {
         const data = await res.json();
-        if (data.charts && Array.isArray(data.charts)) {
-          setBrandSizeCharts(data.charts);
+        const chartList = data.charts || [];
+        if (Array.isArray(chartList)) {
+          setBrandSizeCharts(chartList);
         }
-        if (data.success) {
+        if (data.normal || data.oversized) {
           setActiveSizeCharts({ normal: data.normal, oversized: data.oversized });
         }
       }
@@ -311,6 +323,7 @@ export default function StockManagementPage() {
     setSizeChartPreview('');
     setHowToMeasurePreview('');
     setFormError(null);
+    fetchActiveSizeCharts();
     setIsModalOpen(true);
   };
 
@@ -361,6 +374,7 @@ export default function StockManagementPage() {
     setSizeChartPreview(product.size_chart_img ? formatImageUrl(product.size_chart_img) : '');
     setHowToMeasurePreview(product.how_to_measure_img ? formatImageUrl(product.how_to_measure_img) : '');
     setFormError(null);
+    fetchActiveSizeCharts();
     setIsModalOpen(true);
   };
 
@@ -615,6 +629,7 @@ export default function StockManagementPage() {
       setIsModalOpen(false);
       const isNew = !editingProduct;
       await fetchProducts();
+      await fetchActiveSizeCharts();
 
       if (isNew) {
         setSuccessToast('Product added successfully.');
@@ -901,7 +916,7 @@ export default function StockManagementPage() {
             ))}
           </div>
 
-          <button className="btn-refresh" onClick={fetchProducts}>
+          <button className="btn-refresh" onClick={() => { fetchProducts(); fetchActiveSizeCharts(); }}>
             <i className="fa-solid fa-arrows-rotate"></i> Refresh
           </button>
         </div>
@@ -1302,14 +1317,16 @@ export default function StockManagementPage() {
                           }}
                         >
                           <option value="">-- None (No Brand Size Chart Assigned) --</option>
-                          {brandSizeCharts.map((chart) => {
-                            const bName = chart.brand_name || chart.name || 'Untitled Brand';
-                            return (
-                              <option key={chart.id} value={chart.id}>
-                                {bName} {chart.id ? `(${chart.id})` : ''}
-                              </option>
-                            );
-                          })}
+                          {brandSizeCharts
+                            .filter((chart) => (chart.id !== 'sc_normal_default' && chart.type !== 'NORMAL' && chart.is_active !== false) || chart.id === formData.size_chart_id)
+                            .map((chart) => {
+                              const bName = chart.brand_name || chart.name || 'Untitled Brand';
+                              return (
+                                <option key={chart.id} value={chart.id}>
+                                  {bName} {chart.id ? `(${chart.id})` : ''}
+                                </option>
+                              );
+                            })}
                         </select>
                       </div>
 

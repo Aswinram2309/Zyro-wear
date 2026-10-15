@@ -34,8 +34,8 @@ export interface SizeChartConfig {
  */
 export const NORMAL_SIZE_CHART_DEFAULTS: Record<string, SizeMeasurement> = {
   M: { length: '27', chest: '40', shoulder: '10' },
-  L: { length: '29', chest: '42', shoulder: '10' },
-  XL: { length: '28', chest: '44', shoulder: '10' },
+  L: { length: '28', chest: '42', shoulder: '10' },
+  XL: { length: '29', chest: '44', shoulder: '10' },
   XXL: { length: '30', chest: '46', shoulder: '10.5' },
 };
 

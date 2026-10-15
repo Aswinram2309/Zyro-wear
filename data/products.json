@@ -314,7 +314,9 @@
     "category": "Oversized T-Shirts",
     "front_img": "",
     "back_img": "",
-    "images": [],
+    "images": [
+      "__stock_by_size:{\"S\":10,\"M\":15,\"L\":15,\"XL\":10,\"XXL\":5}"
+    ],
     "sizes": [
       "M",
       "L"
@@ -329,7 +331,7 @@
     "how_to_measure_img": null,
     "is_active": true,
     "created_at": "2026-10-11T16:41:55.415Z",
-    "updated_at": "2026-10-11T16:41:55.415Z"
+    "updated_at": "2026-10-15T18:55:14.183Z"
   },
   {
     "id": "prod_1791736915412_xhqn",

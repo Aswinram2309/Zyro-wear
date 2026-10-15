@@ -1,5 +1,48 @@
 [
   {
+    "id": "sc_1792089732993_9ijw",
+    "name": "Puma Acid Wash",
+    "brand_name": "Puma Acid Wash",
+    "type": "BRAND",
+    "image_url": null,
+    "chart_image_url": null,
+    "how_to_measure_image_url": null,
+    "columns": [
+      "Length",
+      "Chest",
+      "Shoulder",
+      "Sleeve"
+    ],
+    "measurements": [
+      {
+        "size": "M",
+        "Length": "27",
+        "Chest": "41",
+        "Shoulder": "20",
+        "Sleeve": "10"
+      },
+      {
+        "size": "L",
+        "Length": "28",
+        "Chest": "43",
+        "Shoulder": "21",
+        "Sleeve": "10.5"
+      },
+      {
+        "size": "XXL",
+        "Length": "29",
+        "Chest": "45",
+        "Shoulder": "22",
+        "Sleeve": "11"
+      }
+    ],
+    "unit": "ALL MEASUREMENTS ARE IN INCHES",
+    "tips": [],
+    "is_active": true,
+    "created_at": "2026-10-15T18:42:12.993Z",
+    "updated_at": "2026-10-15T18:42:12.993Z"
+  },
+  {
     "id": "sc_1791740402402_3y8f",
     "name": "Brand aa",
     "brand_name": "Brand aa",
@@ -108,14 +151,14 @@
       },
       {
         "size": "L",
-        "length": "29",
+        "length": "28",
         "chest": "42",
         "shoulder": "10",
         "sleeve": "—"
       },
       {
         "size": "XL",
-        "length": "28",
+        "length": "29",
         "chest": "44",
         "shoulder": "10",
         "sleeve": "—"

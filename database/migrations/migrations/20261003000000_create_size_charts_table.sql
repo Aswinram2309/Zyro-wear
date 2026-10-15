@@ -41,8 +41,8 @@ VALUES
     '/images/size-guide.jpg',
     '[
         {"size": "M", "length": "27", "chest": "40", "shoulder": "10", "sleeve": "—"},
-        {"size": "L", "length": "29", "chest": "42", "shoulder": "10", "sleeve": "—"},
-        {"size": "XL", "length": "28", "chest": "44", "shoulder": "10", "sleeve": "—"},
+        {"size": "L", "length": "28", "chest": "42", "shoulder": "10", "sleeve": "—"},
+        {"size": "XL", "length": "29", "chest": "44", "shoulder": "10", "sleeve": "—"},
         {"size": "XXL", "length": "30", "chest": "46", "shoulder": "10.5", "sleeve": "—"}
     ]'::jsonb,
     TRUE
