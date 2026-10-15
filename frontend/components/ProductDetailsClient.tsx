@@ -789,7 +789,7 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
           </div>
         </section>
 
-        {/* 2. Dynamic Size Chart & How to Measure Section */}
+        {/* 2. Dynamic Size Chart Section */}
         <section className="product-sizechart-section">
           <SizeChart
             sizeChart={product.size_chart}
@@ -801,7 +801,6 @@ export default function ProductDetailsClient({ initialProduct }: ProductDetailsC
             onSizeSelect={setActiveSize}
             activeChartRecord={activeChartRecord}
             productSizeChartImg={product.size_chart_img}
-            productHowToMeasureImg={product.how_to_measure_img}
           />
         </section>
 

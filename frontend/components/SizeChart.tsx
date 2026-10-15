@@ -5,7 +5,6 @@ import { SizeMeasurement, SizeChartRecord, SizeChartMeasurementRow } from '@/sha
 import {
   NORMAL_SIZE_CHART_CONFIG,
   getProductMeasurement,
-  getSizeChartConfig,
 } from '@/shared/constants/size-chart-config';
 import { formatImageUrl, normalizeCategory } from '@/shared/constants/stock-config';
 
@@ -19,7 +18,6 @@ interface SizeChartProps {
   onSizeSelect?: (size: string) => void;
   activeChartRecord?: SizeChartRecord | null;
   productSizeChartImg?: string | null;
-  productHowToMeasureImg?: string | null;
 }
 
 export default function SizeChart({
@@ -32,10 +30,8 @@ export default function SizeChart({
   onSizeSelect,
   activeChartRecord: initialActiveRecord,
   productSizeChartImg,
-  productHowToMeasureImg,
 }: SizeChartProps) {
   const [isSizeChartOpen, setIsSizeChartOpen] = useState<boolean>(false);
-  const [isHowToMeasureOpen, setIsHowToMeasureOpen] = useState<boolean>(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const normCat = normalizeCategory(category || '', productName);
@@ -140,25 +136,15 @@ export default function SizeChart({
   const brandImageClean = brandImageRaw ? formatImageUrl(brandImageRaw) : null;
 
   const jerseySizeChartImg = productSizeChartImg ? formatImageUrl(productSizeChartImg) : null;
-  const jerseyHowToMeasureImg = productHowToMeasureImg
-    ? formatImageUrl(productHowToMeasureImg)
-    : activeRecord?.how_to_measure_image_url
-    ? formatImageUrl(activeRecord.how_to_measure_image_url)
-    : normalConfig.howToMeasureImage;
 
   return (
     <div
       className="size-chart-accordions-container"
       style={{
-        marginTop: '1.5rem',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
         width: '100%',
       }}
     >
-      {/* 1. MAIN SIZE CHART ACCORDION */}
+      {/* MAIN SIZE CHART ACCORDION */}
       <div className="size-chart-wrapper" style={{ margin: 0, width: '100%' }}>
         <button
           type="button"
@@ -572,123 +558,6 @@ export default function SizeChart({
           </div>
         )}
       </div>
-
-      {/* 2. HOW TO MEASURE ACCORDION (Preserved for Jerseys & available when guide images exist) */}
-      {(!isBrandCategory || productHowToMeasureImg || activeRecord?.how_to_measure_image_url) && (
-        <div className="size-chart-wrapper" style={{ margin: 0, width: '100%' }}>
-          <button
-            type="button"
-            className="size-chart-header"
-            onClick={() => setIsHowToMeasureOpen((prev) => !prev)}
-            aria-expanded={isHowToMeasureOpen}
-            style={{
-              width: '100%',
-              textTransform: 'uppercase',
-              background: '#181B20',
-              border: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              padding: '1rem 1.25rem',
-              borderRadius: '8px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', color: '#FFF', fontWeight: 800 }}>
-              <i className="fa-solid fa-ruler-horizontal" style={{ color: '#FFC700' }}></i>
-              HOW TO MEASURE
-            </span>
-            <i
-              className={`fa-solid fa-chevron-down toggle-arrow ${isHowToMeasureOpen ? 'expanded' : ''}`}
-              style={{
-                transition: 'transform 0.3s ease',
-                transform: isHowToMeasureOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                color: '#9CA3AF',
-              }}
-            ></i>
-          </button>
-
-          {isHowToMeasureOpen && (
-            <div className="size-chart-content" style={{ marginTop: '0.5rem' }}>
-              <div
-                className="measure-guide-panel"
-                style={{
-                  background: '#111317',
-                  border: '1px solid #262930',
-                  borderRadius: '8px',
-                  padding: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1.2rem',
-                }}
-              >
-                <div
-                  className="how-to-measure-image-container"
-                  style={{
-                    textAlign: 'center',
-                    background: '#0F172A',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,199,0,0.2)',
-                    cursor: 'pointer',
-                    position: 'relative',
-                  }}
-                  onClick={() => setLightboxImage(jerseyHowToMeasureImg)}
-                >
-                  <img
-                    src={jerseyHowToMeasureImg}
-                    alt={`ZYRO WEAR Size & How to Measure Guide`}
-                    style={{
-                      maxWidth: '100%',
-                      height: 'auto',
-                      borderRadius: '6px',
-                      margin: '0 auto',
-                      display: 'block',
-                    }}
-                  />
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      marginTop: '0.6rem',
-                      fontSize: '0.78rem',
-                      color: '#FFC700',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <i className="fa-solid fa-expand" style={{ marginRight: '6px' }}></i> Click image to expand guide
-                  </span>
-                </div>
-
-                {normalConfig.howToMeasureSteps.map((step, idx) => (
-                  <div
-                    key={idx}
-                    className="guide-item"
-                    style={{ background: '#1C1E24', border: '1px solid #262930', borderRadius: '8px', padding: '0.9rem' }}
-                  >
-                    <strong
-                      className="guide-title"
-                      style={{
-                        color: '#FFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        marginBottom: '0.3rem',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      <i className={`${step.icon}`} style={{ color: '#FFC700' }}></i> {step.title}
-                    </strong>
-                    <p className="guide-text" style={{ fontSize: '0.82rem', color: '#9CA3AF', margin: 0, lineHeight: 1.45 }}>
-                      {step.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Lightbox Modal for Full Image View */}
       {lightboxImage && (
